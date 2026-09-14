@@ -6,6 +6,54 @@ Registro resumido das mudanças por versão. Este arquivo deve ser atualizado a 
 
 ---
 
+## v8.79 — 14/09/2026
+
+**MD5 verificado do arquivo recebido:** `f4b9a5003a7535a93352abb0191e81a2`
+
+**Tamanho verificado:** 2.134.151 bytes.
+
+**Marcador interno verificado:** `<!--PCP:8.79-->`.
+
+**Linhas informadas:** 32.207.
+
+**Base:** contém v8.78, v8.77, v8.76, v8.75 e v8.74.
+
+### Corrigido — análise podia executar duas vezes
+
+A investigação descartou a hipótese de dois emissores de toast ou de um resumo prematuro. Existe um único emissor relevante de `Análise aplicada` no fluxo da Demanda, e o toast ocorre no fim da execução.
+
+A causa real era uma segunda execução inteira da análise. A trava de clique ficava apenas no nó DOM do botão (`data-ocupado`, `disabled`, texto `Aguarde…`). Como a janela da prévia permanece aberta durante a análise, qualquer `render()` intermediário por sincronização, Realtime ou gravação podia recriar o botão sem a trava. Um segundo clique então chamava `aplicarAnalise()` novamente.
+
+A segunda rodada encontrava o trabalho já feito pela primeira e, por isso, devolvia corretamente contadores zerados. Como os toasts ficam empilhados, a ordem visual induzia a leitura errada.
+
+### Correção em duas camadas
+
+- `acoes/clique.js`: nova trava por estado `ACOES_RODANDO`, sobrevivendo a qualquer `render()` e protegendo ações `confirmar-*`, `aplicar-*` e `salvar-*` contra reentrada;
+- `demanda/calculo.js`: `aplicarAnalise()` ganhou trava própria de reentrância por `ANALISE_RODANDO`;
+- o miolo da análise, a ordem dos cálculos, os contadores e o toast foram preservados.
+
+### Testes informados
+
+- nova bateria `testes/analise-toast-duplo.js`: **15 ok · 0 falhas**;
+- cenário com render intermediário + segundo clique: **1 chamada e 1 toast** na v8.79; no binário antigo eram 2 chamadas e 2 toasts;
+- sincronização de prioridade da v8.76 preservada;
+- regressão dirigida v8.78 × v8.79: **zero regressão nova**;
+- `janelas`: 531 ok · 0;
+- `conflito-falso`: 12 ok · 0;
+- `duas-abas`: 25 ok · 0;
+- `falso-conflito-papel`: 25 ok · 0;
+- `v877-equivalencia-criacao`: 33 ok · 0;
+- `v876-prioridade-cascata`: 27 ok · 0;
+- `v875-tres-bugs`: 36 ok · 0.
+
+### Observação de publicação
+
+O print que originou a investigação mostrava o texto `pedidos promovidos`, presente até v8.75. A medição indicou que o ambiente publicado ainda estava em v8.73, portanto as correções v8.74–v8.79 estavam acumuladas e ainda não publicadas naquele momento.
+
+Detalhes completos: `versions/v8.79/README.md`.
+
+---
+
 ## v8.78 — 14/09/2026
 
 **MD5 verificado do arquivo recebido:** `9d9e312cf8b140dce904f562b2f24eb5`
@@ -185,11 +233,17 @@ O MD5 da v8.74 não foi registrado porque não foi informado no material usado p
 
 ---
 
-# Diagnósticos e bugs em acompanhamento após v8.78
+# Diagnósticos e bugs em acompanhamento após v8.79
 
 ## Pedido avulso × pedido criado pela Demanda
 
 **Status:** corrigido na v8.77.
+
+## Execução duplicada da análise / dois toasts
+
+**Status:** corrigido na v8.79.
+
+A causa era reentrância: `render()` podia recriar o botão durante a análise e apagar a trava que vivia apenas no DOM. A v8.79 moveu a proteção para estado (`ACOES_RODANDO`) e adicionou uma segunda defesa dentro de `aplicarAnalise()` (`ANALISE_RODANDO`).
 
 ## Conflito de revisão ao editar pedido recém-criado/impresso
 
