@@ -6,6 +6,98 @@ Registro resumido das mudanças por versão. Este arquivo deve ser atualizado a 
 
 ---
 
+## v8.77 — 14/09/2026
+
+**MD5:** `fba537a880ca64ca5dbb7db075aec685`
+
+**Tamanho verificado:** 2.122.922 bytes.
+
+**Marcador interno verificado:** `<!--PCP:8.77-->`.
+
+**Base:** contém integralmente v8.76, v8.75 e v8.74.
+
+### Corrigido — pedido avulso × pedido criado pela Demanda
+
+A causa era estrutural: os dois caminhos de criação haviam evoluído separadamente e deixaram de compartilhar o mesmo contrato de montagem/persistência.
+
+Fluxos envolvidos:
+
+- Demanda: `abrirCriarPedidos()` → `confirmarPedidos()`;
+- avulso: `novo-pedido` → `salvar-novo-pedido`.
+
+Problemas medidos antes da correção:
+
+- o avulso ainda procurava embalagem por `[data-emb]`, mas a janela atual usa `data-pp`, portanto encontrava zero campos e não persistia corretamente as alterações;
+- `produto.etapasUsadas` não era gravado pelo avulso;
+- `setor` não era preenchido de forma equivalente;
+- `criadoNoApp` e `campanhaId` existiam apenas no objeto criado pela Demanda;
+- a Demanda consultava `setor.responsavel` no singular, enquanto o cadastro pode trabalhar com `responsaveis`;
+- trocar o processo no avulso podia repor por cima a sugestão antiga de responsável porque o rascunho não distinguia sugestão automática de edição manual;
+- `#np-num` também podia ficar congelado no rascunho, oferecendo número antigo caso o contador avançasse enquanto a janela estivesse aberta.
+
+### Implementação compartilhada
+
+Foi criada uma camada comum em `pedidos/criar.js`, com as funções informadas:
+
+- `pedEsqueleto`;
+- `pedDestinoDoProcesso`;
+- `pedLerEmbalagemDoForm`;
+- `pedLerEtapasDoForm`;
+- `pedAplicarPadraoDoProduto`;
+- `pedAplicarComuns`;
+- `pedDestinoConfere`.
+
+Os dois fluxos passaram a compartilhar a aplicação dos campos equivalentes, preservando as regras específicas de cada tela.
+
+Campos comuns cobertos incluem, quando aplicável:
+
+- processo;
+- setor;
+- responsável;
+- prestadora;
+- prioridade e trava;
+- `qtdEmbalar`;
+- `qtdMix`;
+- `pedido.etapasUsadas`;
+- `produto.etapasUsadas`;
+- `produto.producao` / embalagem;
+- observações e demais metadados comuns.
+
+### Regras específicas preservadas
+
+Continuam próprias da Demanda:
+
+- saldo;
+- cascata de prioridade;
+- divisão automática;
+- recomendação de prestadora;
+- vínculo com campanha.
+
+Continuam próprias do avulso:
+
+- produto provisório;
+- SKU novo;
+- número informado manualmente.
+
+### Responsável e número sugerido
+
+O responsável sugerido passou a ser marcado por `data-sug`, permitindo diferenciar o que o app sugeriu do que a pessoa realmente digitou. Trocar o processo pode recalcular a sugestão sem apagar uma escolha manual verdadeira.
+
+O número automático deixou de ser congelado pelo rascunho como se fosse edição manual, reduzindo colisões quando o contador oficial muda enquanto a janela está aberta.
+
+### Diferença de etapas mantida intencionalmente
+
+As duas janelas ainda podem exibir listas de etapas diferentes. `tplDoProcesso` retira `CORTE` de propósito porque é etapa interna da Moda Bicho com tratamento próprio no canhoto; a janela da Demanda não passa por essa mesma regra. Isso não foi alterado nesta versão.
+
+### Testes informados
+
+- equivalência entre os dois fluxos nos campos comuns: **33 ok · 0 falhas**;
+- reload completo preservou os dados persistidos;
+- cadastro do produto ficou equivalente pelos dois caminhos;
+- regressão dirigida em 22 baterias: placar idêntico, zero regressão nova.
+
+---
+
 ## v8.76 — 14/09/2026
 
 **MD5:** `30de5847f68661d58d209c958122d834`
@@ -110,26 +202,13 @@ O MD5 da v8.74 não foi registrado neste changelog porque não foi informado no 
 
 ---
 
-# Diagnósticos e bugs em acompanhamento após v8.76
+# Diagnósticos e bugs em acompanhamento após v8.77
 
 ## Pedido avulso × pedido criado pela Demanda
 
-Foi identificado que existem dois fluxos independentes:
+**Status:** corrigido na v8.77.
 
-- Demanda: `abrirCriarPedidos()` → `confirmarPedidos()`;
-- avulso: `novo-pedido` → `salvar-novo-pedido`.
-
-O fluxo da Demanda persiste corretamente campos como etapas e embalagem; o fluxo avulso possui implementação separada e foi relatado perdendo informações após salvar/recarregar.
-
-Direção acordada para correção:
-
-- extrair rotina compartilhada de montagem/persistência dos campos comuns;
-- preservar regras específicas da Demanda;
-- testar equivalência após reload/Supabase;
-- atenção especial a `qtdEmbalar`, `qtdMix`, `etapasUsadas`, `produto.etapasUsadas`, `produto.producao`, processo, setor, responsável, prestadora, prioridade e observações;
-- no avulso, responsável deve ser calculado pelo processo final escolhido na janela, não pelo processo antigo do cadastro.
-
-**Status:** diagnosticado / correção ainda não registrada como concluída neste changelog.
+A divergência estrutural entre `confirmarPedidos()` e `salvar-novo-pedido` foi tratada com uma camada compartilhada de criação/persistência. O histórico detalhado está na seção da v8.77 e em `versions/v8.77/README.md`.
 
 ## Falso conflito ao editar pedido recém-criado/impresso
 
@@ -155,6 +234,12 @@ Diagnóstico feito no código:
 - existe regra histórica de “+ 1 mês de fornecimento externo”, portanto qualquer correção precisa evitar contagem dupla.
 
 **Status:** diagnosticado / regra final ainda precisa ser definida e implementada.
+
+## Lista de etapas entre Demanda e avulso
+
+A v8.77 manteve intencionalmente a diferença de apresentação das etapas entre os dois fluxos. `CORTE` possui tratamento próprio em `tplDoProcesso`/canhoto e não foi unificado apenas para forçar igualdade visual.
+
+**Status:** decisão funcional em aberto, não classificada como bug de persistência.
 
 ---
 
