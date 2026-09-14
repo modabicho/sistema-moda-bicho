@@ -6,6 +6,61 @@ Registro resumido das mudanças por versão. Este arquivo deve ser atualizado a 
 
 ---
 
+## v8.78 — 14/09/2026
+
+**MD5 verificado do arquivo recebido:** `9d9e312cf8b140dce904f562b2f24eb5`
+
+**Tamanho verificado:** 2.131.965 bytes.
+
+**Marcador interno verificado:** `<!--PCP:8.78-->`.
+
+**Base:** contém as correções das v8.77, v8.76, v8.75 e v8.74.
+
+### Corrigido — mensagem e diagnóstico de conflito de revisão
+
+Foi corrigida a rota do diagnóstico do alerta vermelho de conflito de pedido. A mensagem não vem de `outroMexeu()`: esse mecanismo abre a janela de conflito com duas versões e já ignora a própria sessão. O toast vermelho vem da trava otimista de revisão do `pcp_pedido_patch`, quando uma gravação chega com revisão esperada antiga.
+
+`outroMexeu()` não foi alterado nesta versão.
+
+A causa original do caso criar → imprimir → editar ainda **não foi reproduzida**. O fluxo foi testado em v8.73, v8.74 e v8.77 com **14 ok · 0 falhas** em cada binário. A fila baseada em `TELA_FOTO` avança após gravações confirmadas e a RPC continua recusando revisão velha corretamente.
+
+### Autoria do conflito com prova
+
+A mensagem passou a distinguir:
+
+- `updated_by` de outro usuário → pode informar “outra pessoa”;
+- uid do próprio usuário + prova de que a revisão exata saiu da sessão atual → informa que havia uma gravação sua mais nova no servidor;
+- autoria não comprovada → não acusa ninguém.
+
+Também passou a mostrar o número humano do pedido, em vez do id interno.
+
+O app passou a obter o próprio uid pelo retorno de `updated_by` das gravações e, como fallback, pelo JWT.
+
+### Segurança preservada — duas provas
+
+Uma tentativa baseada apenas em `updated_by` fez a bateria `releitura-concorrente` cair de **12·0 para 9·3**, permitindo sobrescrever alteração externa feita por SQL/carga/script quando o `updated_by` permanecia com assinatura antiga.
+
+A regra final exige duas provas simultâneas: uid do usuário atual e revisão exata produzida pela sessão atual. Com isso, `releitura-concorrente` voltou a **12·0**. Outra aba, outra máquina e alterações externas continuam protegidas como conflito.
+
+### Telemetria nova
+
+Todo conflito de revisão agora deixa diagnóstico em `PED_CONFLITOS`, incluindo:
+
+- `updatedBy`;
+- `revisaoDaFoto`;
+- `revisaoDoServidor`;
+- `reviSaiuDestaSessao`.
+
+Quando o caso original reaparecer, esse objeto deve ser coletado para fechar a causa com evidência.
+
+### Status do bug original
+
+**Em investigação.** A v8.78 corrige a atribuição indevida da mensagem, fortalece a identificação de gravações da própria sessão e adiciona telemetria, mas não declara resolvida uma causa que ainda não foi reproduzida.
+
+Detalhes completos: `versions/v8.78/README.md`.
+
+---
+
 ## v8.77 — 14/09/2026
 
 **MD5:** `fba537a880ca64ca5dbb7db075aec685`
@@ -65,29 +120,17 @@ Campos comuns cobertos incluem, quando aplicável:
 
 ### Regras específicas preservadas
 
-Continuam próprias da Demanda:
+Continuam próprias da Demanda: saldo, cascata de prioridade, divisão automática, recomendação de prestadora e vínculo com campanha.
 
-- saldo;
-- cascata de prioridade;
-- divisão automática;
-- recomendação de prestadora;
-- vínculo com campanha.
-
-Continuam próprias do avulso:
-
-- produto provisório;
-- SKU novo;
-- número informado manualmente.
+Continuam próprias do avulso: produto provisório, SKU novo e número informado manualmente.
 
 ### Responsável e número sugerido
 
-O responsável sugerido passou a ser marcado por `data-sug`, permitindo diferenciar o que o app sugeriu do que a pessoa realmente digitou. Trocar o processo pode recalcular a sugestão sem apagar uma escolha manual verdadeira.
-
-O número automático deixou de ser congelado pelo rascunho como se fosse edição manual, reduzindo colisões quando o contador oficial muda enquanto a janela está aberta.
+O responsável sugerido passou a ser marcado por `data-sug`, permitindo diferenciar o que o app sugeriu do que a pessoa realmente digitou. O número automático deixou de ser congelado pelo rascunho como se fosse edição manual.
 
 ### Diferença de etapas mantida intencionalmente
 
-As duas janelas ainda podem exibir listas de etapas diferentes. `tplDoProcesso` retira `CORTE` de propósito porque é etapa interna da Moda Bicho com tratamento próprio no canhoto; a janela da Demanda não passa por essa mesma regra. Isso não foi alterado nesta versão.
+As duas janelas ainda podem exibir listas de etapas diferentes. `tplDoProcesso` retira `CORTE` de propósito porque é etapa interna da Moda Bicho com tratamento próprio no canhoto; a janela da Demanda não passa por essa mesma regra.
 
 ### Testes informados
 
@@ -106,44 +149,15 @@ As duas janelas ainda podem exibir listas de etapas diferentes. `tplDoProcesso` 
 
 ### Corrigido — prioridade automática de pedidos filhos
 
-Causa identificada: a prioridade da OP era atualizada pela análise, mas a promoção/repriorização dos pedidos filhos dependia da caixa opcional **“Recalcular a prioridade desses pedidos”**. Com a caixa desmarcada, a OP mudava e pedidos vivos não travados podiam ficar com prioridade antiga.
+A prioridade da OP era atualizada pela análise, mas a repriorização dos pedidos filhos dependia da caixa opcional “Recalcular a prioridade desses pedidos”. A v8.76 criou `sincronizarPrioridadeDosPedidos(op, linha, analiseId)`, preservou `prioridadesEmCascata`, respeita `prioridadeTravada`, atualiza só quem mudou e mantém `recalcularOP()` sem efeitos colaterais de prioridade.
 
-Implementação:
-
-- nova função `sincronizarPrioridadeDosPedidos(op, linha, analiseId)` em `pedidos/modelo.js`;
-- usa a regra já existente de `prioridadesEmCascata`;
-- percorre apenas pedidos vivos e não travados;
-- preserva `prioridadeTravada === true`;
-- atualiza somente quando a prioridade realmente mudou;
-- registra cada mudança com `registrar()`;
-- atualiza `atualizadoEm` apenas dos pedidos alterados;
-- pedidos já com prestadora recebem `avisar` quando a urgência sobe;
-- se não houver linha da Demanda, retorna `sem-linha` em vez de inventar prioridade;
-- `recalcularOP()` não foi alterada e continua sem efeitos colaterais de prioridade.
-
-A caixa **“Recalcular a prioridade desses pedidos”** foi removida. A prévia continua informativa, mas a prioridade automática deixa de depender de ação manual.
-
-### Regra preservada — cascata
-
-Pedidos irmãos da mesma OP **não** são achatados para a mesma prioridade. Cada pedido é julgado pelo estoque projetado depois dos pedidos anteriores na fila.
-
-Exemplo medido:
-
-- primeiro pedido: Crítico;
-- segundo pedido: pode cair para P2/P3 conforme o estoque projetado;
-- pedido travado manualmente: mantém prioridade;
-- pedido retornado: não muda.
+A caixa foi removida; a prévia continua informativa e a prioridade automática deixou de depender de ação manual.
 
 ### Testes informados
 
 - bateria focada: **27 ok · 0 falhas**;
 - regressão dirigida v8.75 × v8.76 em 20 baterias: placar idêntico;
-- `v875-tres-bugs`: **36 ok · 0 falhas**;
-- repetir a análise sem mudança não cria evento nem gravação desnecessária.
-
-### Comportamento esperado na primeira análise após publicação
-
-Pode haver vários pedidos repriorizados de uma vez. Isso é o acúmulo de pedidos que ficaram com prioridade antiga enquanto o recálculo dependia da caixa opcional. Cada mudança deve deixar histórico na OP.
+- `v875-tres-bugs`: **36 ok · 0 falhas**.
 
 ---
 
@@ -155,82 +169,39 @@ Pode haver vários pedidos repriorizados de uma vez. Isso é o acúmulo de pedid
 
 **Base:** contém integralmente v8.74.
 
-### Validação de regressão
+### Validação e ajustes
 
-Comparativo v8.74 × v8.75 em 42 baterias:
+Comparativo v8.74 × v8.75 em 42 baterias: 41 de 42 deram o mesmo resultado; a única diferença foi o rótulo literal da versão.
 
-- 41 de 42 deram o mesmo resultado;
-- a única diferença foi a bateria que conferia literalmente o rótulo da versão (`8.74` → `8.75`);
-- nas baterias ainda vermelhas, as listas de falhas ficaram idênticas item a item.
-
-### Ajustes validados
-
-- numeração de pedido passou a conferir o contador oficial `pcp_ciclo` no Supabase;
-- teste de publicação esperado: janela **Criar pedidos** mostrar `2726` no cenário medido, em vez de `2817`, com indicação de confirmação na gravação;
-- preservação da marca d'água de numeração como fallback;
-- correção do redesenho dos campos de embalagem: filipeta não mostra tamanho; ao trocar para plástico, tamanho aparece imediatamente;
-- correção estrutural do caminho de volta/redesenho relacionado ao BUG 3, embora o print original não tenha sido reproduzido exatamente;
-- correções incorporadas da v8.74 para `pxdrenar-janela`, `demanda-remocao-fantasma` e baterias `abas-*`.
-
-### Bancadas antigas que quebram antes do placar
-
-Algumas baterias legadas continuam quebrando nas duas versões por apontarem para seletores que já não existem. Isso foi classificado como dívida da bancada, não regressão da v8.75.
-
-### Pendências que não faziam parte da v8.75
-
-- falso conflito / mensagem “outra pessoa” sem validar corretamente `updated_by` e baseline local;
-- rascunho de aba sobrescrevendo silenciosamente;
-- carimbo que não grava quando o documento falha;
-- `ultima_operacao`;
-- carga da planilha;
-- sondas de produção.
+Ajustes validados incluem numeração baseada no contador oficial `pcp_ciclo`, redesenho dos campos de embalagem, correção estrutural do caminho de volta/redesenho do BUG 3 e incorporação das correções da v8.74 para `pxdrenar-janela`, `demanda-remocao-fantasma` e baterias `abas-*`.
 
 ---
 
 ## v8.74 — incorporada nas versões seguintes
 
-A v8.75 foi validada contendo integralmente a v8.74. O comparativo informado mostrou que os consertos da v8.74 permaneceram sem regressão na v8.75.
+A v8.75 foi validada contendo integralmente a v8.74. Correções confirmadas por baterias incluem `pxdrenar-janela`, `demanda-remocao-fantasma`, correções `abas-*` e base dos consertos da bateria `v874-consertos`.
 
-Correções confirmadas por baterias mencionadas no comparativo:
-
-- `pxdrenar-janela` — defeito anterior removido;
-- `demanda-remocao-fantasma` — defeito anterior removido;
-- correções das baterias `abas-*`;
-- base dos consertos validada pela bateria `v874-consertos` (a única diferença posterior foi o rótulo de versão).
-
-O MD5 da v8.74 não foi registrado neste changelog porque não foi informado no material usado para esta atualização.
+O MD5 da v8.74 não foi registrado porque não foi informado no material usado para este histórico.
 
 ---
 
-# Diagnósticos e bugs em acompanhamento após v8.77
+# Diagnósticos e bugs em acompanhamento após v8.78
 
 ## Pedido avulso × pedido criado pela Demanda
 
 **Status:** corrigido na v8.77.
 
-A divergência estrutural entre `confirmarPedidos()` e `salvar-novo-pedido` foi tratada com uma camada compartilhada de criação/persistência. O histórico detalhado está na seção da v8.77 e em `versions/v8.77/README.md`.
+## Conflito de revisão ao editar pedido recém-criado/impresso
 
-## Falso conflito ao editar pedido recém-criado/impresso
+**Status:** causa original não reproduzida; diagnóstico fortalecido na v8.78.
 
-Reprodução observada: criar pedido → imprimir papel → editar logo em seguida pode exibir mensagem vermelha afirmando que “outra pessoa” alterou o pedido, embora a alteração anterior tenha sido feita pelo próprio usuário/app.
-
-Direção para correção:
-
-- revisar `outroMexeu()`;
-- distinguir alteração própria de alteração realmente feita por outra pessoa usando identidade da gravação (`updated_by`) e baseline/revision atualizados após confirmação do servidor;
-- não remover a proteção de concorrência real.
-
-**Status:** reproduzido / pendente.
+A mensagem deixou de acusar “outra pessoa” sem prova. `PED_CONFLITOS` deve ser coletado na próxima ocorrência real para determinar a origem da revisão divergente. `outroMexeu()` não foi alterado porque não é a origem do toast observado.
 
 ## Prazo do fornecedor na estimativa de estoque sugerido
 
-Diagnóstico feito no código:
-
-- `prazoDias` é salvo corretamente no fornecedor;
-- é exibido em telas e seletores;
-- a necessidade bruta é derivada de `estMin`;
+- `prazoDias` é salvo corretamente no fornecedor e exibido no sistema;
 - `estMinCalc` usa atualmente `(vendas / mesesPeriodo) * mesesSeg`;
-- não foi comprovada ainda a incorporação de `prazoDias` à fórmula do mínimo sugerido;
+- ainda não foi comprovada a incorporação de `prazoDias` à fórmula;
 - existe regra histórica de “+ 1 mês de fornecimento externo”, portanto qualquer correção precisa evitar contagem dupla.
 
 **Status:** diagnosticado / regra final ainda precisa ser definida e implementada.
