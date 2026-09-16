@@ -1,0 +1,379 @@
+{
+ "gerado_de": "PCP v8.100 (recorte em fatias contíguas de linha do blob LF, MD5 3296f5a1de067bdee9481d5c5058d4af)",
+ "css": [
+  {
+   "arquivo": "styles/tokens.css",
+   "linhas": 382
+  },
+  {
+   "arquivo": "styles/base.css",
+   "linhas": 141
+  },
+  {
+   "arquivo": "styles/tabelas.css",
+   "linhas": 104
+  },
+  {
+   "arquivo": "styles/componentes.css",
+   "linhas": 432
+  },
+  {
+   "arquivo": "styles/impressao.css",
+   "linhas": 284
+  },
+  {
+   "arquivo": "styles/refino.css",
+   "linhas": 472
+  },
+  {
+   "arquivo": "styles/gramatica.css",
+   "linhas": 532
+  },
+  {
+   "arquivo": "styles/telas.css",
+   "linhas": 425
+  }
+ ],
+ "js": [
+  {
+   "arquivo": "nucleo/utilidades.js",
+   "linhas": 307
+  },
+  {
+   "arquivo": "dados/persistencia.js",
+   "linhas": 633
+  },
+  {
+   "arquivo": "persistencia/mapa.js",
+   "linhas": 205
+  },
+  {
+   "arquivo": "persistencia/servidor.js",
+   "linhas": 101
+  },
+  {
+   "arquivo": "persistencia/outbox.js",
+   "linhas": 99
+  },
+  {
+   "arquivo": "persistencia/merge.js",
+   "linhas": 62
+  },
+  {
+   "arquivo": "persistencia/pedidos.js",
+   "linhas": 373
+  },
+  {
+   "arquivo": "persistencia/realtime.js",
+   "linhas": 180
+  },
+  {
+   "arquivo": "persistencia/tela.js",
+   "linhas": 1307
+  },
+  {
+   "arquivo": "persistencia/demanda.js",
+   "linhas": 1095
+  },
+  {
+   "arquivo": "persistencia/cadastros.js",
+   "linhas": 776
+  },
+  {
+   "arquivo": "persistencia/insumos.js",
+   "linhas": 305
+  },
+  {
+   "arquivo": "persistencia/equipe.js",
+   "linhas": 212
+  },
+  {
+   "arquivo": "persistencia/auxiliares.js",
+   "linhas": 241
+  },
+  {
+   "arquivo": "persistencia/meses.js",
+   "linhas": 100
+  },
+  {
+   "arquivo": "persistencia/prestadora.js",
+   "linhas": 265
+  },
+  {
+   "arquivo": "persistencia/produto-id.js",
+   "linhas": 301
+  },
+  {
+   "arquivo": "dados/conflito.js",
+   "linhas": 672
+  },
+  {
+   "arquivo": "dados/serie-historica.js",
+   "linhas": 104
+  },
+  {
+   "arquivo": "ui/estado-salvo.js",
+   "linhas": 29
+  },
+  {
+   "arquivo": "sessao/presenca.js",
+   "linhas": 311
+  },
+  {
+   "arquivo": "ui/render-de-fundo.js",
+   "linhas": 600
+  },
+  {
+   "arquivo": "nucleo/config.js",
+   "linhas": 110
+  },
+  {
+   "arquivo": "nucleo/sentry.js",
+   "linhas": 242,
+   "porque": "recuperado (v8.88): bloco \"SENTRY · SÓ MONITORAMENTO\" que diz \"Este arquivo…\"; nome citado na casca (linhas 30 e 32); config.js termina na 11204"
+  },
+  {
+   "arquivo": "sessao/acesso.js",
+   "linhas": 209
+  },
+  {
+   "arquivo": "regras/competencia.js",
+   "linhas": 174
+  },
+  {
+   "arquivo": "nucleo/estado.js",
+   "linhas": 169
+  },
+  {
+   "arquivo": "componentes/qrcode.js",
+   "linhas": 261
+  },
+  {
+   "arquivo": "componentes/bipe.js",
+   "linhas": 207
+  },
+  {
+   "arquivo": "componentes/tabela.js",
+   "linhas": 60
+  },
+  {
+   "arquivo": "regras/estoque-minimo.js",
+   "linhas": 63
+  },
+  {
+   "arquivo": "produtos/provisorios.js",
+   "linhas": 439
+  },
+  {
+   "arquivo": "pedidos/modelo.js",
+   "linhas": 427
+  },
+  {
+   "arquivo": "pedidos/cancelamento.js",
+   "linhas": 168,
+   "porque": "recuperado: cabeçalho \"src/pedidos/cancelamento.js · …\"; pedidos/modelo.js termina na 13455"
+  },
+  {
+   "arquivo": "demanda/calculo.js",
+   "linhas": 771
+  },
+  {
+   "arquivo": "componentes/toast.js",
+   "linhas": 120
+  },
+  {
+   "arquivo": "ui/avisos.js",
+   "linhas": 193
+  },
+  {
+   "arquivo": "insumos/preambulo.js",
+   "linhas": 33,
+   "porque": "recuperado (v8.92): as 33 linhas são idênticas ao fim do notificacoes.js da v8.53; README da v8.92 registra o arquivo nesta posição"
+  },
+  {
+   "arquivo": "insumos/modelo.js",
+   "linhas": 706
+  },
+  {
+   "arquivo": "semiacabados/modelo.js",
+   "linhas": 330
+  },
+  {
+   "arquivo": "insumos/nfe.js",
+   "linhas": 105
+  },
+  {
+   "arquivo": "insumos/telas.js",
+   "linhas": 780
+  },
+  {
+   "arquivo": "telas/demanda.js",
+   "linhas": 305
+  },
+  {
+   "arquivo": "telas/pedidos.js",
+   "linhas": 653
+  },
+  {
+   "arquivo": "conferencia/conferencia.js",
+   "linhas": 450
+  },
+  {
+   "arquivo": "telas/estoque-posse.js",
+   "linhas": 187
+  },
+  {
+   "arquivo": "telas/compras.js",
+   "linhas": 172
+  },
+  {
+   "arquivo": "produtos/embalagens.js",
+   "linhas": 56
+  },
+  {
+   "arquivo": "telas/produtos.js",
+   "linhas": 208
+  },
+  {
+   "arquivo": "telas/prestadoras.js",
+   "linhas": 125
+  },
+  {
+   "arquivo": "telas/equipe.js",
+   "linhas": 102
+  },
+  {
+   "arquivo": "telas/historico.js",
+   "linhas": 227
+  },
+  {
+   "arquivo": "impressao/folhas.js",
+   "linhas": 353
+  },
+  {
+   "arquivo": "telas/dados.js",
+   "linhas": 406
+  },
+  {
+   "arquivo": "componentes/modal.js",
+   "linhas": 2536
+  },
+  {
+   "arquivo": "festivas/modelo.js",
+   "linhas": 143
+  },
+  {
+   "arquivo": "semiacabados/salvar.js",
+   "linhas": 149
+  },
+  {
+   "arquivo": "festivas/conta.js",
+   "linhas": 277
+  },
+  {
+   "arquivo": "semiacabados/telas.js",
+   "linhas": 303
+  },
+  {
+   "arquivo": "festivas/telas.js",
+   "linhas": 499
+  },
+  {
+   "arquivo": "semiacabados/janelas.js",
+   "linhas": 270
+  },
+  {
+   "arquivo": "relatorios/relatorios.js",
+   "linhas": 758
+  },
+  {
+   "arquivo": "dados/salvar.js",
+   "linhas": 455
+  },
+  {
+   "arquivo": "impressao/tabela-valores.js",
+   "linhas": 269
+  },
+  {
+   "arquivo": "pedidos/criar.js",
+   "linhas": 322
+  },
+  {
+   "arquivo": "dados/importar.js",
+   "linhas": 971
+  },
+  {
+   "arquivo": "dados/exportar-minimos.js",
+   "linhas": 77
+  },
+  {
+   "arquivo": "acoes/faltas.js",
+   "linhas": 12
+  },
+  {
+   "arquivo": "acoes/clique.js",
+   "linhas": 1008
+  },
+  {
+   "arquivo": "acoes/pedidos.js",
+   "linhas": 535
+  },
+  {
+   "arquivo": "acoes/cadastros.js",
+   "linhas": 531
+  },
+  {
+   "arquivo": "acoes/fabrica.js",
+   "linhas": 634
+  },
+  {
+   "arquivo": "acoes/sistema.js",
+   "linhas": 340
+  },
+  {
+   "arquivo": "ui/formularios-input.js",
+   "linhas": 28
+  },
+  {
+   "arquivo": "ui/busca-rapida.js",
+   "linhas": 106
+  },
+  {
+   "arquivo": "ui/teclado.js",
+   "linhas": 51
+  },
+  {
+   "arquivo": "ui/abas.js",
+   "linhas": 370,
+   "porque": "recuperado: cabeçalho \"src/ui/abas.js · …\" (v8.62); ui/teclado.js termina na 30179; ui/rolagem.js começa no cabeçalho reescrito da 30550"
+  },
+  {
+   "arquivo": "ui/rolagem.js",
+   "linhas": 251
+  },
+  {
+   "arquivo": "ui/formularios-change.js",
+   "linhas": 518
+  },
+  {
+   "arquivo": "ui/imagens.js",
+   "linhas": 16
+  },
+  {
+   "arquivo": "ui/arquivos.js",
+   "linhas": 19
+  },
+  {
+   "arquivo": "ui/atalhos.js",
+   "linhas": 170
+  },
+  {
+   "arquivo": "boot.js",
+   "linhas": 310
+  },
+  {
+   "arquivo": "acoes/rotas.js",
+   "linhas": 7
+  }
+ ]
+}

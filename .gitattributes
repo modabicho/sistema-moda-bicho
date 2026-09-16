@@ -1,0 +1,4 @@
+# As fontes do PCP são montadas por concatenação byte a byte (build.js).
+# Fim de linha LF sempre, também no Windows com core.autocrlf=true:
+# sem isto o HTML montado deixaria de ser idêntico ao publicado.
+src/** text eol=lf

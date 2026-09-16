@@ -1,0 +1,432 @@
+/* ---------- tags ---------- */
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:var(--fs-micro);font-weight:700;padding:3px 10px;border-radius:var(--r-pill);white-space:nowrap;background:var(--slate-soft);color:var(--slate);}
+/* Os nomes de COR (red/amber/teal) continuam funcionando porque estão em
+   dezenas de telas, mas agora são apelidos dos nomes de SIGNIFICADO. Código
+   novo escreve `perigo`, `atencao`, `ok`; nenhum dos dois desanda. */
+.tag.perigo,.tag.red{background:var(--perigo-fundo);color:var(--perigo);}
+.tag.atencao,.tag.amber{background:var(--atencao-fundo);color:var(--atencao);}
+.tag.ok,.tag.teal{background:var(--ok-fundo);color:var(--ok);}
+.tag.acao{background:var(--acao-fundo);color:var(--acao);}
+.tag.neutro{background:var(--neutro-fundo);color:var(--neutro);}
+/* pedido de campanha: bege, a cor que o app já usa para data festiva */
+.tag.campanha{background:var(--bege-soft);color:var(--camel-700);}
+.tag.dot::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+.abc{display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:var(--r-1);font-size:var(--fs-micro);font-weight:700;}
+.abc.A{background:var(--tinta-cheia);color:var(--em-tinta);} .abc.B{background:var(--line);color:var(--ink);} .abc.C{background:var(--line-2);color:var(--ink-3);}
+.prio{display:inline-block;min-width:30px;text-align:center;font-weight:700;font-size:var(--fs-apoio);padding:2px 6px;border-radius:var(--r-2);background:var(--slate-soft);color:var(--slate);font-family:'IBM Plex Mono',monospace;}
+.prio.hi{background:var(--red);color:var(--em-cor);} .prio.mid{background:var(--amber-soft);color:var(--amber);}
+
+/* ---------- ASSINATURA: régua de cobertura ---------- */
+.regua{width:140px;height:24px;position:relative;}
+.regua .track{position:absolute;left:0;right:0;top:9px;height:6px;background:var(--line-2);border-radius:var(--r-1);}
+.regua .fill{position:absolute;left:0;top:0;bottom:0;border-radius:var(--r-1);background:var(--teal);}
+.regua .fill.red{background:var(--red);} .regua .fill.amber{background:var(--amber);} .regua .fill.gray{background:var(--neutro-fraco);}
+.regua .lead{position:absolute;top:3px;width:1.5px;height:18px;background:var(--ink-2);opacity:.6;}
+.regua .lead::after{content:'';position:absolute;top:-2px;left:-2.5px;width:6.5px;height:2px;background:var(--ink-2);border-radius:var(--r-1);}
+.regua .cap{position:absolute;right:0;top:-3px;font-size:var(--fs-nano);color:var(--ink-3);font-family:'IBM Plex Mono',monospace;}
+/* A legenda explica a tabela, mas só é lida uma vez — não pode ocupar 120px
+   embaixo de TODA tela para sempre. Fica recolhida numa linha e abre no clique.
+   Usei clique e não passar-o-mouse de propósito: é texto para ler com calma,
+   e no celular não existe mouse. */
+.legenda{border-top:1px solid var(--line-2);background:var(--surface-2);font-size:var(--fs-apoio);color:var(--ink-3);}
+.legenda > summary{list-style:none;cursor:pointer;padding:5px 16px;font-size:var(--fs-micro);font-weight:700;
+  letter-spacing:.02em;color:var(--ink-4);display:flex;align-items:center;gap:6px;user-select:none;}
+.legenda > summary::-webkit-details-marker{display:none;}
+.legenda > summary::before{content:'ⓘ';font-size:var(--fs-apoio);}
+.legenda > summary::after{content:'mostrar';margin-left:auto;opacity:.75;font-weight:600;}
+.legenda[open] > summary::after{content:'ocultar';}
+.legenda > summary:hover{color:var(--ink-2);background:var(--line-2);}
+.legenda-in{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:2px 16px 11px;}
+.legenda-in i{display:inline-block;width:14px;height:5px;border-radius:var(--r-1);vertical-align:middle;margin-right:5px;}
+
+/* ---------- .pq · o mesmo recado, recolhido ----------
+   Explicação inline. Fica numa linha discreta e abre no clique. */
+.pq{margin:10px 0 0;}
+.pq > summary{list-style:none;cursor:pointer;font-size:var(--fs-apoio);font-weight:700;letter-spacing:.02em;
+  color:var(--ink-4);display:inline-flex;align-items:center;gap:6px;user-select:none;padding:2px 0;}
+.pq > summary::-webkit-details-marker{display:none;}
+.pq > summary::before{content:'ⓘ';font-size:var(--fs-apoio);}
+.pq > summary:hover{color:var(--ink-2);}
+.pq > div{font-size:var(--fs-dado);color:var(--ink-3);line-height:1.65;margin-top:6px;padding:1px 0 2px 12px;
+  border-left:2px solid var(--line-2);}
+.pq > div .kv{border-bottom:0;}
+
+/* ---------- .bloco · conteúdo sem moldura ----------
+   Resumo e leitura não precisam de card: espaço e uma linha bastam,
+   e aí o conteúdo parece maior do que a moldura que o contém. */
+.bloco{padding:2px 2px 4px;}
+.grid-dados .col > * + .bloco{border-top:1px solid var(--line-2);padding-top:16px;margin-top:2px;}
+.bloco-h{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin:0 0 10px;}
+.bloco-h h3{margin:0;font-size:var(--fs-apoio);font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);}
+.bloco-h .sub{font-size:var(--fs-apoio);color:var(--ink-3);}
+.grid-dados .col > .bloco + .card{margin-top:2px;}
+
+/* ---------- as duas ações do balcão ----------
+   Botão grande porque a pessoa está de pé, com a prestadora esperando, e porque
+   são as duas únicas coisas que ela vem fazer nesta tela. */
+.acoes-topo{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.btn.grande{padding:13px 20px;font-size:var(--fs-h3);border-radius:var(--r-3);}
+.btn.grande svg{width:18px;height:18px;}
+
+/* ---------- linha do tempo da prestadora ---------- */
+.tl{display:flex;flex-direction:column;}
+.tl-i{display:flex;gap:14px;padding:9px 0;border-bottom:1px solid var(--line-2);}
+.tl-i:last-child{border-bottom:0;}
+.tl-d{font-family:var(--mono);font-size:var(--fs-apoio);color:var(--ink-4);white-space:nowrap;padding-top:2px;min-width:74px;}
+.tl-c{font-size:var(--fs-dado);line-height:1.55;color:var(--ink-2);}
+.tl-c b{color:var(--ink);}
+.tl-c i{display:block;font-style:normal;font-size:var(--fs-micro);color:var(--ink-4);margin-top:2px;}
+.tl-i.saida .tl-c b{color:var(--coral-2,var(--red));}
+.tl-i.ok .tl-c b{color:var(--ok);}
+
+/* ---------- a tela de retirada ----------
+   Blocos com pouca moldura: o que interessa é o conteúdo, e a pessoa está de pé
+   no balcão com a prestadora esperando. */
+.rt-bloco{border:1px solid var(--line);border-radius:var(--r-3);padding:12px 14px;margin-bottom:10px;background:var(--surface-2);}
+.rt-bloco-h{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:var(--fs-apoio);}
+.rt-bloco-h b{font-size:var(--fs-micro);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);}
+.rt-resumo{margin-left:auto;font-size:var(--fs-apoio);color:var(--ink-2);font-weight:600;text-align:right;}
+.rt-chips{display:flex;gap:7px;flex-wrap:wrap;}
+.rt-lab{font-size:var(--fs-micro);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin:11px 0 5px;}
+.rt-mats{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
+.rt-mat{display:flex;gap:8px;align-items:center;}
+.rt-mat-in{flex:1;min-width:0;}
+.rt-un{font-size:var(--fs-apoio);color:var(--ink-3);min-width:34px;}
+.rt-conf{font-size:var(--fs-apoio);color:var(--ink-3);flex:1;min-width:0;}
+@media (max-width:720px){.rt-mat{flex-wrap:wrap;}.rt-mat-in{flex:1 0 100%;}.rt-conf{flex:1 0 100%;}}
+
+/* ---------- quem mais está no app ----------
+   Mesma família visual do "Tudo salvo": um pontinho e uma frase curta. */
+.presenca{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);
+  background:var(--surface);border-radius:var(--r-pill);padding:5px 12px;font-size:var(--fs-apoio);
+  color:var(--ink-2);cursor:pointer;font-family:inherit;white-space:nowrap;}
+.presenca:hover{border-color:var(--ink-4);color:var(--ink);}
+.presenca .presenca-p{width:7px;height:7px;border-radius:50%;background:var(--teal);flex:none;}
+/* "alguém também está no app" é contexto, não risco: nunca foi um alerta */
+.presenca.amber,.presenca.neutro{border-color:var(--line);}
+.presenca.amber .presenca-p,.presenca.neutro .presenca-p{background:var(--neutro);}
+@media (max-width:900px){.presenca{display:none;}}
+
+/* ---------- a ordem que não foge ---------- */
+.ordem-presa{display:inline-flex;align-items:center;gap:7px;font-size:var(--fs-apoio);color:var(--ink-3);
+  background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-pill);padding:3px 6px 3px 11px;}
+.ordem-presa svg{width:13px;height:13px;stroke:var(--ink-4);fill:none;stroke-width:1.8;}
+tr.recem{background:var(--bege-soft)!important;}
+tr.recem td:first-child{box-shadow:inset var(--marca-lat) var(--bege);}
+tr.novo-fila td:first-child{box-shadow:inset var(--marca-lat) var(--teal);}
+
+/* ---------- filtros ---------- */
+.filters{display:flex;gap:7px;align-items:center;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid var(--line-2);}
+.chip{border:1px solid var(--line);background:var(--surface);padding:5px 11px;border-radius:var(--r-pill);font-size:var(--fs-apoio);font-weight:700;color:var(--ink-2);transition:all .13s;display:inline-flex;align-items:center;gap:5px;}
+.chip:hover{border-color:var(--line);}
+.chip.on{background:var(--coral);border-color:var(--coral);color:var(--em-coral);box-shadow:var(--sh-acao);}
+.chip b{font-family:'IBM Plex Mono',monospace;opacity:.7;}
+.divider{width:1px;height:20px;background:var(--line);}
+.selbar{background:var(--tinta-cheia);color:var(--em-tinta);padding:11px 16px;display:flex;align-items:center;gap:12px;font-size:var(--fs-corpo);}
+.selbar .btn{background:var(--rail-hover);border-color:var(--rail-linha);color:var(--em-cor);}
+.selbar .btn:hover{background:var(--rail-2);}
+.selbar .btn.primary{background:var(--acao-cheio);border-color:var(--acao-cheio);color:var(--em-acao);}
+
+/* ---------- modal / drawer ---------- */
+.ov{position:fixed;inset:0;background:var(--veu-modal);backdrop-filter:blur(2px);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto;animation:fade .16s ease;}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{background:var(--surface);border-radius:var(--r-3);width:100%;max-width:1000px;box-shadow:var(--sh-3);animation:pop .18s cubic-bezier(.2,.8,.3,1);}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
+/* v8.90 · REPINTAR NÃO É REABRIR. `repintarModal()` troca o nó do véu, e nó novo
+   com `animation` no CSS toca a animação de abertura outra vez: o véu volta de
+   opacity 0 e o modal renasce em scale(.99) translateY(10px). Quem repinta marca
+   o nó com esta classe; quem ABRE (janelaPintar, primeira inserção) não marca e
+   continua animando normalmente. */
+.ov.sem-reabrir,.ov.sem-reabrir .modal{animation:none;}
+.modal-h{padding:17px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;}
+.modal-h h2{margin:0;font-size:var(--fs-h1);font-weight:700;letter-spacing:-.02em;}
+.modal-b{padding:20px 22px;max-height:72vh;overflow:auto;}
+/* tabela dentro de modal: nunca deveria precisar de rolagem lateral em tela grande */
+.modal .tw{overflow-x:auto;}
+.modal table.t{width:100%;}
+@media (max-width:1200px){.modal-b{max-height:66vh;}}
+.modal-f{padding:15px 22px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;background:var(--surface-2);border-radius:0 0 var(--r-3) var(--r-3);}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);background:var(--surface);z-index:110;box-shadow:var(--sh-gaveta);display:flex;flex-direction:column;animation:slide .2s cubic-bezier(.2,.8,.3,1);}
+@keyframes slide{from{transform:translateX(24px);opacity:.4}to{transform:none;opacity:1}}
+.drawer-h{padding:18px 22px;border-bottom:1px solid var(--line);}
+.drawer-b{padding:20px 22px;overflow:auto;flex:1;}
+.kv{display:grid;grid-template-columns:1fr auto;gap:7px 14px;font-size:var(--fs-corpo);padding:14px 0;border-bottom:1px solid var(--line-2);}
+.kv dt{color:var(--ink-3);} .kv dd{margin:0;font-weight:600;text-align:right;font-family:'IBM Plex Mono',monospace;}
+.secao{font-size:var(--fs-micro);font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-3);margin:20px 0 8px;}
+
+/* ---------- toast ---------- */
+.toasts{position:fixed;bottom:22px;right:22px;left:auto;transform:none;z-index:200;display:flex;flex-direction:column;gap:8px;align-items:flex-end;max-width:min(430px,calc(100vw - 32px));}
+.toast{position:relative;background:var(--tinta-cheia);color:var(--em-tinta);padding:11px 40px 11px 16px;border-radius:var(--r-3);font-size:var(--fs-corpo);font-weight:500;box-shadow:var(--sh-3);animation:up .2s cubic-bezier(.2,.8,.3,1);display:flex;align-items:flex-start;gap:9px;border-left:4px solid var(--ok);}
+/* aviso de três linhas com o ✓ no meio da altura fica torto: o ícone pertence
+   à PRIMEIRA linha do texto, não ao centro do bloco */
+.toast > svg{margin-top:2px;}
+.toast.erro{background:var(--perigo);border-left-color:var(--perigo-borda);}
+/* o X: encostado na direita, discreto até o mouse chegar perto */
+.toast-x{position:absolute;right:5px;top:50%;transform:translateY(-50%);background:none;border:0;padding:7px;color:var(--em-cor);opacity:.6;border-radius:var(--r-2);display:grid;place-items:center;line-height:0;}
+.toast-x:hover{opacity:1;background:var(--veu-4);}
+.toast-x svg{width:13px;height:13px;stroke-width:2.4;}
+/* ---------- o aviso não pode tapar o botão ----------
+   O aviso mora no canto inferior direito (8.12) e o rodapé de toda janela mora
+   embaixo. Com uma janela aberta, o toast cobria justamente o botão principal —
+   "Salvar e imprimir o papel" some atrás de "Pedido 2002 criado". A pessoa
+   clica no aviso achando que é o botão.
+   Com janela ou gaveta aberta, o aviso sobe para o canto de CIMA: continua no
+   mesmo canto da tela, longe de qualquer rodapé. Navegador sem `:has()` fica
+   com o comportamento antigo — nada quebra, só não melhora. */
+body:has(.ov) .toasts,body:has(.drawer) .toasts{top:var(--sp4,16px);bottom:auto;}
+/* em tela estreita o canto vira faixa: 430px não cabem num celular */
+@media (max-width:720px){.toasts{left:14px;right:14px;max-width:none;align-items:stretch;}}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ---------- estados ---------- */
+.empty{padding:64px 26px;text-align:center;}
+.empty .ic{width:46px;height:46px;margin:0 auto 16px;border-radius:var(--r-3);background:var(--slate-soft);display:grid;place-items:center;}
+.empty .ic svg{width:22px;height:22px;stroke:var(--ink-3);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+.empty h3{margin:0 0 8px;font-size:var(--fs-h2);font-weight:700;}
+.empty p{margin:0 auto 20px;color:var(--ink-3);font-size:var(--fs-h3);max-width:470px;line-height:1.65;}
+
+/* ---------- os três vazios ----------
+   "Ainda não há nada", "os filtros esconderam tudo" e "acabou o trabalho" são
+   três notícias diferentes e precisam parecer diferentes. Antes as três saíam
+   como a mesma frase cinza no meio da tabela e quem lia não sabia se devia
+   cadastrar, limpar o filtro, ou simplesmente seguir a vida.
+   O tamanho é parte do recado: sem dados ocupa a tela, sem resultado ocupa
+   menos, tudo resolvido quase não ocupa. */
+.vaz{text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.vaz .vaz-ic{display:grid;place-items:center;border-radius:var(--r-md);flex:none;}
+.vaz .vaz-ic svg{stroke-width:1.6;}
+.vaz h4{margin:0;font-size:var(--fs-h2);font-weight:700;letter-spacing:-.01em;color:var(--ink);}
+.vaz p{margin:0;font-size:var(--fs-corpo);line-height:1.6;color:var(--ink-3);max-width:44ch;}
+.vaz .vaz-fez{margin-top:4px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+
+/* 1. nenhum dado — a tela está esperando alguém começar: ocupa espaço e chama */
+.vaz.v-nada{padding:42px 20px;}
+.vaz.v-nada .vaz-ic{width:46px;height:46px;background:var(--slate-soft);}
+.vaz.v-nada .vaz-ic svg{width:22px;height:22px;stroke:var(--ink-3);}
+
+/* 2. nenhum resultado — os dados existem, estão atrás do filtro: nota, não tela */
+.vaz.v-filtro{padding:32px 20px;}
+.vaz.v-filtro .vaz-ic{width:38px;height:38px;background:var(--surface);
+  border:1px dashed var(--line);}
+.vaz.v-filtro .vaz-ic svg{width:17px;height:17px;stroke:var(--ink-4);}
+.vaz.v-filtro h4{font-size:var(--fs-h3);color:var(--ink-2);}
+.vaz.v-filtro p{max-width:62ch;}
+
+/* 3. tudo resolvido — boa notícia: uma linha só, sem botão. Não é um problema
+   a resolver, é a ausência de um; ocupar meia tela com isso seria mentira. */
+.vaz.v-pronto{padding:22px 20px;flex-direction:row;justify-content:center;
+  align-items:center;gap:9px;text-align:left;}
+.vaz.v-pronto > div{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+.vaz.v-pronto .vaz-ic{width:21px;height:21px;border-radius:50%;background:var(--teal-soft);align-self:center;}
+.vaz.v-pronto .vaz-ic svg{width:12px;height:12px;stroke:var(--teal);stroke-width:2.8;}
+.vaz.v-pronto h4{font-size:var(--fs-h3);font-weight:600;color:var(--ink-2);}
+.vaz.v-pronto p{max-width:none;font-size:var(--fs-dado);color:var(--ink-4);}
+/* dentro de tabela o vazio não é uma célula: é um recado no lugar das linhas */
+tr.tr-vazio:hover td{background:none;}
+tr.tr-vazio td{padding:0 !important;border:0;background:none;cursor:default;}
+/* .t .btn.primary é esvaziado de propósito dentro das linhas (ali ele compete
+   com o dado). Aqui não há dado nenhum para competir: o botão volta a ser botão. */
+.t tr.tr-vazio .btn.primary{background:var(--acao-cheio);border-color:var(--acao-cheio);color:var(--em-acao);}
+.t tr.tr-vazio .btn.primary:hover{background:var(--acao-cheio-2);border-color:var(--acao-cheio-2);color:var(--em-acao);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+/* Dados: os 3 passos empilhados numa coluna, o resto na outra. A ordem da
+   importação é uma sequência, então tem de ser lida de cima para baixo. */
+.grid-dados{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:start;}
+.grid-dados > .card{margin:0;}
+.grid-dados .col{display:flex;flex-direction:column;gap:12px;min-width:0;}
+@media(max-width:900px){.grid-dados{grid-template-columns:1fr;}}
+.passos{counter-reset:p;display:grid;gap:14px;}
+.passo{display:flex;gap:14px;align-items:flex-start;}
+.passo .n{width:26px;height:26px;flex:0 0 26px;border-radius:50%;background:var(--tinta-cheia);color:var(--em-tinta);display:grid;place-items:center;font-size:var(--fs-apoio);font-weight:700;}
+.passo h4{margin:2px 0 4px;font-size:var(--fs-h3);font-weight:700;}
+.passo p{margin:0 0 8px;font-size:var(--fs-dado);color:var(--ink-3);line-height:1.6;}
+.dz{border:1.5px dashed var(--line);border-radius:var(--r-3);padding:13px;text-align:center;transition:all .15s;background:var(--surface-2);}
+.dz.over{border-color:var(--teal);background:var(--teal-soft);}
+.bar{height:6px;border-radius:var(--r-1);background:var(--line-2);overflow:hidden;}
+.bar > i{display:block;height:100%;background:var(--teal);border-radius:var(--r-1);}
+.dz svg{width:26px;height:26px;stroke:var(--ink-3);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+.toast svg{width:15px;height:15px;flex:0 0 15px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.loading{padding:80px;text-align:center;color:var(--ink-3);font-size:var(--fs-h3);}
+
+
+/* ---------- navegação por seções ---------- */
+.nav .sec{font-size:var(--fs-nano);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:700;padding:14px 11px 6px;}
+.nav .sec:first-child{padding-top:4px;}
+
+/* ---------- fotos de produto ---------- */
+.foto{width:44px;height:44px;border-radius:var(--r-3);object-fit:cover;background:var(--line-2);display:block;flex:0 0 44px;}
+.foto-ph{width:44px;height:44px;border-radius:var(--r-3);background:var(--slate-soft);display:grid;place-items:center;font-size:var(--fs-nano);font-weight:700;color:var(--ink-4);flex:0 0 44px;letter-spacing:.04em;}
+.foto-lg{width:100%;aspect-ratio:1;border-radius:var(--r-3);object-fit:cover;background:var(--line-2);}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;padding:16px;}
+/* resumo de uma linha no topo dos Pedidos: volume à esquerda, o que exige decisão à direita */
+.resumo{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:8px 16px;margin-bottom:10px;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-3);box-shadow:var(--shadow);}
+.res-num{font-size:var(--fs-h3);color:var(--ink-2);}
+.res-num b{font-size:var(--fs-h1);font-weight:800;letter-spacing:-.02em;color:var(--ink);margin-right:3px;}
+.res-num span{color:var(--ink-3);font-size:var(--fs-corpo);}
+.res-alertas{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;}
+.res-al{border:1px solid var(--line);background:var(--surface);border-radius:var(--r-pill);padding:4px 11px;
+  font:inherit;font-size:var(--fs-dado);font-weight:600;cursor:pointer;color:var(--ink-2);transition:background .12s,border-color .12s;}
+.res-al:hover{border-color:var(--ink-4);}
+.res-al.red,.res-al.perigo{color:var(--perigo);border-color:var(--perigo-borda);background:var(--perigo-fundo);}
+.res-al.coral{color:var(--coral-2);border-color:var(--coral-200);background:var(--coral-soft);}
+.res-al.amber,.res-al.atencao{color:var(--atencao);border-color:var(--atencao-borda);background:var(--atencao-fundo);}
+.res-ok{font-size:var(--fs-dado);color:var(--ink-3);}
+.pcard{position:relative;border:1px solid var(--line);border-radius:var(--r-3);overflow:hidden;background:var(--surface);transition:box-shadow .15s,transform .1s;cursor:pointer;}
+.pcard.on{border-color:var(--coral);box-shadow:var(--ring-coral);}
+/* controles só aparecem no hover ou com o card selecionado: a grade continua limpa */
+.pcard-ac{position:absolute;top:6px;left:6px;right:6px;display:flex;align-items:flex-start;z-index:2;opacity:0;transition:opacity .12s;}
+.pcard:hover .pcard-ac,.pcard.on .pcard-ac{opacity:1;}
+.pcard-chk{background:var(--surface);border-radius:var(--r-2);padding:2px 3px 0;line-height:0;box-shadow:var(--sh-2);cursor:pointer;}
+.pcard-x{margin-left:auto;width:23px;height:23px;border-radius:50%;border:0;background:var(--surface);color:var(--red);
+  font-size:var(--fs-apoio);font-weight:800;line-height:1;cursor:pointer;box-shadow:var(--sh-2);display:grid;place-items:center;padding:0;}
+.pcard-x:hover{background:var(--red);color:var(--em-cor);}
+.pcard:hover{box-shadow:var(--shadow);transform:translateY(-1px);}
+.pcard .ph{width:100%;aspect-ratio:1;background:var(--slate-soft);display:grid;place-items:center;color:var(--ink-4);font-size:var(--fs-micro);font-weight:600;}
+.pcard img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--line-2);}
+.pcard .body{padding:10px 12px 12px;}
+.pcard .n{font-size:var(--fs-dado);font-weight:600;line-height:1.35;height:34px;overflow:hidden;}
+.pcard .s{font-family:'IBM Plex Mono',monospace;font-size:var(--fs-micro);color:var(--ink-3);margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ---------- pessoas ---------- */
+.av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:var(--fs-micro);font-weight:700;color:var(--em-cor);background:var(--slate);flex:0 0 28px;letter-spacing:.02em;}
+.av.lg{width:40px;height:40px;flex:0 0 40px;font-size:var(--fs-h3);}
+.pessoa{display:inline-flex;align-items:center;gap:7px;}
+.quem{display:flex;gap:9px;flex-wrap:wrap;padding:16px;border-bottom:1px solid var(--line-2);align-items:center;}
+.quem button{border:1px solid var(--line);background:var(--surface);border-radius:var(--r-pill);padding:5px 14px 5px 6px;display:inline-flex;align-items:center;gap:8px;font-size:var(--fs-corpo);font-weight:600;transition:all .13s;}
+.quem button:hover{border-color:var(--line);}
+.quem button.on{background:var(--tinta-cheia);border-color:var(--tinta-cheia);color:var(--em-tinta);}
+
+/* ---------- tarefas ---------- */
+.tarefa{border:1px solid var(--line);border-radius:var(--r-3);padding:15px 16px;display:flex;gap:15px;align-items:flex-start;background:var(--surface);margin-bottom:11px;}
+/* A exceção chama atenção pela BARRA, não pelo fundo. Tabela densa com linha
+   inteira tingida fica pesada e, pior, o vermelho vira textura de fundo — deixa
+   de ser um sinal e passa a ser decoração. */
+.tarefa.urg{border-color:var(--perigo-borda);box-shadow:inset var(--marca-lat) var(--perigo);}
+.tarefa .info{flex:1;min-width:0;}
+.tarefa h4{margin:0 0 4px;font-size:var(--fs-h3);font-weight:700;letter-spacing:-.01em;}
+.tarefa .meta{font-size:var(--fs-dado);color:var(--ink-3);line-height:1.6;}
+.tarefa .acao{display:flex;flex-direction:column;gap:7px;align-items:stretch;min-width:150px;}
+.passos-fluxo{display:flex;align-items:center;gap:6px;font-size:var(--fs-micro);color:var(--ink-4);margin-top:9px;flex-wrap:wrap;}
+.passos-fluxo b{color:var(--teal);font-weight:700;}
+
+.linkicon{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-apoio);color:var(--teal);text-decoration:none;font-weight:600;}
+.linkicon:hover{text-decoration:underline;}
+.linkicon svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;}
+.aviso{background:var(--atencao-fundo);border:1px solid var(--atencao-borda);border-radius:var(--r-3);padding:11px 14px;font-size:var(--fs-dado);color:var(--atencao-texto);line-height:1.6;margin-bottom:14px;}
+.hint{font-size:var(--fs-apoio);color:var(--ink-3);line-height:1.6;}
+.rowform{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
+@media(max-width:720px){.rowform{grid-template-columns:1fr;}.tarefa{flex-direction:column;}.tarefa .acao{width:100%;}}
+
+
+
+/* ============================================================================
+   NAVEGAÇÃO GLOBAL NO TELEFONE — a barra de baixo e a folha do "Mais"
+   ----------------------------------------------------------------------------
+   Acima de 720px nada disto existe: o trilho manda. Abaixo de 720px o trilho
+   sai inteiro e esta barra assume, presa embaixo, ao alcance do polegar.
+   Ela não é um menu novo — é o mesmo `nav`, o mesmo `podeAba`, os mesmos
+   contadores, com quatro alvos em vez de quinze.
+   O fundo é o navy do trilho nos DOIS temas: a barra é estrutura, não conteúdo,
+   e trocar de cor com o tema faria a pessoa achar que mudou de aplicativo.
+   ============================================================================ */
+.barra-mob{display:none;}
+.bm-folha,.bm-folha-ov{display:none;}
+
+@media (max-width:720px){
+  /* o trilho sai de cena — e sai de verdade, não encolhido */
+  .rail{display:none;}
+  .shell{display:block;}
+  /* espaço para a barra não cobrir a última linha da tabela */
+  .main{padding-bottom:calc(58px + env(safe-area-inset-bottom,0px));}
+
+  .barra-mob{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;
+    position:fixed;left:0;right:0;bottom:0;z-index:60;
+    background:var(--rail);border-top:1px solid var(--rail-linha);
+    padding-bottom:env(safe-area-inset-bottom,0px);}
+  .barra-mob button{position:relative;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:3px;min-height:56px;padding:7px 2px 8px;border:0;background:transparent;
+    color:var(--rail-txt);font-family:var(--ff-corpo);font-size:var(--fs-micro);font-weight:600;
+    letter-spacing:.01em;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  .barra-mob button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round;}
+  .barra-mob button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  /* a aba aberta: tinta cheia e um traço coral em cima. Coral aqui é seleção
+     de marca, como no resto do sistema — nunca alarme. */
+  .barra-mob button.on{color:var(--em-cor);}
+  .barra-mob button.on::before{content:'';position:absolute;top:0;left:22%;right:22%;height:2px;
+    background:var(--coral);border-radius:0 0 var(--r-1) var(--r-1);}
+  .barra-mob button:active{background:var(--veu-1);}
+  /* o contador: número, não bolha. Bolha vermelha em quatro alvos vira semáforo. */
+  .bm-n{position:absolute;top:5px;left:calc(50% + 7px);font-style:normal;
+    font-family:'IBM Plex Mono',monospace;font-size:var(--fs-nano);font-weight:700;
+    color:var(--rail-acento);line-height:1;}
+  .bm-n.urg{color:var(--rail-perigo);}
+
+  /* ---- a folha do "Mais": sobe de baixo, para o polegar chegar primeiro no
+       que está mais perto ---- */
+  .bm-folha-ov{display:block;position:fixed;inset:0;z-index:59;background:var(--veu-modal);}
+  .bm-folha{display:block;position:fixed;left:0;right:0;z-index:61;
+    bottom:calc(56px + env(safe-area-inset-bottom,0px));
+    max-height:62vh;overflow-y:auto;background:var(--rail);
+    border-top:1px solid var(--rail-linha);border-radius:var(--r-3) var(--r-3) 0 0;
+    padding:0 0 var(--sp2);}
+  .bm-alca{width:34px;height:3px;border-radius:var(--r-pill);background:var(--veu-3);
+    margin:9px auto 4px;}
+  .bm-sec{padding:12px 16px 5px;font-size:var(--fs-nano);font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--rail-txt);}
+  .bm-folha button{position:relative;display:flex;align-items:center;gap:11px;width:100%;
+    padding:11px 16px;border:0;background:transparent;color:var(--rail-txt);
+    font-family:var(--ff-corpo);font-size:var(--fs-corpo);font-weight:600;text-align:left;cursor:pointer;}
+  .bm-folha button svg{width:17px;height:17px;flex:0 0 17px;stroke:currentColor;fill:none;
+    stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .bm-folha button.on{color:var(--em-cor);background:var(--veu-2);}
+  .bm-folha button:active{background:var(--veu-1);}
+  .bm-folha .bm-n{position:static;margin-left:auto;font-size:var(--fs-apoio);}
+}
+
+/* ---------- abas internas (v8.62) ----------
+   Barra estilo sistema desktop: a ativa se funde com a área de trabalho
+   embaixo, as outras ficam recuadas. Overflow horizontal com rolagem própria —
+   com muitas abas a barra rola, e nunca empurra a tela nem quebra em duas
+   linhas. */
+.abas {
+  display: flex; align-items: flex-end; gap: 2px;
+  padding: 0 18px; margin: 0;
+  background: var(--bg-2, #f3f4f6);
+  border-bottom: 1px solid var(--line-2);
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: thin;
+}
+.abas::-webkit-scrollbar { height: 5px; }
+.abas::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px; }
+.aba {
+  display: flex; align-items: center; flex: 0 0 auto;
+  max-width: 220px;
+  border: 1px solid var(--line-2); border-bottom: none;
+  border-radius: 7px 7px 0 0;
+  background: transparent;
+  margin-bottom: -1px;
+}
+.aba .aba-ir {
+  border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 12.5px; color: var(--ink-2);
+  padding: 7px 4px 7px 12px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.aba .aba-x {
+  border: 0; background: none; cursor: pointer;
+  font-size: 15px; line-height: 1; color: var(--ink-4);
+  padding: 4px 9px 5px 4px; border-radius: 4px;
+}
+.aba .aba-x:hover { background: var(--line-2); color: var(--ink-1); }
+.aba:hover { background: var(--bg-1, #fff); }
+.aba.on {
+  background: var(--bg-1, #fff);
+  border-color: var(--line-2);
+  box-shadow: 0 -2px 0 var(--acao) inset;
+}
+.aba.on .aba-ir { color: var(--ink-1); font-weight: 600; }
+/* o ponto do rascunho não salvo entra na etapa 3 e já tem lugar guardado aqui */
+.aba .aba-sujo { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); margin-left: 2px; }
+@media (max-width: 720px) { .abas { padding: 0 10px; } .aba { max-width: 150px; } }

@@ -1,0 +1,532 @@
+/* ============================================================================
+   14. GRAMÁTICA VISUAL — botão faz, etiqueta informa, texto mostra
+   Botão, chip, etiqueta, select e texto clicável tinham aparência parecida, e
+   a leitura ficava lenta: era preciso interpretar cada elemento antes de saber
+   se dava para clicar nele. Aqui cada registro ganha uma forma própria.
+   ============================================================================ */
+
+/* ---- FAZ: tem moldura, muda no hover, cursor de mão ---- */
+.btn,.chip,.seg button,.ic-btn{cursor:pointer;}
+.btn{font-weight:600;}
+.btn:active,.chip:active,.ic-btn:active{transform:translateY(1px);}
+/* botão de ícone: a ação secundária não precisa de moldura o tempo todo —
+   ela aparece quando a linha recebe o cursor */
+.ic-btn{display:inline-grid;place-items:center;width:26px;height:26px;padding:0;
+  border:1px solid transparent;border-radius:var(--r-xs);background:transparent;color:var(--ink-4);
+  transition:background .13s, color .13s, border-color .13s;}
+.ic-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.ic-btn:hover{background:var(--slate-soft);border-color:var(--line);color:var(--ink-2);}
+.t tbody tr:hover .ic-btn{color:var(--ink-3);}
+.acoes-sec{display:flex;gap:2px;margin-top:3px;justify-content:flex-end;}
+
+/* ---- INFORMA: sem moldura, sem hover, sem cursor de mão ---- */
+.tag,.corte,.abc,.prio{cursor:default;border:0;box-shadow:none;}
+.tag{font-weight:600;font-size:var(--fs-micro);padding:2px 9px;}
+.corte{border:0;font-weight:700;}
+/* a etiqueta de situação dentro da tabela é leitura, não alvo: sem caixa, com um
+   ponto da própria cor. O número da linha volta a ser o que salta aos olhos. */
+.t td.col-sit .tag,.t .tag.dot{background:transparent;padding:1px 0;font-weight:600;
+  display:inline-flex;align-items:flex-start;}
+.t td.col-sit .tag::before,.t .tag.dot::before{content:'';width:6px;height:6px;border-radius:50%;
+  background:currentColor;display:inline-block;margin:5px 6px 0 0;flex:0 0 6px;}
+/* micro-etiquetas ("aj.", "prov.") continuam caixinhas discretas — um ponto ali seria ruído.
+   O `td:not(.col-sit)` evita que estas regras, mais específicas, desfaçam as de cima. */
+.t td:not(.col-sit) .tag:not(.dot){background:var(--slate-soft);padding:1px 6px;}
+.t td:not(.col-sit) .tag.ok:not(.dot),.t td:not(.col-sit) .tag.teal:not(.dot){background:var(--ok-fundo);}
+.t td:not(.col-sit) .tag.atencao:not(.dot),.t td:not(.col-sit) .tag.amber:not(.dot){background:var(--atencao-fundo);}
+.t td:not(.col-sit) .tag.perigo:not(.dot),.t td:not(.col-sit) .tag.red:not(.dot){background:var(--perigo-fundo);}
+/* o "aj." e afins continuam etiqueta, mas sem virar caixinha dentro do número */
+.t .tag.ok,.t .tag.teal{color:var(--ok);} .t .tag.atencao,.t .tag.amber{color:var(--atencao);}
+.t .tag.perigo,.t .tag.red{color:var(--perigo);}
+
+/* ---- MOSTRA: texto puro; se for clicável, a pista aparece no hover ---- */
+.sku{cursor:default;border-radius:var(--r-1);}
+.sku:hover{background:transparent;box-shadow:none;}
+.t .sku.clickable,.t td[data-sku] .sku,.sku[data-sku]{cursor:pointer;}
+.t .clickable:hover .sku,.sku[data-sku]:hover{background:var(--teal-soft);box-shadow:var(--ring);}
+[data-minsku]{text-decoration:none !important;}
+[data-minsku]:hover{text-decoration:underline dotted !important;}
+/* select dentro de tabela é ação (muda dado), então mantém moldura — mas fina,
+   para não pesar mais que o próprio conteúdo da célula */
+.t .sel{border-color:var(--line-2);background:transparent;font-weight:600;color:var(--ink-2);}
+.t .sel:hover{border-color:var(--line);background:var(--surface);}
+
+/* ---- hierarquia entre botões: cheio = ação da tela, contornado = ação da linha ----
+   Vinte botões navy empilhados numa lista pesam mais que os dados que eles
+   acompanham. O da linha continua sendo botão, só que em contorno; ele se
+   preenche quando o cursor chega. */
+.t .btn.primary{background:transparent;color:var(--acao);border-color:var(--acao-borda);box-shadow:none;}
+.t .btn.primary:hover{background:var(--acao);border-color:var(--acao);color:var(--em-cor);}
+.t tbody tr:hover .btn.primary{border-color:var(--acao);}
+
+/* ============================================================================
+   15. LEITURA DA TABELA — comparar linhas é a função principal, não um efeito
+   Alinhamento, agrupamento, abreviação, contraste e hierarquia. Nada some.
+   ============================================================================ */
+
+/* ---- prioridade: um ponto colorido e um código de largura fixa ----
+   Com a palavra inteira e caixa cheia, cada linha exigia leitura. Com ponto +
+   código, vinte linhas se comparam de relance, sem tirar a informação de lugar. */
+.corte{background:none !important;padding:0;font-size:var(--fs-nano);font-weight:700;letter-spacing:.04em;
+  font-family:'IBM Plex Mono',monospace;display:inline-flex;align-items:center;gap:5px;
+  min-width:52px;color:var(--ink-3);}
+.corte::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 7px;}
+/* ---------- prioridade não pode competir com problema ----------
+   Eram cinco cores (var(--perigo), --red, #C2410C, --amber, --ink-4), duas delas
+   inventadas só para esta escala. Agora a escala usa a MESMA gramática:
+   crítico e urgente são perigo de verdade, P1 é atenção, P2 e P3 são neutros
+   em dois pesos. Comparar linha a linha continua fácil — o ponto e o peso da
+   fonte fazem isso — sem gastar vermelho em pedido que está indo bem. */
+.corte.c0{color:var(--perigo);font-weight:800;} .corte.c1{color:var(--perigo);}
+.corte.c2{color:var(--atencao);}
+/* P3 é a prioridade mais baixa, não a informação mais escondida:
+   `--neutro-fraco` é papel de PREENCHIMENTO (2,67 sobre branco) e aqui é
+   texto de 10px. O degrau mais fraco que ainda se lê é o `--ink-4`. */
+.corte.c3{color:var(--neutro);} .corte.c4{color:var(--ink-4);}
+
+/* ---- situação: código curto, cor no ponto, frase no title ---- */
+.sit{display:inline-flex;align-items:center;gap:5px;font-size:var(--fs-nano);font-weight:700;
+  letter-spacing:.04em;font-family:'IBM Plex Mono',monospace;color:var(--ink-3);white-space:nowrap;cursor:default;}
+.sit::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 6px;}
+.sit.perigo,.sit.red{color:var(--perigo);} .sit.atencao,.sit.amber{color:var(--atencao);}
+.sit.ok,.sit.teal{color:var(--ok);} .sit.neutro{color:var(--neutro);}
+.t td.col-sit{white-space:normal;line-height:1.9;}
+
+/* ---- números: mesma família, mesma largura de dígito, mesma borda direita ---- */
+.t td.num,.t th.num{font-variant-numeric:tabular-nums;text-align:right;}
+.t td.num{font-family:'IBM Plex Mono',monospace;color:var(--ink);font-weight:600;}
+.t td.num .s{font-weight:400;color:var(--ink-4);}
+
+/* ---- agrupamento de colunas: um fio claro entre blocos de sentido ----
+   Sem rótulo em duas linhas, sem esconder coluna: só um respiro que diz
+   "daqui até ali é o mesmo assunto". */
+.t-dem td:nth-child(4),.t-dem th:nth-child(4),
+.t-dem td:nth-child(10),.t-dem th:nth-child(10),
+.t-dem td:nth-child(15),.t-dem th:nth-child(15){border-left:1px solid var(--line);}
+.t-ped td:nth-child(4),.t-ped th:nth-child(4),
+.t-ped td:nth-child(6),.t-ped th:nth-child(6),
+.t-ped td:nth-child(11),.t-ped th:nth-child(11){border-left:1px solid var(--line);}
+/* a coluna de ação: ver o bloco 18, no fim da folha */
+
+.sug-prio{font-family:'IBM Plex Mono',monospace;font-size:var(--fs-nano);font-weight:700;color:var(--ink-4);
+  margin-left:4px;letter-spacing:.02em;cursor:default;}
+.sug-prio.sobe{color:var(--red);}
+/* a célula do pedido tem três informações curtas: não precisa de corte de linha */
+.t-ped td.tcell .p{-webkit-line-clamp:none;display:block;}
+
+/* ============================================================================
+   16. PESO DA INFORMAÇÃO — cabeçalho com presença, decisório antes do contexto
+   ============================================================================ */
+
+/* ---- cabeçalho de grupo: quatro palavras que o olho encontra sem ler ---- */
+.t thead tr.grupos th{position:sticky;top:0;z-index:6;height:23px;padding:0 4px;
+  background:var(--surface-2);border-bottom:0;color:var(--ink-3);
+  font-size:var(--fs-nano);font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  text-align:left;vertical-align:middle;}
+.t thead tr.grupos th + th{border-left:1px solid var(--line);}
+/* a fileira dos títulos desce e continua presa ao rolar */
+/* A fileira dos títulos desce 23px — mas SÓ nas duas tabelas que têm a fileira de
+   grupos acima dela. A regra valia para toda tabela `.t`, e são trinta: em
+   Conferência, Compras, Prestadoras, Histórico e Tarefas o cabeçalho descia sem
+   nada em cima, e pela fresta de 23px apareciam pedaços das linhas passando por
+   baixo — era o "cabeçalho com erro" e as "informações sobre expostas". */
+.t-dem thead tr:not(.grupos) th,.t-ped thead tr:not(.grupos) th{top:23px;z-index:5;}
+
+/* ---- títulos maiores e mais escuros; linhas um pouco mais leves ----
+   Cabeçalho minúsculo com conteúdo minúsculo obriga a ler tudo. Título com
+   presença e linha mais leve deixa o olho pousar onde precisa. */
+table.t.t-ped th,table.t.t-dem th{font-size:var(--fs-micro);color:var(--ink-2);font-weight:700;
+  letter-spacing:.02em;padding-top:8px;padding-bottom:8px;}
+.t-ped td,.t-dem td{font-size:var(--fs-apoio);}
+
+/* ---- decisório mais forte, contexto mais discreto ----
+   Tudo continua na tela; o que pesa na decisão é que chega primeiro ao olho. */
+.t td.num{font-weight:600;color:var(--ink-2);}
+/* Demanda: vendas, estoque real, mínimo, necessidade e demanda de produção */
+.t-dem td:nth-child(5),.t-dem td:nth-child(6),.t-dem td:nth-child(7),
+.t-dem td:nth-child(10),.t-dem td:nth-child(15){color:var(--ink);font-weight:700;font-size:var(--fs-dado);}
+/* Demanda: a abertura do que já está em produção é contexto */
+.t-dem td:nth-child(11),.t-dem td:nth-child(12),
+.t-dem td:nth-child(13),.t-dem td:nth-child(14){color:var(--ink-3);font-weight:500;}
+/* Pedidos: quantidade, vendas, estoque real e mínimo */
+.t-ped td:nth-child(5),.t-ped td:nth-child(6),
+.t-ped td:nth-child(7),.t-ped td:nth-child(8){color:var(--ink);font-weight:700;font-size:var(--fs-dado);}
+/* Pedidos: quem vai fazer é contexto ao lado do número */
+.t-ped td:nth-child(4){color:var(--ink-3);}
+/* processo, setor e fornecedor sob o SKU: presentes, sem disputar */
+.t .tcell .s{color:var(--ink-4);}
+.t .tcell .s .tag{opacity:.9;}
+
+/* ---------- 17. custo de tela ----------
+   O navegador calcula estilo e layout de cada nó em cada redesenho. Numa lista
+   longa isso vira a maior parte do tempo. `content-visibility` deixa ele pular
+   as linhas que estão fora da janela — elas continuam na página e na busca do
+   navegador, só não são medidas enquanto ninguém as vê. */
+.t tbody tr{content-visibility:auto;contain-intrinsic-size:auto 46px;}
+.cards .pcard{content-visibility:auto;contain-intrinsic-size:auto 250px;}
+
+/* ícone no lugar de emoji dentro de texto: mesma altura da linha, sem pular a base */
+.ic-inline{display:inline-flex;vertical-align:-2px;color:var(--ink-4);}
+.ic-inline svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.ic-inline.amber{color:var(--amber);}
+.aviso svg,.modal-h h2 svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 15px;}
+
+/* chip com ícone: sem tamanho definido o SVG assume o padrão do navegador e
+   estoura o botão (foi o que aconteceu no "Editar na tabela") */
+.chip svg{width:13px;height:13px;flex:0 0 13px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.chip{white-space:nowrap;}
+
+/* tamanho de partida de qualquer ícone — rede de segurança contra ícone gigante */
+.ic{width:16px;height:16px;flex:0 0 auto;}
+/* o botão de recolher o menu pede um ícone menor que o padrão */
+.rail-toggle svg{width:14px;height:14px;stroke-width:2;}
+.shell.mini .rail-toggle svg{width:13px;height:13px;}
+
+/* ============================================================================
+   18. DADOS → DECISÃO → AÇÃO
+   A última coluna é onde a leitura vira comando. Em repouso ela quase não
+   aparece: um fundo de 1% só para o olho saber onde a linha termina. Quando a
+   linha recebe o cursor, o realce não se espalha — vai para a ação.
+   ============================================================================ */
+:root{
+  --linha-hover:var(--neutral-50);   /* véu da linha inteira: presença, não destaque */
+  --acao-bg:var(--surface-2);       /* repouso: quase imperceptível */
+  --acao-bg-hover:var(--teal-soft); /* hover: o passo a mais, só aqui */
+}
+.t td.col-acao,.t th.col-acao,
+.t-dem td:last-child,.t-dem th:last-child{
+  border-left:1px solid var(--line);
+  background:var(--acao-bg);
+  transition:background .12s ease;
+}
+/* a linha toda recebe um véu; a coluna de ação recebe um degrau a mais */
+.t tbody tr:hover{background:var(--linha-hover);}
+.t tbody tr:hover td.col-acao,
+.t-dem tbody tr:hover td:last-child{background:var(--acao-bg-hover);}
+/* e o botão da linha ganha corpo — sem acender, só firmando o contorno */
+.t tbody tr:hover .btn.primary{border-color:var(--acao);color:var(--acao);
+  background:var(--surface);box-shadow:var(--sh-1);}
+.t tbody tr:hover .ic-btn{color:var(--ink-3);}
+/* o título da coluna acompanha os botões que estão embaixo dele */
+.t th.col-acao,.t-dem th:last-child{text-align:center;}
+.t td.col-acao{text-align:center;}
+
+/* ============================================================================
+   19. BUSCA RÁPIDA — Ctrl + K
+   ============================================================================ */
+.cmd-ov{align-items:flex-start;padding-top:12vh;background:var(--veu-modal);}
+.cmd{width:min(620px,94vw);background:var(--surface);border-radius:var(--r-lg);
+  box-shadow:var(--el3);overflow:hidden;animation:pop .16s cubic-bezier(.2,.8,.3,1);}
+.cmd-h{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line-2);}
+.cmd-h svg{width:17px;height:17px;stroke:var(--ink-4);fill:none;stroke-width:1.9;flex:0 0 17px;}
+.cmd-inp{flex:1;border:0;outline:0;background:transparent;font-size:var(--fs-h2);color:var(--ink);}
+.cmd-inp::placeholder{color:var(--ink-4);}
+/* o painel inteiro já é o contexto do foco: um anel coral em volta do campo
+   parece aviso de erro */
+.cmd-inp:focus,.cmd-inp:focus-visible{box-shadow:none;outline:0;}
+.cmd-b{max-height:52vh;overflow:auto;padding:6px;}
+.cmd-grupo{font-size:var(--fs-nano);font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-4);padding:10px 10px 4px;}
+.cmd-it{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;border:0;background:none;
+  padding:8px 10px;border-radius:var(--r-sm);cursor:pointer;transition:background .1s;}
+.cmd-it:hover{background:var(--surface-2);}
+.cmd-it.on{background:var(--teal-soft);}
+.cmd-it .sku{font-size:var(--fs-dado);font-weight:600;color:var(--ink);flex:0 0 auto;}
+.cmd-d{font-size:var(--fs-corpo);color:var(--ink-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cmd-m{font-size:var(--fs-micro);color:var(--ink-4);flex:0 0 auto;white-space:nowrap;}
+.cmd-vazio{padding:26px 16px;text-align:center;font-size:var(--fs-corpo);color:var(--ink-3);line-height:1.7;}
+.cmd-f{padding:9px 16px;border-top:1px solid var(--line-2);background:var(--surface-2);
+  font-size:var(--fs-micro);color:var(--ink-4);display:flex;align-items:center;gap:5px;}
+kbd{font-family:'IBM Plex Mono',monospace;font-size:var(--fs-nano);background:var(--surface);
+  border:1px solid var(--line);border-bottom-width:2px;border-radius:var(--r-1);padding:1px 5px;color:var(--ink-3);}
+.kbd-atalho{margin-left:6px;}
+@media (max-width:900px){ .kbd-atalho{display:none;} }
+
+/* linha ativa pelas setas: a mesma cor do hover, com um traço à esquerda para
+   quem está navegando sem o mouse não perder onde está */
+.t tbody tr.linha-ativa{background:var(--linha-hover);box-shadow:inset var(--marca-lat) var(--coral);}
+.t tbody tr.linha-ativa td.col-acao,.t-dem tbody tr.linha-ativa td:last-child{background:var(--acao-bg-hover);}
+.t tbody tr.linha-ativa .btn.primary{border-color:var(--acao);color:var(--acao);background:var(--surface);}
+.kv dt kbd{font-size:var(--fs-micro);}
+
+/* ---------- 18. menos molduras ----------
+   O sistema tinha virado caixa dentro de caixa: card → cabeçalho → filtros →
+   card → resumo → tabela → card. Cada moldura pede atenção, e somadas elas
+   pesavam mais que o conteúdo que seguravam.
+
+   Regra desta camada: **uma superfície por assunto**. O que é auxiliar — resumo,
+   indicadores, filtros, passos — deixa de ser caixa e passa a se separar por
+   **espaço e fio**. Moldura fica reservada para o conteúdo principal: a tabela,
+   a lista, o formulário. O que importa tem de parecer maior que o que o contém. */
+
+/* --- indicadores: quatro caixas viram uma faixa --- */
+.kpis{gap:0;margin-bottom:var(--sp4);padding:var(--sp1) 0 var(--sp3);border-bottom:1px solid var(--line);}
+.kpi{background:none;border:0;border-radius:0;box-shadow:none;padding:2px var(--sp5) 2px var(--sp4);}
+.kpi + .kpi{border-left:1px solid var(--line);}
+/* a barra colorida à esquerda era a borda do cartão; sem cartão ela vira
+   um ponto junto do rótulo, que é onde o olho já está */
+.kpi::before{display:none;}
+.kpi .lbl{display:flex;align-items:center;gap:6px;}
+.kpi.red .lbl::before,.kpi.amber .lbl::before,.kpi.teal .lbl::before{
+  content:'';width:6px;height:6px;border-radius:50%;background:var(--slate);flex:none;}
+.kpi.red .lbl::before{background:var(--red);}
+.kpi.amber .lbl::before{background:var(--amber);}
+.kpi.teal .lbl::before{background:var(--teal);}
+.kpi .val{font-size:var(--fs-num-g);margin-top:5px;}
+.kpi .foot{margin-top:4px;}
+/* clicável sem virar cartão: o realce é o fundo, não o relevo */
+/* apagar de vez é a única ação da tela que não volta: o botão diz isso na cor */
+.ic-btn.perigo:hover{background:var(--red-soft);color:var(--red);border-color:var(--perigo-borda);}
+.ic-btn.perigo:hover svg{stroke:var(--red);}
+.kpi.clicavel{border-radius:0;}
+.kpi.clicavel:hover{background:none;transform:none;box-shadow:inset 0 -2.5px 0 var(--line);}
+.kpi.clicavel.ativo:hover{box-shadow:inset 0 -2.5px 0 var(--coral);}
+.kpi.ativo{background:none;outline:0;box-shadow:inset 0 -2.5px 0 var(--coral);}
+.kpi.ativo .lbl{color:var(--ink);}
+@media (max-width:720px){ .kpi + .kpi{border-left:0;border-top:1px solid var(--line-2);} }
+
+/* --- a instrução do topo da Demanda: faixa, não caixa --- */
+.faixa-topo{display:flex;gap:var(--sp5);align-items:center;flex-wrap:wrap;
+  padding:0 var(--sp1) var(--sp4);margin-bottom:var(--sp4);border-bottom:1px solid var(--line);}
+.faixa-topo h3{margin:0 0 5px;font-size:var(--fs-h2);font-weight:700;letter-spacing:-.01em;}
+
+/* --- resumo dos Pedidos: faixa, não caixa --- */
+.resumo{background:none;border:0;box-shadow:none;border-radius:0;
+  padding:0 var(--sp1) var(--sp3);margin-bottom:var(--sp3);border-bottom:1px solid var(--line);}
+.res-num{font-size:var(--fs-h2);}
+.res-num b{font-size:var(--fs-num-g);}
+
+
+/* --- tarefas: uma pilha de cartões vira uma lista --- */
+.lista-tarefas .tarefa{border:0;border-radius:0;box-shadow:none;margin:0;
+  padding:var(--sp4) var(--sp5);}
+.lista-tarefas .tarefa + .tarefa{border-top:1px solid var(--line-2);}
+/* urgente continua se destacando — pelo fundo e por um traço, não por outra moldura */
+.lista-tarefas .tarefa.urg{background:none;box-shadow:inset var(--marca-lat) var(--perigo);}
+/* fio claro some dentro do vermelho: duas urgentes seguidas viravam um bloco só */
+.lista-tarefas .tarefa.urg + .tarefa.urg{border-top-color:var(--line-2);}
+
+/* --- área de arquivo: três alvos tracejados viram um só, dividido --- */
+.dz{background:none;}
+.dz-grupo{border:1.5px dashed var(--line);border-radius:var(--r-md);overflow:hidden;}
+.dz-grupo .dz{border:0;border-radius:0;margin:0 !important;padding:var(--sp4) var(--sp3);}
+.dz-grupo .dz + .dz{border-top:1px solid var(--line-2);}
+/* empilhados, três alvos verticais gastavam meia tela para dizer três nomes.
+   Como linha — ícone, nome, botão — cada um cabe numa faixa. */
+.dz-grupo .dz{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;
+  column-gap:var(--sp4);align-items:center;text-align:left;}
+.dz-grupo .dz > svg{grid-column:1;grid-row:1 / 3;width:22px;height:22px;}
+.dz-grupo .dz > div:nth-of-type(1){grid-column:2;grid-row:1;margin:0 !important;}
+.dz-grupo .dz > div:nth-of-type(2){grid-column:2;grid-row:2;margin:2px 0 0 !important;}
+.dz-grupo .dz > button{grid-column:3;grid-row:1 / 3;justify-self:end;}
+@media (max-width:560px){
+  .dz-grupo .dz{grid-template-columns:auto 1fr;}
+  .dz-grupo .dz > button{grid-column:2;grid-row:3;justify-self:start;margin-top:8px;}
+}
+.dz-grupo .dz.over,.dz.over{background:var(--teal-soft);}
+.dz-grupo .dz:hover{background:var(--surface-2);}
+
+/* ---------- 22. o número é o filtro ----------
+   A faixa de cima e a fileira de chips diziam a mesma coisa duas vezes. Agora o
+   próprio número filtra — mas nem todo bloco da faixa é clicável, então a
+   diferença entre "faz" e "informa" precisa se ver sem ler (gramática da 7.36). */
+.kpi.clicavel{cursor:pointer;}
+.kpi.clicavel .lbl,.kpi.clicavel .val{transition:color .12s;}
+.kpi.clicavel:hover .val{color:var(--coral);}
+.kpi.clicavel:hover .lbl{color:var(--ink-2);}
+.kpi.clicavel:focus-visible{outline:2px solid var(--ring);outline-offset:-2px;border-radius:var(--r-sm);}
+/* o ativo fica com um traço embaixo, como aba selecionada — sem virar caixa */
+.kpi.ativo .val{color:var(--ink);}
+/* o que só informa fica encostado no fim da faixa, atrás de um fio mais forte,
+   para ninguém tentar clicar no que não clica */
+.kpi-info{display:contents;}
+.kpi-info > .kpi{border-left:2px solid var(--line);padding-left:var(--sp5);}
+.kpi-info > .kpi .val{color:var(--ink-2);}
+@media (max-width:720px){ .kpi-info > .kpi{border-left:0;border-top:2px solid var(--line);padding-left:var(--sp4);} }
+
+/* ---------- 23. insumos ---------- */
+.t-ins td{vertical-align:top;}
+.ins-sit{font-size:var(--fs-nano);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:2px;color:var(--ink-4);}
+.ins-sit.s-erro,.ins-sit.s-perigo{color:var(--perigo);}
+.ins-sit.s-aviso,.ins-sit.s-atencao{color:var(--atencao);}
+.ins-sit.s-ok{color:var(--ok);}
+.ins-sit.s-off,.ins-sit.s-neutro{color:var(--ink-4);}
+/* o tipo do movimento informa: ponto e cor, sem caixa (gramática da 7.36) */
+.ins-mov{font-size:var(--fs-micro);font-weight:700;display:inline-flex;align-items:center;gap:5px;color:var(--ink-2);}
+.ins-mov::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ink-4);}
+.ins-mov.m-ok{color:var(--teal);} .ins-mov.m-ok::before{background:var(--teal);}
+.ins-mov.m-saida{color:var(--red);} .ins-mov.m-saida::before{background:var(--red);}
+.ins-mov.m-ajuste{color:var(--bege);} .ins-mov.m-ajuste::before{background:var(--bege);}
+
+/* cabeçalho da nota: os dados que vieram do XML, sem virar formulário */
+.nf-resumo{display:flex;flex-wrap:wrap;gap:var(--sp5) var(--sp6);padding:var(--sp4) 0 var(--sp4);
+  margin-bottom:var(--sp4);border-bottom:1px solid var(--line);}
+.nf-resumo > div{display:flex;flex-direction:column;gap:2px;}
+.nf-resumo span{font-size:var(--fs-nano);font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-4);}
+.nf-resumo b{font-size:var(--fs-h3);}
+/* item sem vínculo é o que trava a entrada: precisa saltar aos olhos na tabela */
+tr.nf-pend td:first-child{box-shadow:inset var(--marca-lat) var(--perigo);}
+tr.nf-pend{background:var(--red-soft);}
+/* palpite entra na conta, mas fica marcado até alguém olhar */
+tr.nf-palpite td:first-child{box-shadow:inset var(--marca-lat) var(--amber);}
+tr.nf-palpite{background:var(--amber-soft);}
+/* escolher insumo digitando: a lista só existe depois que a pessoa escreve */
+.pick{position:relative;}
+.pick-in{width:100%;font-size:var(--fs-apoio);padding:7px 10px;}
+.pick-sel{display:flex;align-items:center;gap:7px;min-width:0;font-size:var(--fs-dado);line-height:1.3;}
+.pick-sel b{font-weight:700;flex:1 1 auto;min-width:0;}
+.pick-sel em{font-style:normal;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--fs-micro);color:var(--ink-4);flex:0 0 auto;}
+.pick-x{border:0;background:none;color:var(--ink-3);font-size:var(--fs-micro);font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;padding:2px 5px;flex:0 0 auto;border-radius:var(--r-1);text-decoration:underline;text-underline-offset:2px;}
+.pick-x:hover{background:var(--surface-2);color:var(--coral);}
+.pick-lista{position:fixed;z-index:200;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-3);box-shadow:var(--sh-3);max-height:250px;overflow:auto;padding:4px;}
+.pick-op{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 9px;border:0;border-radius:var(--r-2);background:none;cursor:pointer;font:inherit;font-size:var(--fs-dado);color:var(--ink);}
+.pick-op:hover,.pick-op.on{background:var(--teal-soft);}
+.pick-op b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pick-op em{font-style:normal;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--fs-micro);color:var(--ink-4);flex:0 0 auto;}
+.pick-op i{font-style:normal;font-size:var(--fs-micro);color:var(--ink-4);margin-left:auto;flex:0 0 auto;}
+.pick-novo{color:var(--teal);font-weight:700;border-top:1px solid var(--line-2);border-radius:0 0 var(--r-2) var(--r-2);margin-top:2px;}
+.pick-vazio{padding:8px 9px;font-size:var(--fs-apoio);color:var(--ink-3);}
+/* campo que existe mas não se edita: parece dado, não parece formulário */
+.travado{display:flex;align-items:center;gap:7px;padding:8px 11px;border:1px dashed var(--line);border-radius:var(--r-3);background:var(--surface-2);color:var(--ink-2);font-size:var(--fs-corpo);min-height:38px;}
+.travado svg{width:13px;height:13px;stroke:var(--ink-4);fill:none;stroke-width:1.8;flex:0 0 auto;margin-left:auto;}
+/* recibo: duas vias na mesma folha, com a linha de recorte no meio */
+.recibo{border:1px solid var(--line);border-radius:var(--r-2);padding:10px 12px;break-inside:avoid;}
+.rec-cab{display:flex;gap:10px;align-items:flex-start;border-bottom:1.5px solid var(--rail);padding-bottom:7px;margin-bottom:8px;}
+.rec-cab .lg{width:34px;height:34px;background:var(--logo) center/contain no-repeat;flex:0 0 auto;}
+.rec-cab h1{font-size:var(--fs-corpo);margin:0;letter-spacing:.04em;}
+.rec-sub{font-size:var(--fs-nano);color:var(--neutro);}
+.rec-n{margin-left:auto;text-align:right;font-size:var(--fs-nano);font-family:var(--mono);white-space:nowrap;}
+.rec-n span{color:var(--neutro);font-family:inherit;}
+.rec-txt{font-size:var(--fs-micro);line-height:1.55;margin:0 0 8px;}
+.rec-val{font-size:var(--fs-apoio);}
+.rec-t{width:100%;border-collapse:collapse;font-size:var(--fs-nano);margin-bottom:7px;}
+.rec-t th{background:var(--surface-2);text-align:left;padding:3px 5px;font-size:var(--pr-corpo);letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid var(--line);}
+.rec-t td{padding:3px 5px;border-bottom:1px solid var(--line-2);}
+.rec-tot{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;font-size:var(--fs-nano);padding:5px 0;border-top:1px solid var(--line);}
+.rec-apagar{margin-left:auto;font-size:var(--fs-apoio);}
+.rec-ass{display:flex;gap:26px;margin-top:16px;font-size:var(--fs-nano);}
+.rec-ass > div{flex:1;}
+.rec-ass i{color:var(--neutro);font-style:normal;font-size:var(--pr-apoio);}
+.rec-linha{display:block;border-top:1px solid var(--rail);margin-bottom:3px;height:22px;}
+.rec-corte{border-top:1.5px dashed var(--ink-3);text-align:center;margin:12px 0;position:relative;}
+.rec-corte span{position:relative;top:-7px;background:var(--surface);padding:0 8px;font-size:var(--pr-apoio);color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase;}
+/* tabela larga de folha: cabe no A4 sem cortar coluna */
+.folha table.f-larga{table-layout:fixed;width:100%;border-collapse:collapse;}
+.folha table.f-larga th,.folha table.f-larga td{padding:3px 4px;font-size:var(--fs-nano);overflow:hidden;text-overflow:ellipsis;}
+.folha .cab-rep th{background:var(--surface-2);font-size:var(--fs-nano);text-align:left;letter-spacing:.05em;}
+.folha .bloco-proc{margin-bottom:12px;break-inside:avoid;}
+.folha .th-vu{font-weight:400;font-size:var(--pr-apoio);color:var(--neutro);letter-spacing:0;text-transform:none;margin-top:1px;}
+.folha tr.sub-proc td{background:var(--surface-2);border-top:1.2px solid var(--rail);font-size:var(--fs-nano);font-weight:700;padding:4px;}
+/* campo onde se digita dinheiro: o R$ fica à vista, não só no cabeçalho */
+.rs-in{position:relative;display:block;}
+.rs-in::before{content:"R$";position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:var(--fs-micro);color:var(--ink-4);pointer-events:none;font-weight:600;}
+.rs-in > input{padding-left:34px !important;text-align:right;}
+/* permissões: uma lista para ler, não um formulário para preencher */
+.perms{border:1px solid var(--line);border-radius:var(--r-3);padding:12px 14px;margin:4px 0 12px;background:var(--surface-2);}
+.perms-h{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.perms-h > span:first-child{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:700;}
+.perms-n{font-size:var(--fs-apoio);color:var(--ink-4);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+.perms-h .btn{margin-left:auto;}
+.perms-g{padding-top:9px;margin-top:9px;border-top:1px solid var(--line-2);}
+.perms-g:first-of-type{border-top:0;margin-top:0;}
+.perms-gt{font-size:var(--fs-apoio);font-weight:700;color:var(--ink-2);margin-bottom:6px;}
+.perm{display:flex;gap:9px;align-items:flex-start;cursor:pointer;padding:5px 0;}
+.perm span{min-width:0;}
+.perm b{display:block;font-size:var(--fs-corpo);font-weight:600;line-height:1.35;}
+.perm i{display:block;font-style:normal;font-size:var(--fs-apoio);color:var(--ink-3);line-height:1.45;margin-top:1px;}
+.perm:hover b{color:var(--teal);}
+/* relatório de produção */
+.rel-bases{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 4px;}
+.rel-base{flex:1 1 200px;min-width:190px;text-align:left;background:none;border:1px solid var(--line);border-radius:var(--r);padding:10px 13px;cursor:pointer;transition:border-color .13s,background .13s;}
+.rel-base:hover{border-color:var(--line);background:var(--surface-2);}
+.rel-base.on{border-color:var(--teal);box-shadow:inset 0 -2.5px 0 var(--coral);background:var(--surface);}
+.rel-base .rb-t{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:700;}
+.rel-base.on .rb-t{color:var(--teal);}
+.rel-base .rb-v{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--fs-num-g);font-weight:700;line-height:1.25;color:var(--ink);}
+.rel-base .rb-f{font-size:var(--fs-apoio);color:var(--ink-3);}
+.rel-esc{display:flex;gap:4px;justify-content:flex-end;margin:3px 0 0;}
+.rel-esc button{border:0;background:none;font-size:var(--fs-nano);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-4);cursor:pointer;padding:1px 4px;border-radius:var(--r-1);font-weight:700;}
+.rel-esc button:hover{background:var(--surface-2);color:var(--ink-2);}
+.rel-esc button.on{color:var(--teal);background:var(--teal-soft);}
+.rel-alvo{font-weight:700;}
+.rel-tot{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:13px 16px;border-top:1px solid var(--line-2);font-size:var(--fs-corpo);}
+.rel-tot b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--fs-h2);}
+.rel-cons{padding:0 16px 16px;}
+.rel-cons h4{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin:16px 0 3px;padding-top:14px;border-top:1px solid var(--line-2);}
+tr.apagada td{opacity:.55;}
+td.sumido{color:var(--ink-4);}
+tr.linha-alerta td:first-child{box-shadow:inset var(--marca-lat) var(--perigo);}
+.nf-total{display:flex;align-items:baseline;gap:var(--sp3);margin-top:var(--sp4);
+  padding-top:var(--sp3);border-top:1px solid var(--line);}
+.nf-total span{font-size:var(--fs-dado);color:var(--ink-3);}
+.nf-total b{margin-left:auto;font-size:var(--fs-h1);font-family:var(--mono);}
+/* agrupamento por fornecedor dentro de um card: faixa, não outro cartão (7.46) */
+.sub-h{display:flex;align-items:baseline;gap:10px;padding:var(--sp3) var(--sp5) var(--sp2);
+  font-size:var(--fs-apoio);font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);
+  border-top:1px solid var(--line);background:var(--surface-2);}
+.sub-h span{font-size:var(--fs-micro);font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink-3);}
+/* fornecedor: o que ele manda, sem virar cartão dentro de cartão (7.46) */
+.forn-bloco{padding:10px 0 12px;border-bottom:1px solid var(--line-2);}
+.forn-bloco:last-of-type{border-bottom:0;}
+.forn-listas{display:flex;flex-direction:column;gap:5px;margin:8px 0 0 2px;padding-left:11px;border-left:2px solid var(--line-2);}
+.forn-listas > div{font-size:var(--fs-apoio);line-height:1.55;color:var(--ink-3);}
+.forn-listas span{font-size:var(--fs-nano);font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-4);display:block;}
+.forn-listas b{font-weight:600;color:var(--ink-2);display:inline-block;margin-right:10px;}
+.forn-listas em{font-family:var(--mono);font-style:normal;font-size:var(--fs-micro);color:var(--ink-4);}
+.forn-listas i{font-style:normal;color:var(--ink-4);}
+
+/* ---------- 21. o menu chamando ----------
+   Os contadores do menu são informação de fundo — quantos pedidos existem,
+   quantos produtos. Um item pode pedir cor e um ponto ao lado do nome quando o
+   número deixa de ser estatística e vira cobrança: é o 4º elemento (`tom`) do
+   array `nav`. Nenhuma aba usa isso hoje — quem usava era Notificações, que saiu
+   na v8.92. O mecanismo fica de pé, porque é genérico e o render já o lê.
+   Um só item chamando atenção continua sendo silêncio; três seriam ruído. */
+.nav button.chamando{color:var(--em-cor);}
+.nav button.chamando svg{opacity:.95;}
+.nav .badge.alerta{background:var(--coral);color:var(--em-coral);font-weight:800;
+  padding:1px 8px;border-radius:var(--r-pill);min-width:20px;text-align:center;}
+.nav .badge.urg{background:var(--perigo);color:var(--em-perigo);font-weight:800;
+  padding:1px 8px;border-radius:var(--r-pill);min-width:20px;text-align:center;}
+.nav button.on .badge.alerta,.nav button.on .badge.urg{background:var(--coral);color:var(--em-cor);}
+.nav button:hover .badge.alerta,.nav button:hover .badge.urg{color:var(--em-cor);}
+/* o ponto: some no menu recolhido, onde o próprio contador já vira ponto */
+.nav button.chamando > span:first-of-type::after{
+  content:'';display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--coral);margin-left:7px;vertical-align:middle;}
+.nav button.chamando.urg > span:first-of-type::after{background:var(--perigo);}
+.shell.mini .nav button.chamando > span:first-of-type::after{display:none;}
+.shell.mini .nav .badge.alerta,.shell.mini .nav .badge.urg{background:var(--coral);color:var(--em-coral);}
+.shell.mini .nav .badge.urg{background:var(--perigo);}
+
+/* o percurso: hora à esquerda, fio no meio, o que aconteceu à direita */
+.tl{display:flex;flex-direction:column;}
+.tl-l{display:grid;grid-template-columns:52px 16px 1fr;align-items:start;gap:0;}
+.tl-h{font-size:var(--fs-apoio);color:var(--ink-3);padding-top:1px;text-align:right;padding-right:10px;}
+.tl-p{position:relative;justify-self:center;width:16px;align-self:stretch;}
+.tl-p::before{content:'';position:absolute;left:50%;top:6px;width:7px;height:7px;margin-left:-3.5px;
+  border-radius:50%;background:var(--teal2);}
+.tl-p::after{content:'';position:absolute;left:50%;top:15px;bottom:-2px;width:1px;margin-left:-.5px;background:var(--line);}
+.tl-l:last-child .tl-p::after{display:none;}
+.tl-l:last-child .tl-p::before{background:var(--teal);}
+.tl-t{font-size:var(--fs-corpo);padding:0 0 14px 6px;line-height:1.45;}
+.tl-t span{color:var(--ink-3);font-size:var(--fs-apoio);}
+.tl-d{display:block;font-size:var(--fs-micro);color:var(--ink-4);}
+
+.aviso code{font-family:var(--mono);font-size:var(--fs-micro);background:var(--neutro-fundo);padding:2px 5px;border-radius:var(--r-1);display:inline-block;margin-top:4px;}
+
+textarea.inp{resize:vertical;font-family:inherit;line-height:1.55;}
+
+/* --- indicadores dentro de janela: nunca cartão dentro de cartão --- */
+.modal .kpis{background:var(--surface-2);border-radius:var(--r-md);padding:var(--sp3) 0;border-bottom:0;}
+.modal .kpi .val{font-size:var(--fs-num-g);}
+
+/* ---------- cópia de teste ---------- */
+/* Duas telas iguais lado a lado, uma valendo e outra não, é receita de erro.
+   A cópia fica com a moldura e a etiqueta o tempo todo. Nada disso ocupa
+   espaço: é tudo fixo por cima, para não encolher a tabela. */
+body[data-teste]::after{content:"";position:fixed;inset:0;border:3px solid var(--atencao);pointer-events:none;z-index:9998;}
+body[data-teste]::before{content:"CÓPIA DE TESTE · NÃO VAI PARA O APP";position:fixed;left:0;bottom:0;z-index:9999;
+  background:var(--atencao);color:var(--em-cor);font:700 10px/1 var(--ff-titulo);letter-spacing:.11em;padding:7px 11px;border-radius:0 var(--r-3) 0 0;pointer-events:none;}
+@media print{body[data-teste]::after,body[data-teste]::before{display:none;}}
+

@@ -1,0 +1,382 @@
+<style>
+/* ===========================================================================
+   TOKENS · a fonte única de cor, medida e tipo do PCP                  v8.51
+   ---------------------------------------------------------------------------
+   Este arquivo vem ANTES de todos os outros no manifesto, e é o único lugar
+   onde um valor de cor nasce. Ele tem três níveis, e a ordem importa:
+
+     NÍVEL 1 · A MARCA   as rampas oficiais do design system Moda Bicho.
+                         Nenhum componente usa estas variáveis diretamente.
+     NÍVEL 2 · OS PAPÉIS o que cada cor SIGNIFICA no PCP. É só isto que o
+                         resto do app enxerga — e é por isso que o tema
+                         escuro cabe em um bloco, sem tocar em componente.
+     NÍVEL 3 · AS MEDIDAS espaço, tipo, raio, sombra, quebra.
+
+   POR QUE OS NÍVEIS.
+   A varredura mediu 299 cores literais no CSS contra 71 variáveis que já
+   existiam. Ou seja: a camada de token existia e era contornada. Um app com
+   299 hex soltos não tem tema escuro — tem 299 lugares para esquecer.
+
+   O QUE ESTE ARQUIVO NÃO FAZ.
+   Ele não muda o SIGNIFICADO de nenhuma cor. A gramática de cinco sentidos
+   (perigo · atencao · ok · acao · neutro) já existia no `base.css` e continua
+   inteira, palavra por palavra. O que mudou é de onde os valores vêm.
+   =========================================================================== */
+
+:root {
+  /* =========================================================================
+     NÍVEL 1 · A MARCA — rampas oficiais (design system Moda Bicho v1)
+     -------------------------------------------------------------------------
+     Valores do manual, não recalculados. O contraste de cada degrau sobre
+     branco está no comentário: é ele que decide onde cada um pode ser usado.
+     NÃO USE ESTAS VARIÁVEIS EM COMPONENTE. Use as do nível 2.
+     ========================================================================= */
+  --navy-50:#F2F4F8;   --navy-100:#E1E5EE;  --navy-200:#BCC4D5;
+  --navy-300:#909BB3;  --navy-400:#4D5C7E;  /* 6.67 AA  */
+  --navy-500:#2A3551;  /* 12.16 AAA */      --navy-600:#1E2945;  /* 14.40 AAA */
+  --navy-700:#141C33;  --navy-800:#0D1426;  --navy-900:#060B17;
+
+  --coral-50:#FEF1F2;  --coral-100:#FBDDDE; --coral-200:#F7BCBD;
+  --coral-300:#F3A1A3; --coral-400:#EF8083; --coral-500:#EB696C; /* 3.10 AA UI */
+  --coral-600:#D44E51; /* 4.19 AA UI */     --coral-700:#B43A3D; /* 5.81 AA  */
+  --coral-800:#8F2A2D; /* 8.28 AAA */       --coral-900:#5F1F21;
+
+  --neutral-50:#F8FAFC;  --neutral-100:#F1F5F9; --neutral-200:#E2E8F0;
+  --neutral-300:#CBD5E1; --neutral-400:#94A3B8; --neutral-500:#64748B; /* 4.76 AA */
+  --neutral-600:#475569; --neutral-700:#334155; --neutral-800:#1E293B;
+  --neutral-900:#0F172A;
+
+  /* funcionais do manual. `--fn-success` é cor de PREENCHIMENTO (contraste
+     2.54 sobre branco: não serve para texto) — o verde de TEXTO do PCP é o
+     `--ok` do nível 2, escolhido para ficar irmão do vermelho e do âmbar. */
+  --fn-success:#10B981; --fn-danger:#DC2626; --fn-warning:#F59E0B; --fn-info:#0EA5E9;
+
+  /* rampa quente do manual. Ela existe para a LOJA (vitrine, hero, foto) e
+     fica FORA do cromo do PCP: em console industrial ela competiria com o
+     âmbar de atenção. Aqui ela serve só ao que já é da marca — o logo e o
+     bege herdado. */
+  --camel-100:#F0E6DB; --camel-300:#D8B99A; --camel-500:#C79476; --camel-700:#96633C;
+
+  /* =========================================================================
+     NÍVEL 2 · OS PAPÉIS — o que a cor significa no PCP
+     -------------------------------------------------------------------------
+     A GRAMÁTICA, que não mudou:
+       perigo   quebrou, venceu ou travou. RESOLVA.
+       atencao  ainda não quebrou, mas vai. PRESTE ATENÇÃO.
+       ok       deu certo, está conferido, está saudável.
+       acao     é clicável, é a etapa ativa. Não é elogio nem alarme.
+       neutro   estado normal, contexto, dado secundário.
+     `--coral` é o acento da MARCA (seleção, foco, linha ativa) e nunca
+     significa alerta: era ele que competia com o vermelho de verdade.
+     ========================================================================= */
+
+  /* TEXTO · quatro degraus, e os QUATRO passam 4,5:1 sobre `--surface` e sobre
+     `--surface-2`. Os dois últimos não passavam: `--ink-3` dava 3,66 e
+     `--ink-4` dava 2,79 — e não eram enfeite, eram texto que a pessoa precisa
+     ler ("sem linha de estoque", o nome da prestadora, a legenda da coluna).
+     Degrau que não dá para ler não é hierarquia, é dado escondido.
+     Medido:  14,40 · 9,22 · 6,29 · 4,99 */
+  --ink:var(--navy-600); --ink-2:#3A4767;
+  --ink-3:#55607A; --ink-4:#647087;
+
+  /* superfície */
+  --canvas:#F0F2F5; --surface:#FFFFFF; --surface-2:var(--neutral-50);
+  --line:#DEE3EC; --line-2:#ECEFF4;
+
+  /* a família navy com os nomes que o app já usa */
+  --teal:var(--navy-500); --teal-2:var(--navy-700);
+  --teal-soft:#E8ECF4;    --teal2:#AFC0E0;
+
+  /* coral: acento de marca */
+  --coral:var(--coral-500); --coral-2:var(--coral-600); --coral-soft:var(--coral-50);
+
+  /* quente herdado */
+  --bege:var(--camel-500); --bege-soft:#F6ECE4;
+
+  /* os cinco sentidos */
+  --perigo:#C2261A;  --perigo-fundo:#FCEBE9; --perigo-borda:#E9CBC7;
+  --atencao:#B45309; --atencao-fundo:#FDF2E4; --atencao-borda:#EDD6B4;
+  --ok:#24705A;      --ok-fundo:#E6F2ED;     --ok-borda:#BFDDD0;
+  --acao:var(--navy-500);   --acao-fundo:#E8ECF4;   --acao-borda:#C9D3E6;
+  /* AÇÃO CHEIA — o botão primário, o único bloco de cor sólida da tela.
+     Ela existe separada de `--acao` porque as duas andam em direções
+     opostas no tema escuro: o TEXTO clicável precisa clarear, o BLOCO
+     preenchido precisa continuar sendo um bloco. Quem escrevia
+     `background:var(--teal); color:var(--em-cor)` estava usando o mesmo
+     token para as duas coisas — e no escuro uma das duas tinha que quebrar. */
+  --acao-cheio:var(--navy-500); --acao-cheio-2:var(--navy-700); --em-acao:#FFFFFF;
+
+  /* SUPERFÍCIE INVERTIDA — o aviso que sobe, a barra de seleção, o número do
+     passo. Sete regras escreviam `background:var(--ink)`, e `--ink` é papel de
+     TEXTO: no tema escuro ele vira quase branco e o aviso ficava branco sobre
+     branco (medido: 1,10). A superfície invertida é um papel próprio — escura
+     nos dois temas, porque a função dela é destacar-se do fundo, e no escuro
+     quem se destaca é o painel mais CLARO, não o mais branco. */
+  --tinta-cheia:var(--navy-600); --em-tinta:#FFFFFF;
+
+  /* CLASSIFICAÇÃO ABC — é Pareto, não alarme, então não gasta nenhum dos cinco
+     sentidos. A faixa B usava camel.700 sobre bege claro: 4,35 no claro e 3,12
+     no escuro, em letra de 10px. Vira papel próprio, que vira com o tema. */
+  --abc-b-fundo:var(--bege-soft); --abc-b-tinta:#6E4526;
+  --neutro:#5B6583; --neutro-fundo:#EDF0F5; --neutro-fraco:var(--navy-300);
+  /* mesmo âmbar, com contraste de LEITURA: etiqueta de duas palavras aguenta
+     4,5:1; parágrafo de 12,5px não. */
+  --atencao-texto:#7C3A06;
+
+  /* nomes antigos, mesma fonte */
+  --red:var(--perigo); --red-soft:var(--perigo-fundo);
+  --amber:var(--atencao); --amber-soft:var(--atencao-fundo);
+  --slate:var(--neutro); --slate-soft:var(--neutro-fundo);
+
+  /* o trilho */
+  --rail:var(--navy-600); --rail-2:var(--navy-700);
+  --rail-linha:#33406355; --rail-hover:#2E3B60;
+  --rail-txt:#AEB9D6; --rail-txt-2:#7F8BAF;
+  /* ACENTO SOBRE O TRILHO. O trilho e escuro nos DOIS temas, entao o que
+     escreve em cima dele nao segue o tema — segue o trilho. Coral.500 sobre
+     o item ativo do trilho da 3,59: o contador de pendencias do menu e texto
+     de 11px, precisa de 4,5. Coral.300 da 5,53 ali e 7,16 no trilho parado. */
+  --rail-acento:var(--coral-300);
+  /* A MARCA MUDA DE ARTE, NÃO DE COR. O logotipo tem duas artes: uma para
+     fundo claro e outra para fundo escuro. No tema escuro o cartão de entrada
+     é navy, e a arte clara sumia — "MODA" e "ACESSÓRIOS" desapareciam e
+     sobrava o bichinho. Qual arte usar é papel de nível 2, como qualquer
+     outra decisão que vira com o tema. */
+  --logo-auth:var(--logo-claro);
+  /* A MARCA DE QUEM FEZ. Mesma regra do logotipo da Moda Bicho: duas artes,
+     uma para fundo claro e outra para fundo escuro. A marca da SINAL é
+     monocromática, então a arte clara é a mesma forma com a tinta clareada —
+     não é outra marca, é a mesma em outro tom. Medido: a tinta original
+     (#696969) dá 4,89 sobre o chão claro e 2,62 sobre o navy; a clara dá
+     8,61 sobre o navy do trilho e 11,75 sobre o navy do tema escuro.
+     `--logo-sinal` acompanha o tema; `--logo-sinal-trilho` é sempre a clara,
+     porque o trilho é navy nos dois temas. */
+  --logo-sinal:url("data:image/png;base64,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");
+  --logo-sinal-trilho:url("data:image/png;base64,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");
+
+  /* PERIGO SOBRE O TRILHO. `--perigo` do tema claro da 2,46 sobre o navy do
+     trilho — ilegivel. O vermelho continua sendo vermelho (a gramatica nao
+     muda), so clareia o bastante para caber ali: 5,93. */
+  --rail-perigo:#F08A80;
+
+  /* linha de tabela e superfície clicável */
+  --linha-hover:var(--neutral-50);
+  --acao-bg:#FBFCFE; --acao-bg-hover:#EDF2F9;
+
+  /* a barra do sistema operacional / navegador */
+  --barra-sistema:var(--navy-500);
+
+  /* TEXTO SOBRE COR CHEIA — botão primário, trilho, etiqueta preenchida.
+     Existe como token para não virar `#fff` solto: no tema escuro o fundo
+     saturado muda, e quem escreve `#fff` no componente não fica sabendo. */
+  --em-cor:#FFFFFF;
+  /* TEXTO SOBRE CORAL. Branco sobre coral dá 3,10 no claro e 2,60 no escuro —
+     o próprio manual marca coral.400/500 como "AA UI", que serve para caixa e
+     ícone, NÃO para texto. Sobre coral, a tinta é navy: 5,91 no claro e 7,06
+     no escuro. É o chip ativo, o badge do menu e qualquer etiqueta cheia. */
+  --em-coral:var(--navy-800);
+  /* e a mesma pergunta para os outros preenchimentos cheios: no tema claro o
+     `--perigo` é escuro (texto branco); no escuro ele é claro (texto navy). Um
+     token só não resolve os dois — por isso são quatro, um por sentido. */
+  --em-perigo:#FFFFFF; --em-atencao:#FFFFFF; --em-ok:#FFFFFF;
+
+  /* =========================================================================
+     NÍVEL 3 · AS MEDIDAS
+     ========================================================================= */
+
+  /* espaço · múltiplo de 4, como o manual */
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px;
+  --sp5:24px; --sp6:32px; --sp7:48px; --sp8:64px;
+
+  /* TIPO · a escala do PCP, não a da loja.
+     O manual manda Display 48 / H1 36 / Body 16 — medida de vitrine. Em tela
+     de produção, um H1 de 36px come três linhas de tabela. Esta é a mesma
+     proporção, deslocada para densidade de console: oito degraus no lugar dos
+     29 tamanhos distintos que a varredura achou. */
+  --fs-num-g:22px; /* número grande de painel — o único degrau de vitrine */
+  --fs-h1:20px;    /* título da página */
+  --fs-h2:16px;    /* título de seção */
+  --fs-h3:14px;    /* título de bloco, cabeçalho de janela */
+  --fs-corpo:13px; /* o padrão da interface */
+  --fs-dado:12.5px;/* célula de tabela, campo */
+  --fs-apoio:12px; /* legenda, ajuda */
+  --fs-micro:11px; /* etiqueta, badge, eyebrow */
+  --fs-nano:10px;  /* carimbo, unidade */
+
+  /* IMPRESSÃO tem escala PRÓPRIA, e é de propósito: a folha é medida em
+     milímetro, não em pixel de tela. Os 6 a 8,5px do romaneio e da etiqueta
+     não são "fonte pequena demais" — são o tamanho certo no papel. Encaixá-los
+     na escala de tela encheria a folha e tiraria linha do romaneio. */
+  /* o trilho recolhido: rótulo de 8,5px sob o ícone. Não é a escala de tela —
+     é legenda de ícone, e por isso tem degrau próprio e nomeado. */
+  --fs-trilho-mini:8.5px;
+
+  /* PAPEL: preto é preto na folha. Na tela o manual proíbe preto puro em
+     texto; na impressora ele é a tinta. */
+  --pr-tinta:#000000; --pr-papel:#FFFFFF;
+  /* segundo degrau da folha: o que a pessoa lê depois do nome (descrição,
+     observação). Cinza de impressora, não cinza de tela. */
+  --pr-tinta-2:#3F3F46;
+
+  --pr-titulo:11px; --pr-corpo:8.5px; --pr-apoio:8px;
+  --pr-micro:7.5px; --pr-nano:6.5px; --pr-selo:6px;
+
+  --lh-titulo:1.25; --lh-corpo:1.5;
+
+  --ff-titulo:'Red Hat Display',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --ff-corpo:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --ff-mono:'IBM Plex Mono',ui-monospace,'SF Mono',monospace;
+  --mono:var(--ff-mono);
+
+  /* RAIO · quatro, e um pill. O manual usa 8–24 porque card de vitrine é
+     grande; célula de tabela com canto de 24px vira ruído. */
+  --r-1:4px;   /* etiqueta, campo pequeno, célula */
+  --r-2:6px;   /* botão, input, chip */
+  --r-3:8px;   /* card, painel, janela */
+  --r-pill:999px;
+  /* nomes antigos, apontados para a escala nova */
+  --r-xs:var(--r-1); --r-sm:var(--r-2); --r-md:var(--r-3);
+  --r-lg:var(--r-3); --r-xl:var(--r-3); --r:var(--r-3);
+
+  /* SOMBRA · três, e a regra do manual: sombra em NAVY, nunca em preto puro.
+     Console industrial vive de borda, não de elevação — a varredura achou 41
+     sombras distintas, e quase todas eram a mesma ideia escrita de novo. */
+  --sh-0:none;
+  --sh-1:0 1px 2px rgba(30,41,69,.06);
+  --sh-2:0 2px 8px -2px rgba(30,41,69,.12), 0 1px 2px rgba(30,41,69,.05);
+  --sh-3:0 12px 32px -12px rgba(30,41,69,.30), 0 2px 6px rgba(30,41,69,.07);
+  /* duas elevações com papel próprio, e só duas: a gaveta que entra pela
+     lateral e o realce da ação principal. Fora estas, nada flutua. */
+  --sh-gaveta:-8px 0 40px rgba(30,41,69,.20);
+  --sh-acao:0 2px 8px -2px rgba(235,105,108,.45);
+  --el1:var(--sh-1); --el2:var(--sh-2); --el3:var(--sh-3);
+  --shadow:var(--sh-2);
+
+  /* VÉUS SOBRE O TRILHO ESCURO — branco a baixa opacidade. Existem como token
+     porque no tema escuro o trilho já é quase preto e o mesmo véu precisa ser
+     um pouco mais forte para aparecer. */
+  --veu-1:rgba(255,255,255,.055);
+  --veu-2:rgba(255,255,255,.085);
+  --veu-3:rgba(255,255,255,.11);
+  --veu-4:rgba(255,255,255,.16);
+  --veu-modal:rgba(23,31,52,.52);
+
+  /* MARCADOR LATERAL — a barra de 3px na borda esquerda que diz o estado da
+     linha. A varredura contou 40 "sombras" distintas; a maioria era isto, que
+     não é elevação nenhuma: é sinalização, e por isso tem token próprio. */
+  --marca-lat:3px 0 0;
+
+  /* foco */
+  --ring:0 0 0 3px rgba(42,53,81,.14);
+  --ring-coral:0 0 0 3px rgba(235,105,108,.24);
+
+  /* QUEBRAS · quatro. A varredura achou 21 larguras distintas, então cada tela
+     quebrava na sua. Estas ficam aqui como documentação: media query não lê
+     variável, então o valor está repetido nos arquivos — mas é UM valor.
+       --bp-xl 1200  trilho + conteúdo largo
+       --bp-lg  900  trilho recolhe
+       --bp-md  720  vira uma coluna
+       --bp-sm  560  celular estreito                                        */
+  --bp-xl:1200px; --bp-lg:900px; --bp-md:720px; --bp-sm:560px;
+
+  color-scheme:light;
+}
+
+/* ===========================================================================
+   TEMA ESCURO · NATIVO, NÃO INVERSÃO
+   ---------------------------------------------------------------------------
+   Só o NÍVEL 2 é redefinido. Nenhum componente sabe que existe tema escuro —
+   é isso que faz caber num bloco em vez de numa varredura.
+
+   A regra que vem do manual: no escuro a superfície ELEVADA fica mais clara
+   que a base (no claro é o contrário). Inverter as cores do tema claro daria
+   um cinza chapado e texto branco puro — que o próprio manual proíbe.
+
+   `data-tema` é escolha da pessoa e ganha do sistema. Sem escolha, o sistema
+   decide. É por isso que a regra de sistema está guardada com `:not()`.
+   =========================================================================== */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) { color-scheme:dark; }
+}
+:root[data-tema="escuro"] { color-scheme:dark; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --em-cor:#F4F7FD;  /* o manual proíbe branco puro em texto */
+    --ink:#E7ECF6; --ink-2:#B3BED6; --ink-3:#8592B1; --ink-4:#7C89A6;  /* 5,23 sobre a superfície escura */
+    --em-coral:var(--navy-900);
+  --em-perigo:var(--navy-900); --em-atencao:var(--navy-900); --em-ok:var(--navy-900);
+    --em-perigo:var(--navy-900); --em-atencao:var(--navy-900); --em-ok:var(--navy-900);
+    --canvas:var(--navy-900); --surface:var(--navy-800); --surface-2:#111A30;
+    --line:#28324B; --line-2:#1D2540;
+    --teal:#8FA3CC; --teal-2:#A9BADD;   /* no escuro o navy vira TINTA, não fundo */
+  --teal-soft:#1B2540; --teal2:#7E8FB8;
+    --coral:var(--coral-400); --coral-2:var(--coral-300); --coral-soft:#2A1B1E;
+    --bege:var(--camel-300); --bege-soft:#2A2119;
+    --perigo:#F08A80;  --perigo-fundo:#33191A; --perigo-borda:#5A2A28;
+    --atencao:#E8A33D; --atencao-fundo:#2E2415; --atencao-borda:#54401E;
+    --atencao-texto:#F0BC6B;
+    --ok:#57BF9C;      --ok-fundo:#132A24;     --ok-borda:#25473C;
+    --acao:#8FA3CC;    --acao-fundo:#1B2540;   --acao-borda:#2E3B60;
+  --acao-cheio:#8FA3CC; --acao-cheio-2:#A9BADD; --em-acao:var(--navy-900);
+  --logo-auth:var(--logo-rail);
+  --logo-sinal:url("data:image/png;base64,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");
+  --tinta-cheia:#2E3B60; --em-tinta:#F4F7FD;
+  --abc-b-fundo:#2A2119; --abc-b-tinta:var(--camel-300);
+    --neutro:#98A3BF;  --neutro-fundo:#19223A; --neutro-fraco:#5E6A87;
+    --rail:var(--navy-900); --rail-2:#04080F;
+    --rail-linha:#1E2945AA; --rail-hover:#16203A;
+    --rail-txt:#B6C1DC; --rail-txt-2:#76829F;
+    --linha-hover:#141E36; --acao-bg:#111A30; --acao-bg-hover:#1A2540;
+    --barra-sistema:var(--navy-900);
+    --veu-1:rgba(255,255,255,.07);
+    --veu-2:rgba(255,255,255,.11);
+    --veu-3:rgba(255,255,255,.14);
+    --veu-4:rgba(255,255,255,.20);
+    --veu-modal:rgba(0,0,0,.62);
+    --sh-gaveta:-8px 0 40px rgba(0,0,0,.55);
+    --sh-acao:0 2px 8px -2px rgba(239,128,131,.35);
+    --sh-1:0 1px 2px rgba(0,0,0,.40);
+    --sh-2:0 2px 8px -2px rgba(0,0,0,.55), 0 1px 2px rgba(0,0,0,.35);
+    --sh-3:0 12px 32px -12px rgba(0,0,0,.70), 0 2px 6px rgba(0,0,0,.40);
+    --ring:0 0 0 3px rgba(143,163,204,.20);
+    --ring-coral:0 0 0 3px rgba(239,128,131,.28);
+  }
+}
+:root[data-tema="escuro"] {
+    --em-cor:#F4F7FD;  /* o manual proíbe branco puro em texto */
+  --ink:#E7ECF6; --ink-2:#B3BED6; --ink-3:#8592B1; --ink-4:#7C89A6;  /* 5,23 sobre a superfície escura */
+  --em-coral:var(--navy-900);
+  --em-perigo:var(--navy-900); --em-atencao:var(--navy-900); --em-ok:var(--navy-900);
+  --canvas:var(--navy-900); --surface:var(--navy-800); --surface-2:#111A30;
+  --line:#28324B; --line-2:#1D2540;
+  --teal:#8FA3CC; --teal-2:#A9BADD;   /* no escuro o navy vira TINTA, não fundo */
+  --teal-soft:#1B2540; --teal2:#7E8FB8;
+  --coral:var(--coral-400); --coral-2:var(--coral-300); --coral-soft:#2A1B1E;
+  --bege:var(--camel-300); --bege-soft:#2A2119;
+  --perigo:#F08A80;  --perigo-fundo:#33191A; --perigo-borda:#5A2A28;
+  --atencao:#E8A33D; --atencao-fundo:#2E2415; --atencao-borda:#54401E;
+  --atencao-texto:#F0BC6B;
+  --ok:#57BF9C;      --ok-fundo:#132A24;     --ok-borda:#25473C;
+  --acao:#8FA3CC;    --acao-fundo:#1B2540;   --acao-borda:#2E3B60;
+  --acao-cheio:#8FA3CC; --acao-cheio-2:#A9BADD; --em-acao:var(--navy-900);
+  --logo-auth:var(--logo-rail);
+  --logo-sinal:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAABoCAMAAAB8HT2JAAAAwFBMVEUAAADe3t7e3t7i4uLg4ODc3NzIyMje3t7e3t7e3t7e3t7e3t7////g4ODg4ODg4ODg4ODg4ODg4OAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACTDPNnAAAAQHRSTlMALfwE/gsBb07Rja8BJ2dQjKrZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAtQpldgAACltJREFUeNrtnYmSozgMQDFCNgYys7v//7Frg0+Qr8Tpnmnimprq7nA+JFmXyTCUB+f6f1ADmR8PRPUX//lnGBKKC0sMQPzwMqi0SCE+WHYgmE3vjgqRVYxDvO6NCqpIefG6Ma4WVDuu7b5i1Yhqt/Y3Fa4nUBlctxOr7UlWShf5vYSLD0+j2nHdi9ZLrDStGwnWi6x2VbyJCgLrMOAOqtiJ1S1o8QFZp/HjzXxHVjeQrY6sfvykCIx9aNWm+R59YbGfmxLkfZXwRxv5N7D6wbTewKomCQEIuvKh/13TYRyOcf49ddgt86n5DMjHh9nD6ssM9+OcvWXkzRZHiMHxaj342plv/4+/UwmLiqinS5zFqsciZjR/CiyD0OMXO67W/u7+cLkl9kt/PBMfbuYzIagrgjlzWH1gZA/2ZiXMKyJX1zCv4+TGuCpeGN388YEwj9b+PkmktAmG+TgOwQOGxew7X4ioGO+4ioWGpc67zLPGbDZnbxsp0VLXNUt1Z8FQFOagBKku8vizh2U3FNRtaVj7xwQsjtLsug54hSXTRx02rlj9+4+YRasSmg0fDF8Me5RYrREpg2sBRysNaxwpQ52BheGu50+1ZGVg4SDYvLIRF7N57Z2LZZX7WJe52sYnWMkrq/3JOxXLwCLvKwNLa6HddT6LVhkWzlKKYWkRLCEDA6POvYoq+aIsKgfPyh3P6QmUJWvEbWuAxbk/3cUyFWHN87yw1UhWhWAdpvisM+NSg4tTF2Cf9CTVPKjMpzq8lxoswqKMcRpWtKfENjVUPpZQYqF41Sb8lpFWGoXrCdFCe1vKotvrA+FOwTgUJWtEDg2wRHD5Zw+hBEttMHuHpCxWtH0xt1ueEC/PajsOqAyUfnCofHj9g7H4dsLKwlKihQ2wjvPRk14RVuia4pNiZYVLYKOvpeamyWhE4Bejnx/ZDiIvWVb+CHk9wzI7TnKXr0m2w0LY9misbN7XDKrjITfqoZubYoVQtGQoNXlYV4cpDYsflBYk9bBWsipSfo8Sqwpal+ln14rL7To9Om63IFlG/qoka78H5TQc5xX8SVhFwSqz2p9Zg2OqTmku7qxI9q4OXygJS9CilYIF5nxqTlioh9QNFi4VrPR5GmA5CBf3EDnTRlD+3t34FKzJPMDz/klYRgvXgd6gQQ3zWjiPlWOud7Vc7MGICU1OCyuEOxOz80OcgUrBQiOvKrZD+5TgOVh5BZJTHatJ1tcusrC0o8EPtzGphmxwogVlWFbr99MdRmt5Fha8roRlRYz00KshJ8MLLAXSjHvR4kVYwOfDYwDuAodoiwZYXZRwv4XaRA3Yi6PyR4FmpdVwsKIV3V4CltVCdTa7xRTJdD2sLSdY61TPKj8jciJ/NMp8HjkDi1snIswC0rC4N1Tofo4eUz2szB0+WItgjbLa00JSMFpgkUegYUVBkJUyCbwzLLZMLbCyVut0/TaunYdMSSUHy4kWbFCCFThX7syhE98HlmyDtdbC2uz8pPzLIY0rB8ua6lChSFheC/Vscj5kR1hj46gOD33iUhEO5r9KWMr6gBMtH0+TsII/gs8CRsF0PaxcZnRqhDXX1i04oE1k6IxYWJSrhDUEooU5WF4LIXpM6MH0gIVLI6ys0aKTNAeu9bdeowBNsJTT5EQL07DOlRvnPARxaRfJWlth5ZyHa640KoHpohxgAywnIz4spmC5p+ILtZcovAss2QprbUjEqxk9SClOhzbGtj4PiwOMY+RhUrCsFsqNx25LsNGfBwtKhUNdkNZ5h1pYzg1QxjoNi+MpGjQpiDBl0QdWo32f5KOljI97STqqFumpEWphKdGSUaqHgHWN2eHqxP8NsLTSoYgq+EoZg26HAqxAtI6gh4BlDZsM/2SKFy64/wvU0AgXxg0Pk/QxbgmWFq0wVUPAsm5V4LoGTjx+KyxsLOIP+6z/WENT7yOREixP5xCtKywqJ2s10wP8412HAJe6sbDYNrnyaRGWU6ljCwqWSHtekvM/1Cl95CIu7TUJ34xgu6/KsLxvq3ehYBFlpEshrgeshxj7hTv5VlztX6Er31/gJGH5VI3WqQssvwMiuIF4cuK/JZCWL/Qt6+v2RhJ3DamB5bOAGxCwjBaeGm543K7zPSkafKXJW5fvzQnN7FYBKxItp5QeljG7YomGVRkctjZY0C/tIB6vdcS7YqixMTWwwlTNGZY7XthWFvSC2YJJH1gd08pV63i8KwC58n1UXI3iaTZGsHj+aVu731CRZp3mw/qCxW7RN9rQyyDbVAdr86maEywXMyfHsWGnImu3Ulhcb0FMKmI4q1fB8kHPOsSwuE9ep56vCTL7wOpWZA1haZliYkUSVhiK1MHSWVdXew1hmeLq1WI5q2Wc+G69Dv3L99wsFXAJTqrnqAFWKFoRLKeFumf1NEwfzlERa4DF+zSG1PbgIp//0w+WaHN8EpaPpxkEsJwWSuquZZC5aWk5yooWVroPorb1L4hQtmtCkItmm+URK0cvaoUzf10g9N93Hx5gCWLKfs1sVWZrKrSVxoU8OaU6HeKcby0s189rutzs3stEd4EFZQupLWjHNsmKurR6ePlDbGSb9aXjyKbVTSBSDcv7Zx6WnwuplTzuQy3CLTar2IBbpFVqV44dB1vD0r3K55sWYQdDNayzR3V0NVjdpAj4XgneBKvc2u3zAV1au51o6S54IFcjsWZY7OxrBlpIZbR5gLIJVnn9XG7RwFqxaIDT63Y0LaV6OsWgF/TatIOvHtfCOokW6nV4ds0cuSrN8jHbWlh6CTIx6udDE1OnlqOI9uUoXg6mceZ+Fa8tJNpCYAMsH08bAG5dwjogHSv4TstAsmpGzZqwRV4XOsmlZk9qUZpPi4rdY0XmUqXOA2uAFaycOmA5LRScXrzEnSfrYS0VWYC6JXTqdtYwdBjlKmpQscQiXF+LHqWUo1tzpuw+8mZYPp4+wnCO8tIAQq8TA+U9QHaut3mvFtHajZdY1lXKff139bpfMtEXTrHBasNjPc/QDCvkvwMym8qUzXa1jtn1uGaSE1uraEXrfht2IA2s0kTSCgas2mC51of95lxDkkjDEr5lqQXWOxeUp1KkygKvZyN4VKShuKCcghWuKUQnNyNLwzIH08E0yAZYb3xVAabTokO0OnaynTS5XodkABPG0+rmnBamX8LBXfitfsw7kidY3/ESDF3/eojV2nap3+pAd9HMlxUWmE1Kq09FsR0agm3ykiXPkvUuRczWKfZmP/2q+Zk9jtaO8yoxU+hzv1+9xPiJ4745d1vmX+5ybATBgenBm4Oet7xvDIJuP4RXX2T9ZW+o4b3fy5Z5AcbZ1ujHu5Fb8n2kfyc359FPuVOfN0+MZ7IPn9dnvZHWz377ZmdF3H72uzfhK437Xz+6vtT1h4/P64K/xYGAe7xBHz46+KWG605fNfCqcN2K1YuGC+729SjPqyLe8XuK4ClcgMMNx3PChXf9bjXebOjx5l9yiB/XqiXzWGe7Pt+daXEBlEh9UAW8eO4LbD+kIlw7ik2nysNFY/tXBPjPbzD+B79Ug4TZqAv3AAAAAElFTkSuQmCC");
+  --tinta-cheia:#2E3B60; --em-tinta:#F4F7FD;
+  --abc-b-fundo:#2A2119; --abc-b-tinta:var(--camel-300);
+  --neutro:#98A3BF;  --neutro-fundo:#19223A; --neutro-fraco:#5E6A87;
+  --rail:var(--navy-900); --rail-2:#04080F;
+  --rail-linha:#1E2945AA; --rail-hover:#16203A;
+  --rail-txt:#B6C1DC; --rail-txt-2:#76829F;
+  --linha-hover:#141E36; --acao-bg:#111A30; --acao-bg-hover:#1A2540;
+  --barra-sistema:var(--navy-900);
+  --sh-gaveta:-8px 0 40px rgba(0,0,0,.55);
+  --sh-acao:0 2px 8px -2px rgba(239,128,131,.35);
+  --sh-1:0 1px 2px rgba(0,0,0,.40);
+  --sh-2:0 2px 8px -2px rgba(0,0,0,.55), 0 1px 2px rgba(0,0,0,.35);
+  --sh-3:0 12px 32px -12px rgba(0,0,0,.70), 0 2px 6px rgba(0,0,0,.40);
+  --ring:0 0 0 3px rgba(143,163,204,.20);
+  --ring-coral:0 0 0 3px rgba(239,128,131,.28);
+}
+/* quem já escolheu claro fica no claro, mesmo com o sistema no escuro */
+:root[data-tema="claro"] { color-scheme:light; }

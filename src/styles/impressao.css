@@ -1,0 +1,284 @@
+/* ---------- impressão (ordem de corte, romaneio, fechamento) ---------- */
+.folha{display:none;}
+@media print{
+  @page{size:A4;margin:14mm 12mm;}
+  body.imprimindo #app,body.imprimindo #toasts,
+  body.imprimindo .shell,body.imprimindo .toasts,body.imprimindo .ov,body.imprimindo .drawer{display:none!important;}
+  body.imprimindo .folha{display:block;font-family:var(--ff-corpo);color:var(--ink);font-size:12px;}
+  .folha .cab-f{display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--teal);padding-bottom:10px;margin-bottom:6px;}
+  .folha .cab-f .lg{width:158px;height:48px;background:var(--logo-claro) left center/contain no-repeat;flex:0 0 158px;}
+  .folha .cab-f h1{margin:0;font-size:19px;letter-spacing:-.01em;color:var(--rail);}
+  .folha .cab-f .sub-f{font-size:11px;color:var(--neutro);margin-top:2px;}
+  .folha .cab-f .dt{margin-left:auto;text-align:right;font-size:11px;color:var(--neutro);line-height:1.5;}
+  .folha table{width:100%;border-collapse:collapse;margin-top:10px;}
+  .folha th{background:var(--teal);color:var(--pr-papel);text-align:left;padding:6px 8px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;}
+  .folha td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .folha tr{page-break-inside:avoid;}
+  .folha .qtd-g{font-size:16px;font-weight:800;font-family:'IBM Plex Mono',monospace;}
+  .folha .sku-f{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11.5px;}
+  .folha .cx{display:inline-block;width:13px;height:13px;border:1.8px solid var(--teal);border-radius:3px;}
+  .folha .pill{display:inline-block;padding:1.5px 8px;border:1.2px solid var(--teal);border-radius:999px;font-size:9.5px;font-weight:700;}
+  .folha .pill.critico{background:var(--perigo);border-color:var(--perigo);color:var(--pr-papel);}
+  .folha .tot-f{margin-top:12px;display:flex;gap:26px;justify-content:flex-end;font-size:12px;}
+  .folha .tot-f b{font-size:15px;}
+  .folha .apagar-f{border:2.5px solid var(--teal);border-radius:10px;padding:10px 16px;font-size:13px;}
+  .folha .ass{display:flex;gap:40px;margin-top:34px;}
+  .folha .ass div{flex:1;border-top:1.5px solid var(--teal);padding-top:5px;font-size:10.5px;color:var(--neutro);text-align:center;}
+  .folha .quebra{page-break-after:always;}
+  .folha .obs-f{margin-top:8px;font-size:10.5px;color:var(--neutro);}
+  /* papéis de produção: canhotos didáticos */
+  .slip-comofaz{border:1.6px dashed var(--teal);border-radius:8px;padding:6px 10px;font-size:9.5px;margin-top:8px;line-height:1.6;background:var(--surface-2);}
+  /* colunas (e não grid): o navegador respeita "não cortar canhoto" na virada da página */
+  .papeis{column-count:2;column-gap:5mm;margin-top:8px;}
+  .slip{display:inline-block;width:100%;box-sizing:border-box;margin:0 0 5mm;break-inside:avoid;page-break-inside:avoid;
+    border:1.8px solid var(--teal);border-radius:9px;font-size:9px;line-height:1.5;overflow:hidden;}
+  .slip-band{display:flex;align-items:center;gap:8px;background:var(--teal);color:var(--pr-papel);padding:4px 9px;}
+  .slip-proc{font-weight:800;font-size:12.5px;letter-spacing:.05em;}
+  .slip-num{font-size:9px;}
+  .slip-num b{font-size:16px;font-family:'IBM Plex Mono',monospace;}
+  .slip-band .pill{background:var(--pr-papel);color:var(--teal);border:0;font-size:8.5px;flex:0 0 auto;white-space:nowrap;}
+  .slip-band .pill.critico{background:var(--coral);color:var(--pr-papel);}
+  .slip-id{display:flex;align-items:center;gap:8px;padding:2px 9px 2px;}
+  /* quantidade e QR na mesma faixa: economiza altura de bobina e deixa o balão fora do canto */
+  .slip-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:4px 9px 2px;}
+  .slip-sku{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px;letter-spacing:-.01em;}
+  .slip-desc{font-size:var(--pr-corpo);color:var(--pr-tinta-2);margin-top:1px;}
+  .slip-qtd{border:2px solid var(--teal);border-radius:7px;padding:2px 10px;display:flex;align-items:center;gap:6px;flex:0 0 auto;margin:0 auto;}
+  .slip-qtd small{font-size:6.5px;letter-spacing:.1em;color:var(--neutro);white-space:nowrap;}
+  .slip-qtd b{font-size:15px;font-family:'IBM Plex Mono',monospace;line-height:1;}
+  .slip-qr{flex:1 1 0;text-align:center;line-height:1.25;min-width:0;}
+  .slip-qr small{display:block;margin-top:2px;font-size:7.5px;letter-spacing:.02em;}
+  .slip-qr svg{display:block;width:15mm;height:15mm;}
+  .slip-qr small{display:block;font-size:6px;letter-spacing:.06em;font-weight:700;color:var(--teal);margin-top:1px;}
+  .slip-linha{margin:3px 9px;font-size:8.5px;color:var(--rail);line-height:1.9;}
+  .slip .cx{display:inline-block;width:10px;height:10px;border:1.6px solid var(--teal);border-radius:3px;flex:0 0 auto;}
+  .slip .cx.on{position:relative;background:var(--pr-papel);}
+  .slip .cx.on::after{content:"×";position:absolute;inset:0;display:grid;place-items:center;font-size:9px;font-weight:800;color:var(--teal);line-height:1;}
+  .slip .ckl{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;margin-right:9px;vertical-align:middle;}
+  /* grade de 2 colunas: os itens ficam alinhados um sob o outro, e o rótulo
+     sai de dentro da fila — era ele que empurrava o primeiro item e desalinhava tudo */
+  .slip-ckl{display:block;line-height:1.9;}
+  .slip-ckl .ckl-tit{display:block;margin-bottom:1px;}
+  .slip-ckl .ckl-grade{display:grid;grid-template-columns:1fr 1fr;gap:0 8px;}
+  .slip-ckl .ckl{min-width:0;margin-right:0;}
+  .slip .slip-flex{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;}
+  .slip .cxbox{flex:1 1 auto;min-width:40px;height:15px;border:1.3px solid var(--teal);border-radius:5px;background:var(--pr-papel);}
+  /* espaço de escrever sem caixa: só o risco embaixo, como numa ficha de papel */
+  .slip .linha-esc{flex:1 1 auto;min-width:40px;height:14px;border-bottom:1.3px solid var(--teal);}
+  .slip .emb-l{display:flex;align-items:center;gap:4px;flex-wrap:wrap;line-height:2;}
+  .slip .emb-l + .emb-l{margin-top:1px;}
+  .slip-t{width:calc(100% - 18px);border-collapse:collapse;margin:3px 9px;}
+  .slip-t th{background:var(--neutro-fundo);color:var(--rail);border:1.2px solid var(--teal);padding:3px 5px;font-size:8px;text-align:left;}
+  .slip-ord{display:inline-grid;place-items:center;width:12px;height:12px;border-radius:50%;background:var(--coral);color:var(--pr-papel);font-size:8px;font-weight:800;vertical-align:-2px;}
+  .slip-t td{border:1.2px solid var(--teal);padding:5px;font-size:8.5px;line-height:2;vertical-align:top;word-wrap:break-word;overflow-wrap:break-word;}
+  /* só o contorno externo: o espaço em branco depois dos dois pontos é onde se escreve */
+  .slip-nome{background:var(--surface-2);border:1.4px solid var(--teal);border-radius:6px;padding:5px 8px;margin:4px 9px !important;min-height:22px;}
+  body.imprimindo.cupom .slip .ckl{margin-right:4px;}
+  .slip-t td.et,.slip-t th.et{background:var(--neutro-fundo);font-weight:800;white-space:nowrap;letter-spacing:.03em;}
+  .slip-t th.qc,.slip-t td.qc{text-align:center;white-space:nowrap;}
+  .slip-t td.vazio{min-width:52px;height:15px;}
+  .slip-t tr.emb td{background:var(--surface-2);line-height:2.1;}
+  .slip-preencher{display:inline-block;min-width:34px;max-width:100%;border-bottom:1.4px solid var(--teal);height:10px;vertical-align:baseline;}
+  .slip .qtd-g{font-size:11.5px;}
+  .slip-rodape{margin:2px 9px;font-size:8.5px;background:var(--surface-2);border-radius:6px;padding:3px 7px;}
+  /* valor que veio do cadastro: é instrução, não opção a marcar */
+  .emb-def{font-size:11px;letter-spacing:.02em;}
+}
+/* cupom térmico 80mm */
+@media print{
+  body.cupom{font-size:12px;}
+}
+body.cupom .folha{width:72mm;}
+@media print{
+  body.imprimindo.cupom .folha .papeis{column-count:auto;columns:auto;display:block;}
+  body.imprimindo.cupom .slip{display:block;border:0;border-radius:0;padding:0 0 3mm;font-size:11px;width:72mm;page-break-inside:avoid;margin-bottom:2mm;}
+  /* ---------- um pedido, uma página ----------
+     É o que faz a impressora cortar entre um canhoto e o outro: o driver corta
+     no fim de cada página, e cada página passa a ser exatamente um pedido. O
+     último não quebra, senão sai uma tira em branco no fim do rolo. */
+  body.imprimindo.cupom.corta .slip{break-after:page;page-break-after:always;}
+  body.imprimindo.cupom.corta .slip:last-child{break-after:auto;page-break-after:auto;margin-bottom:0;}
+  /* qualquer sobra embaixo da folha empurra uma página inteira a mais — e uma
+     página a mais numa térmica é um pedaço de papel em branco cortado fora */
+  body.imprimindo.cupom.corta .folha{padding-bottom:0;margin-bottom:0;}
+  body.imprimindo.cupom.corta .papeis{margin-bottom:0;}
+  /* a marca de rasgar, para quem não tem corte automático no driver */
+  body.imprimindo.cupom.marca .slip:not(:last-child)::after{
+    content:"✂ - - - - - - - - - - - - - - - - - - - - - -";
+    display:block;margin:3mm 0 0;font-size:9px;letter-spacing:.5px;color:var(--pr-tinta);text-align:center;}
+  body.imprimindo.cupom .slip-band{flex-wrap:nowrap;gap:5px;}
+  body.imprimindo.cupom .slip-proc{font-size:15px;margin-left:auto;margin-right:0;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.03em;}
+  body.imprimindo.cupom .slip-num{flex:0 0 auto;white-space:nowrap;}
+  body.imprimindo.cupom .slip-num b{font-size:19px;}
+  /* o CRÍTICO vinha sendo empurrado para fora da bobina pelo nome do processo */
+  body.imprimindo.cupom .slip-band .pill{font-size:8px;padding:1px 5px;flex:0 0 auto;}
+  body.imprimindo.cupom .slip-id{flex-wrap:wrap;}
+  /* ---- margem de segurança do canhoto inteiro ----
+     A bobina nunca entra perfeitamente alinhada no mecanismo, e o que estiver
+     encostado na borda sai cortado. Em vez de afastar elemento por elemento,
+     o canhoto todo recua 3mm de cada lado e os recuos internos são zerados,
+     para não somar duas margens e espremer o conteúdo. */
+  body.imprimindo.cupom .slip{padding:0 3mm 4mm;}
+  body.imprimindo.cupom .slip-band{padding:2px 0 3px;}
+  body.imprimindo.cupom .slip-linha{margin-left:0;margin-right:0;}
+  body.imprimindo.cupom .slip-nome{margin-left:0 !important;margin-right:0 !important;}
+  body.imprimindo.cupom .slip-id{padding-left:0;padding-right:0;}
+  body.imprimindo.cupom .slip-rodape{margin-left:0;margin-right:0;}
+  body.imprimindo.cupom .slip-comofaz{margin-left:0;margin-right:0;}
+  body.imprimindo.cupom .slip-topo{padding:4px 0 2px;gap:6px;}
+  /* o QR fica à esquerda, longe da borda direita onde a bobina costuma cortar,
+     e com zona clara de 4 módulos: sem essa moldura branca o leitor não acha o código */
+  body.imprimindo.cupom .slip-qr{margin:0;}
+  body.imprimindo.cupom .slip-qtd{margin-right:0;}
+  body.imprimindo.cupom .slip-qtd b{font-size:18px;}
+  body.imprimindo.cupom .slip-sku{font-size:15px;}
+  body.imprimindo.cupom .slip-desc{font-size:10.5px;}
+  body.imprimindo.cupom .slip-qtd b{font-size:16px;}
+  body.imprimindo.cupom .slip .cx{width:12px;height:12px;}
+  body.imprimindo.cupom .slip-linha{font-size:10px;}
+  /* table-layout:fixed é o que faz a tabela obedecer à largura: sem isso a coluna
+     CONF. MB impõe sua largura mínima e a tabela transborda a bobina inteira. */
+  body.imprimindo.cupom .slip-t{width:100%;margin:3px 0;table-layout:fixed;}
+  /* trava geral: nada dentro do canhoto pode ser mais largo que o canhoto.
+     Vale para qualquer coisa que eu venha a acrescentar depois. */
+  body.imprimindo.cupom .slip *{max-width:100%;box-sizing:border-box;}
+  body.imprimindo.cupom .slip{overflow-x:hidden;}
+  body.imprimindo.cupom .slip-t th.qc{font-size:8.5px;letter-spacing:-.01em;}
+  /* com table-layout:fixed, texto maior que a célula vaza para fora da tabela;
+     o cabeçalho precisa poder quebrar e ter recuo curto */
+  body.imprimindo.cupom .slip-t th{padding:2px 3px;overflow-wrap:break-word;word-break:break-word;}
+  body.imprimindo.cupom .slip-t td{overflow:hidden;}
+  /* min-widths pensados para o A4: na bobina eles é que empurravam a tabela para fora */
+  body.imprimindo.cupom .slip-t td.vazio{min-width:0;}
+  body.imprimindo.cupom .slip .cxbox{min-width:0;}
+  /* Se a linha não couber, ela QUEBRA — nunca corta. Contas de largura em pixels
+     nunca batem exatamente com o que a impressora faz, então a quebra é a garantia. */
+  body.imprimindo.cupom .slip .slip-flex{flex-wrap:wrap;gap:4px;row-gap:1px;}
+  body.imprimindo.cupom .slip .est-par{display:inline-flex;gap:8px;white-space:nowrap;flex:0 0 auto;}
+  /* quebrar dentro da palavra deixava "TRAVA/AGULH A"; assim ela quebra na barra */
+  body.imprimindo.cupom .slip-t .et{white-space:normal;overflow-wrap:normal;word-break:normal;}
+  /* checklist em duas colunas por proporção, não por pixels: sempre cabe na bobina */
+  body.imprimindo.cupom .slip-ckl .ckl-grade{gap:0 6px;}
+  body.imprimindo.cupom .slip-t th{font-size:9.5px;}
+  body.imprimindo.cupom .slip-t td{font-size:10.5px;}
+  body.imprimindo.cupom .slip-t td{padding:4px 3px;}
+  body.imprimindo.cupom .slip-preencher{min-width:26px !important;}
+  body.imprimindo.cupom .slip-t td.et{font-size:9.5px;}
+  body.imprimindo.cupom .slip .qtd-g{font-size:15px;}
+  body.imprimindo.cupom .slip .cx{width:12px;height:12px;}
+
+  /* ---- térmica é 1 bit: imprime preto ou nada ----
+     Cinza vira meio-tom esgarçado e some no papel; e fundo escuro com letra branca
+     não sai de jeito nenhum, porque o navegador descarta o fundo e resta branco no branco.
+     Por isso, no cupom, tudo é preto puro sobre branco, com traço mais grosso. */
+  body.imprimindo.cupom .slip,
+  body.imprimindo.cupom .slip *{color:var(--pr-tinta) !important;background:transparent !important;
+    text-shadow:none !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body.imprimindo.cupom .slip-band{border-bottom:2.5px solid var(--pr-tinta);padding:2px 0 3px;margin-bottom:2px;}
+  body.imprimindo.cupom .slip-proc{font-weight:800;letter-spacing:.06em;}
+  body.imprimindo.cupom .slip-num,
+  body.imprimindo.cupom .slip-num b{font-weight:800;}
+  body.imprimindo.cupom .slip-band .pill{border:1.6px solid var(--pr-tinta) !important;font-weight:800;}
+  body.imprimindo.cupom .slip-desc{font-weight:600;}      /* era cinza claro: sumia */
+  body.imprimindo.cupom .slip-qtd{border:2.2px solid var(--pr-tinta);}
+  body.imprimindo.cupom .slip-qtd small{font-weight:700;}
+  body.imprimindo.cupom .slip-t th,
+  body.imprimindo.cupom .slip-t td{border:1.5px solid var(--pr-tinta) !important;}
+  body.imprimindo.cupom .slip-t th{font-weight:800;}
+  body.imprimindo.cupom .slip-t td.et,
+  body.imprimindo.cupom .slip-t th.et{font-weight:800;}
+  body.imprimindo.cupom .slip .cx{border:2px solid var(--pr-tinta) !important;}
+  body.imprimindo.cupom .slip .cxbox{border:1.8px solid var(--pr-tinta) !important;}
+  body.imprimindo.cupom .slip .linha-esc{border-bottom:1.8px solid var(--pr-tinta) !important;height:15px;}
+  body.imprimindo.cupom .slip-ord{border:1.6px solid var(--pr-tinta) !important;font-weight:800;}
+  body.imprimindo.cupom .slip-nome,
+  body.imprimindo.cupom .slip-comofaz{border:1.6px solid var(--pr-tinta) !important;}
+  body.imprimindo.cupom .slip-preencher{border-bottom:1.8px solid var(--pr-tinta) !important;}
+  body.imprimindo.cupom .slip-rodape{border:1.4px solid var(--pr-tinta) !important;padding:3px 6px;}
+  /* o QR precisa de módulo grosso e zona clara: térmica esgarça ponto fino */
+  /* dois códigos lado a lado: 26mm cada dá 3,6 pontos por módulo mesmo na versão 10 */
+  body.imprimindo.cupom .slip-qr svg{width:26mm;height:26mm;}
+  body.imprimindo.cupom .slip-qr small{font-size:6.5px;font-weight:600;line-height:1.2;}
+  body.imprimindo.cupom .slip-qr small b{font-size:7px;font-weight:800;}
+  body.imprimindo.cupom .slip-qr svg rect{fill:var(--pr-papel) !important;}
+  body.imprimindo.cupom .slip-qr svg path{fill:var(--pr-tinta) !important;}
+  /* margem de segurança: a bobina raramente imprime nos 72mm cheios e o recorte sai torto */
+  body.imprimindo.cupom .folha{margin:0 auto;padding:0;}
+  body.imprimindo.cupom .slip{margin-left:auto;margin-right:auto;}
+}
+/* O tamanho da página do cupom é injetado por JS em imprimir(), porque @page não aceita
+   seletor de classe — e sem isso a impressão herdava o A4 com margem de 12mm, que é o
+   que fazia o canhoto sair torto e deslocado na bobina. */
+
+tr.fora td{opacity:.55;}
+.kv{border-bottom:0;}
+.tcell .p{font-size:12.5px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.tcell .s{font-size:10.5px;color:var(--ink-3);margin-top:3px;display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.tcell .s .sku{font-size:10px;}
+.t td{vertical-align:middle;}
+.regua{max-width:130px;}
+.corte{display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;padding:2.5px 9px;border-radius:999px;letter-spacing:.02em;border:1px solid transparent;}
+.corte.c0{background:var(--perigo);color:var(--pr-papel);border-color:var(--perigo);}
+.corte.c1{background:var(--perigo-fundo);color:var(--perigo);border-color:var(--perigo-borda);}
+.corte.c2{background:var(--atencao-fundo);color:var(--atencao);border-color:var(--atencao-borda);}
+.corte.c3{background:var(--neutro-fundo);color:var(--neutro);border-color:var(--line);}
+.corte.c4{background:var(--surface-2);color:var(--ink-3);border-color:var(--line);}
+.t th{white-space:nowrap;}
+/* link é ação normal, e ação normal usa a cor da interface. O coral ficou
+   reservado para SELEÇÃO (aba ativa, linha ativa, chip ligado, anel de foco). */
+.lupa{display:inline-flex;align-items:center;gap:4px;border:0;background:none;color:var(--acao);cursor:pointer;font:inherit;font-size:var(--fs-apoio);padding:2px 4px;border-radius:var(--r-2);}
+.lupa:hover{background:var(--coral-soft);}
+.lupa svg{width:12px;height:12px;}
+.kpi.clicavel{cursor:pointer;transition:border-color .15s, transform .1s, box-shadow .15s;}
+.kpi.clicavel:hover{border-color:var(--coral);transform:translateY(-1px);box-shadow:var(--shadow);}
+.kpi.ativo{outline:2.5px solid var(--coral);outline-offset:-2.5px;}
+.abc{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:var(--r-2);font-size:var(--fs-nano);font-weight:800;}
+.abc.A{background:var(--acao-cheio);color:var(--em-acao);}
+.abc.B{background:var(--abc-b-fundo);color:var(--abc-b-tinta);}
+.abc.C{background:var(--surface-2);color:var(--ink-4);border:1px solid var(--line);}
+/* o botão primário não precisa de halo: ele já é o único bloco cheio da tela.
+   O brilho de 10px era escala de vitrine — em console industrial ele só
+   engorda a linha. Fica a sombra de primeiro degrau, e só. */
+.btn.primary{box-shadow:var(--sh-1);}
+.fb-linha{display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%;}
+.fb-linha + .fb-linha{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line-2);}
+.fb-topo{margin-bottom:2px;}
+.fb-grupo{display:flex;align-items:center;gap:8px;}
+.flabel{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4);font-weight:800;flex:0 0 auto;min-width:48px;}
+.filters{flex-wrap:wrap;}
+@media(max-width:1200px){.grid2{grid-template-columns:1fr;}}
+@media(max-width:900px){
+  .rail{position:fixed;left:0;right:0;bottom:0;top:auto;width:100%;height:auto;flex-direction:row;z-index:60;}
+  .brand,.rail-foot{display:none;}
+  .nav{flex-direction:row;padding:6px;justify-content:space-around;}
+  .nav button{flex-direction:column;gap:3px;font-size:10px;padding:7px 6px;position:relative;}
+  .nav .badge{position:absolute;top:1px;right:2px;margin:0;font-size:9px;padding:1px 5px;}
+  .main{padding-bottom:66px;}
+  .page{padding:16px 13px 40px;}
+  .topbar{padding:13px;}
+  .tw{max-height:none;}
+  .desc{max-width:150px;}
+}
+
+
+/* ============================================================================
+   PASSE C · O QUE NÃO VAI PARA O PAPEL
+   ----------------------------------------------------------------------------
+   Papel não tem menu, não tem busca e não tem botão. O trilho de 216px, a barra
+   de estado do topo e a barra do telefone estavam sendo impressos: gastavam
+   tinta, empurravam a tabela para a direita e ainda saíam em branco sobre
+   branco quando a impressora ignora o fundo colorido — que é o padrão.
+   ============================================================================ */
+@media print{
+  .rail,.barra-mob,.topbar .right,.bm-folha,.bm-folha-ov,
+  .toasts,.cmd-ov,.ov{display:none !important;}
+  .shell{display:block !important;}
+  .main{padding-bottom:0 !important;}
+  /* A tinta clara existe para funcionar sobre cor cheia. No papel a cor cheia
+     não sai: sobra texto branco sobre branco. Na folha, toda tinta é tinta. */
+  .btn,.btn.primary,.tag,.abc,.avatar,.pessoa .av,.badge{
+    color:var(--pr-tinta) !important;background:transparent !important;
+    border-color:#999 !important;box-shadow:none !important;}
+  .col-acao,.acoes-sec,th.col-acao{display:none !important;}
+}

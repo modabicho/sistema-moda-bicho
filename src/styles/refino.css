@@ -1,0 +1,472 @@
+/* ============================================================================
+   REFINO VISUAL — v7.31
+   Uma camada só, no fim da folha, para o sistema visual ficar coerente entre
+   todas as telas sem reescrever as regras que já funcionavam. O que ela faz:
+   1. escala única de espaço, raio, sombra e foco
+   2. tela de entrada com a marca, respirável e amigável
+   3. barra lateral com hierarquia clara e bloco de conta no rodapé
+   4. cabeçalho de página, cards, botões, chips, campos, tabelas e pop-ups
+      falando a mesma língua
+   Cores da marca intactas: azul var(--teal)/var(--rail), coral var(--coral), bege var(--bege).
+   ============================================================================ */
+/* Os tokens que este arquivo declarava — espaço, raio, elevação, anel e os
+   tons do trilho — subiram para `styles/tokens.css`, que é a fonte única.
+   Declarar de novo aqui criava uma segunda verdade: o `--rail` daqui e o do
+   base.css eram valores diferentes com o mesmo nome, e ganhava quem viesse
+   por último no manifesto. */
+body{font-size:var(--fs-h3);line-height:1.5;}
+:focus-visible{outline:0;box-shadow:var(--ring-coral);border-radius:var(--r-xs);}
+
+/* ---------- 1. tela de entrada ----------
+   Antes: um card genérico com a logo pequena em cima. Agora a marca ocupa o
+   lugar dela, o texto acolhe, e os três estados (servidor, PIN, conta sem
+   vínculo) usam exatamente a mesma moldura. */
+.auth{min-height:100vh;display:grid;grid-template-rows:1fr auto;background:
+  radial-gradient(1100px 620px at 50% -18%, var(--surface-2) 0%, transparent 62%), var(--canvas);}
+.auth-in{display:grid;place-items:center;padding:var(--sp6) var(--sp4);}
+.auth-card{width:min(432px,94vw);background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-xl);box-shadow:var(--el3);overflow:hidden;animation:pop .22s cubic-bezier(.2,.8,.3,1);}
+.auth-card.lg{width:min(500px,94vw);}
+.auth-top{padding:var(--sp6) var(--sp5) var(--sp4);text-align:center;background:
+  linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%);border-bottom:1px solid var(--line-2);}
+.auth-logo{width:170px;height:56px;margin:0 auto var(--sp4);background:var(--logo-claro) center/contain no-repeat;}
+.auth-top h2{margin:0 0 var(--sp1);font-size:var(--fs-h1);font-weight:700;letter-spacing:-.02em;color:var(--ink);}
+.auth-top p{margin:0;font-size:var(--fs-corpo);color:var(--ink-3);line-height:1.6;}
+.auth-b{padding:var(--sp5);}
+.auth-b .fld{margin-bottom:var(--sp3);}
+.auth-b .inp,.auth-b .sel{width:100%;padding:11px 13px;border-radius:var(--r-sm);font-size:var(--fs-h3);}
+.auth-b .btn{width:100%;justify-content:center;padding:12px 16px;font-size:var(--fs-h3);border-radius:var(--r-sm);}
+.auth-b .btn.primary{box-shadow:var(--sh-2);}
+.auth-b .btn + .btn{margin-top:var(--sp2);}
+.auth-nota{margin:var(--sp4) 0 0;font-size:var(--fs-apoio);color:var(--ink-3);line-height:1.65;text-align:center;}
+/* uma linha só, pequena e centrada, bem separada do cartão */
+.auth-foot{padding:var(--sp5) var(--sp4) var(--sp5);display:flex;flex-wrap:wrap;
+  align-items:center;justify-content:center;gap:7px;
+  font-size:var(--fs-micro);color:var(--ink-4);}
+.auth-foot .sinal-marca{width:54px;height:19px;flex:0 0 54px;}
+.auth .aviso{margin:0 var(--sp5) var(--sp4);}
+
+/* ---------- 1b. a entrada, sem faixa de cabeçalho ----------
+   Variante `entrada` do MESMO card. Os outros três estados (segundo fator,
+   cadastro do autenticador, conta sem vínculo) continuam com `.auth-top` e a
+   faixa em degradê — nada ali foi tocado. Aqui o card é um bloco só: marca
+   pequena à esquerda, saudação grande, subtítulo, campos com respiro, um botão
+   da largura do card. Alinhamento à esquerda porque é formulário: o olho lê a
+   etiqueta, o campo e o botão na mesma coluna, sem voltar ao centro. */
+/* `94vw` no card + 16px de recuo dos dois lados no `.auth-in` pedem 398px numa
+   tela de 390 — é a rolagem lateral de 9px que existe desde antes desta versão.
+   `100%` já desconta o recuo do pai, e o card passa a caber. */
+.auth-card.entrada{width:min(460px,100%);}
+.auth-card.entrada .auth-b{padding:var(--sp6) var(--sp6) var(--sp5);}
+.auth-card.entrada .auth-marca{width:126px;height:38px;margin:0 0 var(--sp5);
+  background:var(--logo-auth) left center/contain no-repeat;}
+.auth-card.entrada h2{margin:0 0 5px;font-size:27px;line-height:1.2;font-weight:800;
+  letter-spacing:-.025em;color:var(--ink);}
+.auth-card.entrada .auth-sub{margin:0 0 var(--sp6);font-size:var(--fs-corpo);
+  color:var(--ink-3);line-height:1.55;}
+.auth-card.entrada .fld{margin-bottom:var(--sp4);}
+.auth-card.entrada .inp{padding:12px 14px;}
+.auth-card.entrada .btn.primary{margin-top:var(--sp3);padding:15px 16px;font-weight:700;}
+/* a ÚLTIMA nota fica separada por um fio: ela é recado de rodapé, não parte do
+   formulário. Na tela do código há DUAS notas — o recado do código, no meio, e o
+   "entrando como", no fim — e só a de baixo leva o fio. */
+.auth-card.entrada .auth-b > .auth-nota:last-child{margin:var(--sp5) 0 0;
+  padding-top:var(--sp4);border-top:1px solid var(--line-2);}
+/* o botão secundário ("Gerar novo código") acompanha o principal */
+.auth-card.entrada .btn + .btn{margin-top:var(--sp2);}
+/* os chips de "qual autenticador" ficam à esquerda, como o resto do cartão */
+.auth-card.entrada .mfa-fatores{justify-content:flex-start;}
+/* a nota do MEIO do cartão (o recado do código) explica o campo logo acima —
+   então ela segue o alinhamento dele, não o do rodapé */
+.auth-card.entrada .auth-b > .auth-nota:not(:last-child){text-align:left;margin-top:var(--sp2);}
+/* ---------- o campo dos seis dígitos ----------
+   `.mfa-cod` pede 26px desde que foi escrito, e nunca ganhou: `.auth-b .inp`
+   tem mais peso e fixava 14px. O defeito é anterior a esta versão (conferido
+   na v8.94). Aqui a regra passa a valer, com o peso necessário — seis números
+   lidos de um celular precisam de caractere largo. */
+.auth-card.entrada .inp.mfa-cod{font-size:23px;padding:14px;}
+@media (max-width:520px){ .auth-card.entrada .inp.mfa-cod{font-size:20px;} }
+/* o aviso do arquivo local já mora DENTRO do corpo aqui, então não repete o recuo */
+.auth-card.entrada .aviso{margin:0 0 var(--sp4);}
+
+/* o olho da senha: dentro do campo, alvo de 32px, sem empurrar o texto */
+.campo-senha{position:relative;}
+.campo-senha .inp{padding-right:46px;}
+.campo-senha .olho{position:absolute;right:7px;top:50%;transform:translateY(-50%);
+  display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;
+  background:none;border-radius:var(--r-xs);cursor:pointer;color:var(--ink-4);
+  transition:color .12s,background .12s;}
+.campo-senha .olho:hover{color:var(--ink-2);background:var(--surface-2);}
+.campo-senha .olho svg{width:18px;height:18px;display:block;stroke:currentColor;
+  fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+
+@media (max-width:520px){
+  .auth-card.entrada .auth-b{padding:var(--sp5) var(--sp4) var(--sp4);}
+  .auth-card.entrada h2{font-size:23px;}
+  .auth-card.entrada .auth-marca{width:108px;height:33px;margin-bottom:var(--sp4);}
+}
+
+/* ---------- 2. barra lateral ----------
+   O item ativo era um bloco branco cheio, que brigava com o conteúdo. Agora é
+   um realce discreto com uma marca coral na borda — lê rápido e não grita. */
+.rail{background:linear-gradient(180deg, var(--rail) 0%, var(--rail-2) 100%);}
+.brand{padding:var(--sp4) var(--sp3);border-bottom:1px solid var(--rail-linha);}
+.nav{padding:var(--sp3) var(--sp2);gap:1px;}
+.nav button{position:relative;padding:9px 11px;border-radius:var(--r-sm);font-size:var(--fs-corpo);
+  font-weight:600;color:var(--rail-txt);letter-spacing:-.005em;
+  transition:background .14s ease, color .14s ease;}
+.nav button::before{content:'';position:absolute;left:3px;top:50%;transform:translateY(-50%) scaleY(0);
+  width:3px;height:19px;border-radius:var(--r-1);background:var(--coral);transition:transform .16s cubic-bezier(.2,.8,.3,1);}
+.nav button:hover{background:var(--rail-hover);color:var(--em-cor);}
+.nav button.on{background:var(--veu-2);color:var(--em-cor);font-weight:700;}
+.nav button.on::before{transform:translateY(-50%) scaleY(1);}
+.nav button.on svg{opacity:1;color:var(--em-cor);}
+.nav svg{width:17px;height:17px;flex:0 0 17px;opacity:.7;}
+.nav .sec{font-size:var(--fs-nano);letter-spacing:.15em;color:var(--rail-txt-2);padding:var(--sp4) 11px var(--sp1);opacity:.85;}
+.nav .badge{background:var(--veu-3);color:var(--rail-txt);font-weight:700;font-size:var(--fs-nano);padding:1px 7px;}
+.nav button.on .badge{background:var(--coral);color:var(--em-cor);}
+.nav button:hover .badge{background:var(--veu-3);color:var(--em-cor);}
+/* rodapé: estado do sistema em cima, bloco de conta embaixo — como uma conta de verdade */
+.rail-foot{padding:var(--sp3);border-top:1px solid var(--rail-linha);font-size:var(--fs-micro);color:var(--rail-txt);}
+.rf-estado{padding:0 4px var(--sp3);line-height:1.65;}
+.rf-estado b{color:var(--rail-txt);font-weight:600;}
+.rf-conta{display:flex;align-items:center;gap:var(--sp2);padding:7px;border-radius:var(--r-sm);
+  background:var(--veu-1);transition:background .14s;}
+.rf-conta:hover{background:var(--veu-2);}
+.rf-conta .av{width:26px;height:26px;flex:0 0 26px;font-size:var(--fs-nano);}
+.rf-nome{min-width:0;flex:1;line-height:1.25;}
+.rf-nome b{display:block;color:var(--em-cor);font-size:var(--fs-apoio);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rf-nome span{display:block;font-size:var(--fs-nano);color:var(--rail-txt);letter-spacing:.04em;text-transform:uppercase;}
+.rf-sair{display:flex;gap:var(--sp1);margin-top:var(--sp2);}
+.rf-sair button{flex:1;border:1px solid var(--rail-linha);background:transparent;color:var(--rail-txt);
+  border-radius:var(--r-xs);padding:5px 6px;font-size:var(--fs-micro);font-weight:600;transition:background .13s,color .13s;}
+.rf-sair button:hover{background:var(--rail-hover);color:var(--em-cor);}
+.rf-versao{display:block;width:100%;margin-top:var(--sp2);background:none;border:0;padding:2px;
+  color:var(--rail-txt-2);font:inherit;font-size:var(--fs-nano);letter-spacing:.04em;text-align:center;cursor:pointer;}
+.rf-versao:hover{color:var(--em-cor);}
+.shell.mini .rf-estado,.shell.mini .rf-nome,.shell.mini .rf-sair{display:none;}
+.shell.mini .rf-conta{justify-content:center;padding:5px;}
+.shell.mini .rail-foot{padding:var(--sp2) var(--sp1);}
+.shell.mini .nav button::before{left:1px;height:15px;}
+
+/* ---------- 3. cabeçalho da página ---------- */
+.topbar{padding:var(--sp3) var(--sp5);gap:var(--sp3);align-items:center;
+  box-shadow:var(--sh-1);}
+.topbar h1{font-size:var(--fs-h1);letter-spacing:-.025em;}
+.topbar p{margin-top:2px;font-size:var(--fs-dado);line-height:1.45;}
+.topbar .right{gap:var(--sp2);}
+.page{padding:var(--sp4) var(--sp5) var(--sp6);}
+
+/* ---------- 4. superfícies ---------- */
+.card{border-radius:var(--r-lg);box-shadow:var(--el1);}
+.card-h{padding:var(--sp3) var(--sp4);gap:var(--sp2);}
+.card-h h3,.card-h h2{font-size:var(--fs-apoio);letter-spacing:.07em;}
+.bloco-h h3{font-size:var(--fs-apoio);letter-spacing:.07em;}
+.filters{padding:var(--sp3) var(--sp4);gap:var(--sp2);}
+.fb-linha{gap:var(--sp2);}
+.kpi{border-radius:var(--r-md);padding:var(--sp3) var(--sp4);box-shadow:var(--el1);}
+.kpis{gap:var(--sp3);margin-bottom:var(--sp3);}
+.resumo{border-radius:var(--r-md);padding:var(--sp3) var(--sp4);box-shadow:var(--el1);}
+
+/* ---------- 5. controles ---------- */
+.btn{border-radius:var(--r-sm);padding:9px 15px;font-size:var(--fs-corpo);font-weight:600;letter-spacing:-.005em;
+  transition:background .14s, border-color .14s, box-shadow .14s, transform .08s;}
+.btn:hover{box-shadow:var(--el1);}
+.btn.primary{box-shadow:var(--sh-1);}
+.btn.primary:hover{box-shadow:var(--sh-2);}
+.btn.sm{padding:5px 11px;font-size:var(--fs-apoio);border-radius:var(--r-xs);}
+.btn.ghost:hover{background:var(--slate-soft);box-shadow:none;}
+.chip{padding:5px 12px;font-size:var(--fs-apoio);font-weight:600;border-radius:var(--r-pill);
+  transition:background .14s, border-color .14s, color .14s, box-shadow .14s;}
+.chip:hover{background:var(--surface-2);border-color:var(--line);}
+.chip.on{box-shadow:var(--sh-acao);}
+.chip.on:hover{background:var(--coral-2);border-color:var(--coral-2);}
+.chip b{opacity:.62;font-weight:700;}
+.chip.on b{opacity:.85;}
+.inp,.sel{border-radius:var(--r-xs);padding:8px 11px;}
+.inp:focus,.sel:focus{border-color:var(--teal);box-shadow:var(--ring);}
+.fld > span{font-size:var(--fs-micro);font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);}
+
+/* ---------- 6. tabelas ---------- */
+.t th{background:var(--surface-2);color:var(--ink-3);font-weight:700;letter-spacing:.05em;}
+.t tbody tr{transition:background .1s;}
+.t tbody tr:hover{background:var(--linha-hover);}
+.sku:hover{box-shadow:var(--ring);}
+
+/* ---------- 7. pop-ups ----------
+   Todos com a mesma moldura: cabeçalho fino, corpo respirável, rodapé claro. */
+.ov{background:var(--veu-modal);backdrop-filter:blur(3px);padding:var(--sp5) var(--sp4);}
+.modal{border-radius:var(--r-xl);box-shadow:var(--el3);}
+.modal-h{padding:var(--sp4) var(--sp5);gap:var(--sp3);}
+.modal-h h2{font-size:var(--fs-h2);letter-spacing:-.025em;}
+.modal-b{padding:var(--sp5);}
+.modal-f{padding:var(--sp4) var(--sp5);gap:var(--sp2);border-radius:0 0 var(--r-xl) var(--r-xl);}
+.drawer{box-shadow:var(--el3);}
+.drawer-h{padding:var(--sp4) var(--sp5);}
+.drawer-b{padding:var(--sp5);}
+.secao{margin:var(--sp5) 0 var(--sp2);font-size:var(--fs-nano);letter-spacing:.1em;}
+.aviso{border-radius:var(--r-sm);padding:var(--sp3) var(--sp4);}
+/* a sombra mais funda é o que separa o aviso do fundo claro da tabela —
+   com a sombra de antes ele se dissolvia no branco e passava despercebido */
+.toast{border-radius:var(--r-sm);box-shadow:var(--sh-3);padding:11px 40px 11px 16px;}
+.empty{padding:var(--sp7) var(--sp5);}
+.empty .ic{border-radius:var(--r-md);}
+.tarefa{border-radius:var(--r-md);box-shadow:var(--el1);}
+.pcard{border-radius:var(--r-md);}
+
+
+/* ---------- 8. ajustes finais ----------
+   Coisas que só aparecem com a tela montada e dados de verdade dentro. */
+/* a marca precisa de ar: encostada no topo o menu parece cortado */
+.brand{padding:var(--sp5) var(--sp4) var(--sp4);align-items:center;}
+.brand-logo{height:38px;}
+.shell.mini .brand{padding:var(--sp4) var(--sp2) var(--sp3);}
+/* cabeçalho de tabela: fica preso no topo ao rolar e pode quebrar em duas linhas.
+   A regra antiga proibia quebra, e em coluna estreita o título saía cortado
+   ("EM PRODU", "EST. RI") — o que obriga a adivinhar o que a coluna mostra. */
+.tw thead th{position:sticky;top:0;z-index:3;box-shadow:inset 0 -1px 0 var(--line);}
+/* o "não quebrar" do cabeçalho vem de três lugares diferentes da folha
+   (`table.t th`, `.num`, `.t th`). Em vez de disputar especificidade com cada
+   um deles, esta regra encerra o assunto: título de coluna sempre quebra. */
+table.t th,table.t th.num{white-space:normal !important;overflow-wrap:break-word;line-height:1.2;vertical-align:bottom;}
+/* nas duas tabelas densas o espaçamento entre letras era o que fazia "%Est."
+   não caber e quebrar no meio — sem ele o título cabe numa linha só */
+/* de novo a especificidade: `table.t th` traz letter-spacing .08em, e um
+   `.t-ped th` solto não vence. Nas tabelas densas o espaçamento entre letras
+   é justamente o que faz "%Est." não caber e quebrar no meio da palavra. */
+table.t.t-ped th,table.t.t-dem th{letter-spacing:0;padding-left:3px;padding-right:3px;font-size:var(--fs-nano);}
+.fb-ativos{flex:1 0 100%;}
+/* linha da tabela: alvo de clique mais confortável e leitura menos apertada */
+.t td{padding-top:7px;padding-bottom:7px;}
+.t tbody tr:hover{background:var(--surface-2);}
+/* selects e campos dentro de tabela não devem parecer botões grandes */
+.t .sel,.t .inp{border-radius:var(--r-xs);}
+/* barra de seleção com o mesmo raio dos cards */
+.selbar{border-radius:0;}
+/* alerta e legenda no mesmo tom das demais superfícies */
+.legenda > summary{padding:7px var(--sp4);}
+.legenda-in{padding:0 var(--sp4) var(--sp3);}
+/* toasts não podem cobrir o rodapé da tabela em tela cheia */
+.toasts{bottom:var(--sp5);}
+
+/* botão da coluna Ação vinha com "não quebrar" do estilo base: em coluna
+   estreita o rótulo saía cortado ("Papel impre…") e a operadora ficava sem
+   saber o que o botão faz. Aqui ele quebra e cabe inteiro. */
+.t-ped td.col-acao .btn,.t-dem td .btn.sm{white-space:normal;text-align:center;line-height:1.3;max-width:100%;}
+.t-ped td.col-acao{padding-right:var(--sp2);}
+
+/* ---------- 9. recolher e expandir o menu ----------
+   A largura, o recuo dos itens e o tamanho do rótulo andam juntos na mesma
+   curva. A logo faz travessia por opacidade em duas camadas — a horizontal
+   sai enquanto a redonda entra — porque imagem de fundo não anima sozinha. */
+.rail{transition:width .3s cubic-bezier(.32,.72,0,1), flex-basis .3s cubic-bezier(.32,.72,0,1);
+  will-change:width;overflow:hidden;}
+.brand{transition:padding .3s cubic-bezier(.32,.72,0,1);}
+.brand-logo{position:relative;background-image:none;transition:height .3s cubic-bezier(.32,.72,0,1), width .3s cubic-bezier(.32,.72,0,1), flex-basis .3s cubic-bezier(.32,.72,0,1);}
+.brand-logo::before,.brand-logo::after{content:'';position:absolute;inset:0;
+  background-repeat:no-repeat;background-size:contain;transition:opacity .26s ease;}
+.brand-logo::before{background-image:var(--logo-rail);background-position:left center;opacity:1;}
+.brand-logo::after{background-image:var(--logo);background-position:center;opacity:0;}
+.shell.mini .brand-logo{background-image:none;}
+.shell.mini .brand-logo::before{opacity:0;}
+.shell.mini .brand-logo::after{opacity:1;}
+.rail-toggle{transition:background .13s, color .13s, width .3s cubic-bezier(.32,.72,0,1), height .3s cubic-bezier(.32,.72,0,1), flex-basis .3s cubic-bezier(.32,.72,0,1);}
+.nav{transition:padding .3s cubic-bezier(.32,.72,0,1);}
+.nav button{transition:background .14s ease, color .14s ease,
+  padding .3s cubic-bezier(.32,.72,0,1), gap .3s cubic-bezier(.32,.72,0,1);}
+.nav button span{transition:font-size .3s cubic-bezier(.32,.72,0,1), opacity .18s ease .06s;}
+.nav button svg{transition:width .3s cubic-bezier(.32,.72,0,1), height .3s cubic-bezier(.32,.72,0,1), flex-basis .3s cubic-bezier(.32,.72,0,1);}
+.nav .sec{transition:padding .3s cubic-bezier(.32,.72,0,1), font-size .3s cubic-bezier(.32,.72,0,1), opacity .18s;}
+.rail-foot{transition:padding .3s cubic-bezier(.32,.72,0,1);}
+.rf-conta{transition:background .14s, padding .3s cubic-bezier(.32,.72,0,1);}
+/* o que some ao recolher sai desmaiando, em vez de desaparecer de um quadro
+   para o outro — display:none não tem meio-termo, opacidade tem */
+.rf-estado,.rf-nome,.rf-sair{transition:opacity .16s ease;}
+.shell.mini .rf-estado,.shell.mini .rf-nome,.shell.mini .rf-sair{opacity:0;pointer-events:none;}
+/* quem prefere menos movimento no sistema não recebe nenhum */
+@media (prefers-reduced-motion: reduce){
+  .rail,.brand,.brand-logo,.brand-logo::before,.brand-logo::after,.rail-toggle,
+  .nav,.nav button,.nav button span,.nav button svg,.nav .sec,
+  .rail-foot,.rf-conta,.rf-estado,.rf-nome,.rf-sair{transition:none !important;}
+}
+
+/* ---------- 10. barra de filtros ----------
+   Só a fileira por onde se navega fica aberta. O resto vive atrás do botão
+   "Filtros" e, fechado, volta como etiquetas que dizem o que está filtrando —
+   cada uma com o seu ×. Menos ruído sem esconder o estado da tela. */
+.fb-btn-filtro{border-color:var(--line);}
+.fb-btn-filtro svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linejoin:round;}
+/* o painel é filho de um flex container: sem largura total ele encolhe até o
+   tamanho do conteúdo e o fundo cinza fica pela metade */
+.fb-painel{flex:1 0 100%;width:100%;border-top:1px dashed var(--line);background:var(--surface-2);
+  margin:var(--sp2) calc(var(--sp4) * -1) calc(var(--sp3) * -1);padding:var(--sp2) var(--sp4) var(--sp3);
+  animation:painel .18s cubic-bezier(.2,.8,.3,1);}
+.fb-painel .fb-linha{margin:0;}
+@keyframes painel{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+.fb-ativos{padding-top:var(--sp1);}
+.fb-tira{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--teal2);
+  background:var(--teal-soft);color:var(--teal-2);border-radius:var(--r-pill);padding:3px 6px 3px 11px;
+  font-size:var(--fs-apoio);font-weight:600;transition:background .13s,border-color .13s;}
+.fb-tira:hover{background:var(--teal-soft);border-color:var(--teal);}
+.fb-tira span{display:grid;place-items:center;width:15px;height:15px;border-radius:50%;
+  background:var(--neutro-fundo);font-size:var(--fs-nano);line-height:1;}
+.fb-tira:hover span{background:var(--teal);color:var(--em-cor);}
+/* os botões da barra de ações não precisam de emoji: o ícone já é do sistema */
+.filters .btn svg{opacity:.9;}
+
+/* ---------- 11. navegação mais silenciosa ----------
+   O menu é meio de chegar ao conteúdo, não conteúdo. Aqui ele baixa o tom:
+   inativo mais apagado, contadores sem caixa, divisões sem rótulo e um rodapé
+   com uma informação só — quem está usando. */
+/* (o tom do trilho é o do tokens.css: --rail-txt / --rail-txt-2) */
+.nav button{color:var(--rail-txt);font-weight:500;}
+.nav button svg{opacity:.55;}
+.nav button:hover{background:var(--veu-1);color:var(--teal-soft);}
+.nav button:hover svg{opacity:.85;}
+.nav button.on{background:var(--veu-2);color:var(--em-cor);font-weight:600;}
+.nav button.on svg{opacity:1;}
+/* contador sem caixa: o número informa, a caixa só fazia barulho */
+.nav .badge{background:none;color:var(--rail-txt);font-weight:600;font-size:var(--fs-micro);
+  padding:0;min-width:0;font-family:'IBM Plex Mono',monospace;}
+.nav button:hover .badge{background:none;color:var(--acao-borda);}
+.nav button.on .badge{background:none;color:var(--rail-acento);}
+/* Divisão sem rótulo: a separação continua, o texto some. Ele some do OLHO,
+   não do documento — "Operação" e "Cadastros" continuam no DOM e continuam
+   sendo lidos por leitor de tela, que é onde o rótulo de grupo faz falta.
+   `color:transparent` está aqui junto do `font-size:0` de propósito: é o que
+   distingue "texto escondido porque é redundante" de "texto que sumiu por
+   engano". A varredura do design system cobra essa distinção. */
+.nav .sec{font-size:0;color:transparent;padding:0;height:1px;margin:var(--sp3) 12px;background:var(--veu-2);}
+.nav .sec:first-child{display:none;}
+.shell.mini .nav .sec{margin:var(--sp3) 14px;padding:0;border:0;background:var(--veu-2);color:transparent;}
+/* ---------- rodapé: uma linha e um menu ---------- */
+.rail-foot{padding:var(--sp2);border-top:1px solid var(--veu-1);position:relative;}
+.rf-conta{display:flex;align-items:center;gap:var(--sp2);width:100%;padding:7px;border:0;
+  border-radius:var(--r-sm);background:transparent;color:inherit;text-align:left;cursor:pointer;
+  transition:background .14s;}
+.rf-conta:hover,.rf-conta.on{background:var(--veu-2);}
+.rf-conta .av{width:26px;height:26px;flex:0 0 26px;font-size:var(--fs-nano);}
+.rf-nome{min-width:0;flex:1;line-height:1.2;}
+.rf-nome b{display:block;color:var(--em-cor);font-size:var(--fs-apoio);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rf-nome span{display:block;font-size:var(--fs-nano);color:var(--rail-txt);letter-spacing:.03em;}
+.rf-mais{color:var(--rail-txt-2);font-size:var(--fs-h2);line-height:1;letter-spacing:.05em;}
+.rf-conta:hover .rf-mais,.rf-conta.on .rf-mais{color:var(--teal-soft);}
+.rf-menu{position:absolute;left:var(--sp2);right:var(--sp2);bottom:calc(100% - 2px);
+  background:var(--rail-hover);border:1px solid var(--veu-3);border-radius:var(--r-sm);
+  box-shadow:var(--sh-3);padding:4px;z-index:40;
+  animation:pop .14s cubic-bezier(.2,.8,.3,1);}
+.rf-menu button{display:block;width:100%;text-align:left;background:none;border:0;
+  color:var(--rail-txt);font:inherit;font-size:var(--fs-apoio);padding:8px 10px;border-radius:var(--r-xs);transition:background .12s,color .12s;}
+.rf-menu button:hover{background:var(--veu-2);color:var(--em-cor);}
+.rf-menu button.on{background:var(--veu-3);color:var(--em-cor);}
+.rf-menu button svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.9;vertical-align:-2px;margin-right:8px;opacity:.85;}
+.rf-sep{height:1px;background:var(--veu-3);margin:4px 6px;}
+.shell.mini .rf-nome,.shell.mini .rf-mais{display:none;}
+.shell.mini .rf-conta{justify-content:center;padding:5px;}
+.shell.mini .rf-menu{left:4px;right:4px;font-size:var(--fs-micro);}
+/* o topo passa a carregar o estado do sistema; as etiquetas ficam discretas */
+.topbar .right .tag{background:var(--surface-2);color:var(--ink-3);font-weight:600;border:1px solid var(--line-2);}
+.topbar .right .tag.red{background:var(--red-soft);color:var(--red);border-color:var(--perigo-borda);}
+.topbar .right .tag.amber{background:var(--amber-soft);color:var(--amber);border-color:var(--atencao-borda);}
+
+/* ---------- "está salvo?" ----------
+   Botão, porque faz alguma coisa quando clicado (abre o que fazer). Mas é o
+   botão mais quieto da barra: enquanto tudo vai bem ele tem peso de texto.
+   Só ganha cor quando a resposta deixa de ser "sim". */
+/* ---------- 3b. a busca do topo ----------
+   Ela NÃO é um campo de texto — é um botão que abre a busca rápida (Ctrl K), e
+   continua sendo. Mas aos olhos de quem usa é um campo, então tem cara de campo:
+   cápsula, fundo discreto, lupa dentro, o atalho encostado à direita.
+
+   O formato não veio de fora: TUDO nesta barra já é cápsula — `.tag`, `.presenca`
+   e `.sinc` usam `--r-pill`. O botão retangular era o único fora do compasso.
+
+   Por que os outros campos de busca do app NÃO viram cápsula: eles moram nas
+   barras de filtro, lado a lado com `select`s e chips de 6px. Uma cápsula ali
+   brigaria com o vizinho em vez de combinar. Ver o comentário em `base.css`. */
+.btn.sm.busca-topo{border-radius:var(--r-pill);background:var(--surface-2);
+  border-color:var(--line-2);color:var(--ink-3);font-weight:500;
+  padding:6px 9px 6px 13px;gap:8px;min-width:214px;justify-content:flex-start;}
+.btn.sm.busca-topo svg{stroke:var(--ink-4);flex:0 0 15px;}
+/* o atalho encosta na direita, como a lupa da referência — e some sozinho
+   abaixo de 900px pela regra que já existia em `.kbd-atalho` */
+.btn.sm.busca-topo .kbd-atalho{margin-left:auto;background:var(--surface);
+  border-color:var(--line-2);border-bottom-width:1px;}
+.btn.sm.busca-topo:hover{background:var(--surface);border-color:var(--ink-4);
+  color:var(--ink-2);box-shadow:var(--el1);}
+.btn.sm.busca-topo:hover svg{stroke:var(--ink-2);}
+/* tela estreita: a cápsula encolhe para o tamanho do conteúdo em vez de
+   espremer os vizinhos — o atalho já saiu, então não sobra buraco */
+@media (max-width:1100px){
+  .btn.sm.busca-topo{min-width:0;padding:6px 13px;}
+}
+
+.sinc{display:inline-flex;align-items:center;gap:7px;border:1px solid transparent;background:none;
+  border-radius:var(--r-sm);padding:4px 9px;font:inherit;font-size:var(--fs-apoio);font-weight:600;
+  color:var(--ink-3);cursor:pointer;transition:background .12s,color .12s,border-color .12s;}
+.sinc:hover{background:var(--surface-2);border-color:var(--line-2);color:var(--ink-2);}
+.sinc b{font-weight:700;font-family:'IBM Plex Mono',monospace;font-size:var(--fs-micro);
+  background:var(--surface-2);border-radius:var(--r-pill);padding:1px 6px;}
+.sinc-p{width:6px;height:6px;border-radius:50%;background:var(--ink-4);flex:0 0 6px;}
+.sinc.ok{color:var(--ok);} .sinc.ok .sinc-p{background:var(--ok);}
+.sinc.andando{color:var(--ink-2);}
+/* "Salvando…" é estado normal de passagem, não aviso: cinza pulsando basta */
+.sinc.andando .sinc-p{background:var(--neutro-fraco);animation:pulsa 1.1s ease-in-out infinite;}
+.sinc.espera{color:var(--atencao);background:var(--atencao-fundo);border-color:var(--atencao-borda);}
+.sinc.espera:hover{background:var(--atencao-fundo);color:var(--amber);}
+.sinc.espera .sinc-p{background:var(--amber);}
+.sinc.erro{color:var(--perigo);background:var(--perigo-fundo);border-color:var(--perigo-borda);}
+.sinc.erro:hover{background:var(--perigo-fundo);color:var(--red);}
+.sinc.erro .sinc-p{background:var(--red);}
+.sinc.erro b{background:var(--perigo-fundo);color:var(--red);}
+@keyframes pulsa{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.75)}}
+@media (prefers-reduced-motion:reduce){.sinc.andando .sinc-p{animation:none;}}
+
+/* ---------- 12. filtros principais à vista, o resto atrás de um botão ----------
+   Busca, status e prioridade resolvem a maior parte do dia. Curva, setor,
+   processo e fornecedor são ajuste fino e vivem em "Mais filtros". A prioridade
+   virou um segmentado: seis opções no espaço de duas etiquetas soltas. */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r-pill);overflow:hidden;background:var(--surface);}
+.seg button{border:0;background:none;padding:5px 10px;font-size:var(--fs-apoio);font-weight:600;color:var(--ink-3);
+  border-right:1px solid var(--line-2);transition:background .13s,color .13s;}
+.seg button:last-child{border-right:0;}
+.seg button:hover{background:var(--surface-2);color:var(--ink-2);}
+/* branco sobre coral dá 3,10: coral é cor de CAIXA, não de fundo de texto.
+   Sobre coral a tinta é navy — a mesma regra do chip e do badge do menu. */
+.seg button.on{background:var(--coral);color:var(--em-coral);}
+.seg button.on:hover{background:var(--coral-2);}
+/* O teto de altura na barra de filtros cortava o painel "Mais filtros": ele
+   abria e a segunda fileira ficava escondida atrás da tabela, obrigando a rolar
+   dentro da própria barra. O painel tem duas fileiras — mostra inteiro. */
+.filters{position:relative;z-index:8;}
+.fb-painel{position:relative;z-index:9;}
+
+/* ---------- 13. menu recolhido: o número vira um ponto ----------
+   Com 68px de largura o contador ficava por cima do ícone e puxava o olho para
+   a navegação — justamente o que ela não deveria fazer. Recolhido, ele informa
+   só que existe algo ali; o número continua no rótulo ao expandir e no tooltip. */
+.shell.mini .nav .badge{position:absolute;top:6px;right:12px;width:5px;height:5px;padding:0;
+  border-radius:50%;background:var(--rail-txt-2);color:transparent;font-size:0;overflow:hidden;
+  min-width:0;line-height:0;}
+.shell.mini .nav button.on .badge{background:var(--coral);}
+.shell.mini .nav button:hover .badge{background:var(--acao-borda);}
+/* o rótulo abreviado ("Confer…", "Prestado…") também competia: fica mais apagado
+   e só acende no item ativo ou sob o cursor */
+.shell.mini .nav button span{color:var(--rail-txt-2);font-weight:600;}
+.shell.mini .nav button.on span,.shell.mini .nav button:hover span{color:inherit;}
+
+/* ponto âmbar no lugar da etiqueta "N p/ Magazord": o número já vive no Passo 4
+   da aba Dados, e ali na barra ele só engordava o botão */
+.pt-pendente{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--amber);margin-left:2px;vertical-align:middle;}
+
+
+/* v8.20 · o motivo por escrito, embaixo da etiqueta de situação.
+   Existe porque hover não é um jeito de guardar informação essencial: some
+   ao tirar o mouse, não existe no toque e não sai na impressão. */
+.sit-lista { list-style: none; margin: 4px 0 0; padding: 0; }
+.sit-lista li {
+  font-size:var(--fs-apoio); line-height: 1.45; color: var(--atencao-texto);
+  background: var(--atencao-fundo); border-left: 2px solid var(--atencao-borda);
+  padding: 2px 6px; margin-top: 2px; border-radius:0 var(--r-1) var(--r-1) 0;
+}
+@media print { .sit-lista li { background: none; color:var(--pr-tinta); border-left-color:var(--pr-tinta); } }

@@ -1,0 +1,104 @@
+/* ---------- tabela ---------- */
+/* A tabela rola dentro de si mesma, e este limite reservava 320px para o
+   cabeçalho. Depois que o topo encolheu, aquilo virava faixa vazia embaixo.
+   Com 250px a tabela ocupa o que sobrou de verdade. */
+.tw{overflow:auto;max-height:calc(100vh - 250px);}
+@media(max-height:800px){.tw{max-height:calc(100vh - 225px);}}
+table.t{width:100%;border-collapse:separate;border-spacing:0;font-size:var(--fs-dado);}
+table.t th{position:sticky;top:0;z-index:5;background:var(--surface-2);text-align:left;padding:9px 11px;font-size:var(--fs-nano);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:700;border-bottom:1px solid var(--line);white-space:nowrap;}
+table.t th.s{cursor:pointer;user-select:none;}
+/* Pedidos: mesmo formato de sempre, só em escala menor. E as colunas de texto
+   (Situação, Ação) deixam de esticar para ocupar a sobra — era daí o espaço
+   vazio enorme. O SKU fica com a folga, com espaço para 25 caracteres. */
+.t-ped{font-size:var(--fs-micro);table-layout:fixed;}
+/* com largura fixa, conteúdo maior que a célula vazaria por cima da coluna
+   vizinha — cada célula quebra dentro do seu próprio espaço */
+.t-ped td,.t-ped th{overflow:hidden;overflow-wrap:break-word;}
+.t-ped td .s{white-space:normal !important;line-height:1.35;}
+/* Demanda: 16 colunas — larguras fixas para o navegador não repartir a sobra
+   entre elas, que é o que criava vão e obrigava a rolar para o lado.
+
+   As colunas de NÚMERO saíram de porcentagem para PIXEL. O motivo: o número é
+   monoespaçado e de corpo fixo, então o espaço de que ele precisa não muda com
+   a largura da janela — quem tem de ceder é o texto. Em porcentagem, `1.200`
+   aparecia como `1.20` e `117 aj.` ficava cortado, e número cortado ao meio não
+   é densidade: é a pessoa lendo o valor errado. Agora só SKU e Situação
+   respiram com a janela. */
+.t-dem{font-size:var(--fs-micro);table-layout:fixed;}
+@media(max-width:1200px){
+  .t-dem col:nth-child(3){width:13%;}   /* SKU cede primeiro */
+  .t-dem col:nth-child(4){width:8%;}    /* depois a Situação */
+}
+.t-dem td,.t-dem th{overflow:hidden;overflow-wrap:break-word;}
+.t-dem td .s{white-space:normal !important;line-height:1.35;}
+.t-dem td,.t-dem th{padding:4px 4px;}
+.t-dem th{font-size:var(--fs-nano);letter-spacing:.02em;white-space:normal;line-height:1.25;vertical-align:bottom;}
+.t-dem .p{font-size:var(--fs-micro);}
+.t-dem .s{font-size:var(--fs-nano);}
+.t-dem .tag{font-size:var(--fs-nano);padding:1px 6px;white-space:normal;display:inline-block;text-align:left;}
+.t-dem .sku{font-size:var(--fs-micro);}
+.t-dem .btn.sm{padding:3px 7px;font-size:var(--fs-micro);}
+.t-dem .num .s{white-space:normal;line-height:1.35;}
+@media(max-width:1200px){
+  .t-dem{font-size:var(--fs-micro);}
+  .t-dem td,.t-dem th{padding:3px 3px;}
+  .t-dem .btn.sm{padding:2px 6px;font-size:var(--fs-nano);}
+}
+.t-ped td,.t-ped th{padding:4px 5px;}
+.t-ped th{font-size:var(--fs-nano);letter-spacing:.04em;}
+.t-ped .sku-trunc{max-width:100%;font-size:var(--fs-apoio) !important;}
+.t-ped select.sel{width:100%;max-width:none;padding:2px 5px;font-size:var(--fs-micro);}
+.t-ped .tag{font-size:var(--fs-nano);padding:1px 6px;}
+.t-ped .p{font-size:var(--fs-micro);}
+/* a divisão do adesivo ("300 embalar · 0 mix") não pode esticar a coluna Qtd */
+.t-ped td.num .s{white-space:normal;font-size:var(--fs-nano);line-height:1.35;}
+.t-ped .s{font-size:var(--fs-nano);}
+.t-ped .btn.sm{padding:3px 8px;font-size:var(--fs-micro);}
+/* Situação e Ação QUEBRAM em vez de esticar. Uma única linha com texto longo
+   ("Adiantar · estoque 20% · no prazo · pode deixar p/ depois" tem 481px)
+   definia a largura da coluna inteira, deixando as outras com espaço vazio. */
+.t-ped td.col-sit{white-space:normal;line-height:1.6;}
+/* a etiqueta tem "não quebrar" no estilo base — dentro desta coluna ela precisa
+   quebrar, senão o texto sai por cima da coluna de Ação */
+.t-ped td.col-sit .tag{display:inline-block;white-space:normal;text-align:left;margin:1px 0;}
+
+.t-ped td.col-acao{white-space:normal;line-height:1.85;}
+.t-ped td.col-acao .btn{margin:1px 0;}
+@media(max-width:1200px){
+  .t-ped{font-size:var(--fs-micro);}
+  .t-ped td,.t-ped th{padding:3px 3px;}
+  .t-ped .sku-trunc{max-width:140px;}
+  .t-ped select.sel{max-width:92px;}
+  .t-ped .btn.sm{padding:3px 7px;font-size:var(--fs-micro);}
+}
+.btn.ic{padding:4px 6px;line-height:0;}
+.btn.ic svg{width:15px;height:15px;}
+/* coluna de ação comum: sem fixar nem separar — a tabela cabe na tela */
+table.t th.s:hover{color:var(--ink);}
+table.t th .ar{color:var(--teal);margin-left:2px;}
+table.t td{padding:10px 12px;border-bottom:1px solid var(--line-2);vertical-align:middle;}
+.sku-trunc{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+table.t tbody tr{transition:background .1s;}
+table.t tbody tr:hover{background:var(--linha-hover);}
+table.t tbody tr.on{background:var(--teal-soft);}
+table.t tbody tr.clickable{cursor:pointer;}
+/* "table.t th" tem prioridade maior que ".num", então os títulos das colunas
+   numéricas ficavam à esquerda enquanto os números iam à direita. */
+table.t th.num{text-align:right;}
+.num{text-align:right;font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;white-space:nowrap;}
+/* todo SKU do app copia com um clique — daí o cursor e o realce no hover */
+/* célula editável: parece texto até receber o cursor, para a tabela não virar um formulário */
+.cel-qtd{width:100%;max-width:62px;border:1px solid transparent;border-radius:var(--r-2);background:transparent;
+  font:inherit;font-family:var(--mono);font-size:var(--fs-dado);text-align:right;padding:2px 5px;color:inherit;
+  -moz-appearance:textfield;transition:border-color .12s,background .12s;}
+.cel-qtd::-webkit-outer-spin-button,.cel-qtd::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.cel-qtd:hover{border-color:var(--line);background:var(--surface-2);}
+.cel-qtd:focus{outline:0;border-color:var(--teal);background:var(--surface);box-shadow:var(--ring);}
+.cel-qtd::placeholder{color:var(--amber);font-size:var(--fs-micro);opacity:.85;}
+.et-nome{font-size:var(--fs-nano);color:var(--ink-4);letter-spacing:-.01em;text-align:right;}
+.sku{font-family:'IBM Plex Mono',monospace;font-size:var(--fs-apoio);font-weight:500;white-space:nowrap;cursor:copy;border-radius:var(--r-1);transition:background .12s,box-shadow .12s;}
+.sku:hover{background:var(--teal-soft);box-shadow:var(--ring);}
+@media print{.sku{cursor:auto;}.sku:hover{background:none;box-shadow:none;}}
+.desc{max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2);}
+.chk{width:15px;height:15px;accent-color:var(--teal);cursor:pointer;}
+

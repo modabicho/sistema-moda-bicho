@@ -1,0 +1,425 @@
+/* ---------- Relatórios ---------- */
+/* KPI que leva a algum lugar precisa parecer que leva: cursor, realce e foco. */
+.kpi-btn{text-align:left;border:1px solid var(--line);background:var(--surface);cursor:pointer;font:inherit;color:inherit;
+  transition:border-color .12s,transform .12s;}
+.kpi-btn:hover{border-color:var(--teal2);transform:translateY(-1px);}
+.kpi-btn:focus-visible{outline:2px solid var(--coral);outline-offset:2px;}
+.kpi-btn.red .val{color:var(--red);} .kpi-btn.amber .val{color:var(--amber);}
+.rolar-x{overflow-x:auto;}
+svg.graf{width:100%;min-width:520px;height:auto;display:block;}
+.gr-linha{stroke:var(--line-2);stroke-width:1;}
+.gr-eixo{font-size:var(--fs-nano);fill:var(--ink-3);font-family:var(--mono,ui-monospace,monospace);}
+.gr-valor{font-size:var(--fs-micro);font-weight:700;fill:var(--ink-2);}
+/* série de dados usa a paleta normal. Verde e vermelho ficam guardados para
+   quando o NÚMERO significar bom ou ruim — e isso depende da métrica: atraso
+   caindo é ótimo, e pintar de vermelho porque "caiu" seria mentir. */
+.gr-barra{fill:var(--teal2);} .gr-barra.gr-max{fill:var(--acao);}
+.barra-mini{height:8px;background:var(--line-2);border-radius:var(--r-pill);overflow:hidden;}
+.barra-mini i{display:block;height:100%;background:var(--teal2);border-radius:var(--r-pill);}
+.rel-aten{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:var(--fs-corpo);color:var(--ink-2);}
+
+/* ---------- escolher em lote nas Datas festivas ---------- */
+.fest-op{display:flex;align-items:center;gap:9px;padding:6px 9px;border-radius:var(--r-2);cursor:pointer;font-size:var(--fs-dado);}
+.fest-op:hover{background:var(--surface-2);}
+.fest-op.on{background:var(--teal-soft);}
+.fest-op .sku{flex:0 0 auto;}
+.fest-op span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ---------- o aviso que fecha o ciclo ---------- */
+.toast.passo{align-items:flex-start;}
+.toast.passo span{display:flex;flex-direction:column;gap:2px;}
+.toast.passo b{font-weight:700;}
+.toast.passo i{font-style:normal;opacity:.82;font-size:var(--fs-apoio);}
+.resumo.tem-excecao{border-left:3px solid var(--red);padding-left:13px;}
+/* número que não é clicável não finge que é */
+.kpi:not(.clicavel):not(.kpi-btn){cursor:default;}
+.kpi:not(.clicavel):not(.kpi-btn):hover{border-color:var(--line);transform:none;}
+/* botão que espera alguma coisa: diz o que espera, em vez de dar erro depois */
+.btn.espera{background:var(--surface-2);color:var(--ink-3);border:1px dashed var(--line);cursor:help;font-weight:600;}
+.btn.espera:hover{background:var(--surface-2);border-color:var(--ink-4);color:var(--ink-2);}
+
+/* ---------- a fila de avisos do topo ----------
+   Teto de altura é o ponto: o primeiro abre inteiro, o resto vira uma linha.
+   Quatro banners empilhados empurram o conteúdo para fora da primeira dobra —
+   e tela empurrada para baixo é tela onde ninguém lê nada. */
+.avs{margin-bottom:16px;display:flex;flex-direction:column;gap:1px;
+  border-radius:var(--r-3);overflow:hidden;box-shadow:var(--el1);}
+.avs-i{display:flex;gap:14px;align-items:flex-start;padding:15px 18px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r-3);}
+.avs-i + .avs-i,.avs-mais + .avs-i{border-radius:0;margin-top:-1px;}
+.avs-ic{display:grid;place-items:center;width:30px;height:30px;border-radius:var(--r-3);flex:0 0 30px;}
+.avs-ic svg{width:16px;height:16px;stroke-width:2;}
+.avs-corpo{flex:1;min-width:0;}
+.avs-nivel{font-size:var(--fs-nano);font-weight:800;letter-spacing:.11em;margin-bottom:3px;}
+.avs-tit{margin:0;font-size:var(--fs-h3);font-weight:700;letter-spacing:-.01em;line-height:1.35;}
+.avs-txt{margin:4px 0 0;font-size:var(--fs-corpo);color:var(--ink-2);line-height:1.6;}
+.avs-acoes{display:flex;flex-direction:column;gap:6px;align-items:stretch;min-width:170px;}
+.avs-acoes .btn{justify-content:center;}
+/* crítico: a barra grossa é o sinal, não o fundo inteiro tingido */
+.avs-critico{border-color:var(--perigo-borda);box-shadow:inset var(--marca-lat) var(--perigo);}
+.avs-critico .avs-ic{background:var(--perigo-fundo);color:var(--perigo);}
+.avs-critico .avs-nivel{color:var(--perigo);}
+.avs-atencao{border-color:var(--atencao-borda);box-shadow:inset var(--marca-lat) var(--atencao);}
+.avs-atencao .avs-ic{background:var(--atencao-fundo);color:var(--atencao);}
+.avs-atencao .avs-nivel{color:var(--atencao);}
+.avs-info{box-shadow:inset var(--marca-lat) var(--neutro-fraco);}
+.avs-info .avs-ic{background:var(--neutro-fundo);color:var(--neutro);}
+.avs-info .avs-nivel{color:var(--neutro);}
+/* a dobra */
+.avs-mais{display:flex;align-items:center;gap:9px;width:100%;padding:10px 18px;background:var(--surface-2);
+  border:1px solid var(--line);border-top:0;text-align:left;font-size:var(--fs-dado);font-weight:700;color:var(--ink-2);
+  border-radius:0 0 var(--r-3) var(--r-3);margin-top:-1px;}
+.avs-mais:hover{background:var(--neutro-fundo);}
+.avs-mais svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;}
+.avs-mais-t{font-weight:500;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* recolhido: uma linha por aviso */
+.avs-min{padding:10px 18px;align-items:center;gap:10px;border-top:0;border-radius:0;}
+.avs-min:last-child{border-radius:0 0 var(--r-3) var(--r-3);}
+.avs-ponto{width:7px;height:7px;border-radius:50%;flex:0 0 7px;background:var(--neutro-fraco);}
+.avs-min.avs-atencao .avs-ponto{background:var(--atencao);}
+.avs-min.avs-critico .avs-ponto{background:var(--perigo);}
+.avs-tit-min{font-size:var(--fs-corpo);font-weight:700;}
+.avs-txt-min{font-size:var(--fs-dado);color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* o crachá da cópia de teste */
+/* Reconhecível sem gritar: quem já sabe onde está só precisa confirmar de
+   relance, e a borda laranja da tela + a faixa do rodapé já são o alarme. */
+.cracha-teste{font-size:var(--fs-nano);font-weight:800;letter-spacing:.09em;padding:3px 9px;border-radius:var(--r-2);
+  background:var(--atencao-fundo);color:var(--atencao-texto);border:1px solid var(--atencao-borda);line-height:1.5;}
+.cracha-teste:hover{background:var(--atencao);color:var(--em-cor);border-color:var(--atencao);}
+@media(max-width:720px){
+  .avs-i{flex-direction:column;gap:11px;padding:14px 15px;}
+  .avs-acoes{min-width:0;flex-direction:row;flex-wrap:wrap;}
+  .avs-acoes .btn{flex:1 1 auto;}
+  .avs-ic{display:none;}
+  .avs-min{flex-direction:row;padding:10px 15px;}
+  .avs-txt-min{display:none;}
+  .avs-mais-t{display:none;}
+}
+
+/* ============================================================================
+   PEDIDOS — a densidade da tabela de referência
+   ----------------------------------------------------------------------------
+   A linha de Pedidos carrega um registro inteiro: número, prioridade, data,
+   SKU, curva, setor, processo, quem está com a peça, quantidade, cinco números
+   de estoque, situação e ação. Isso é para ser denso, não estreito — mas cada
+   pedaço estava ganhando uma linha própria, e três linhas por registro vezes
+   vinte e seis pedidos é meia tela de ar.
+   ============================================================================ */
+/* "quem está com a peça": rótulo e valor na mesma linha */
+.t td.tcell .p.cq,.t td.tcell .s.cq{display:flex;align-items:center;gap:7px;min-width:0;}
+.cq-rot{font-size:var(--fs-nano);letter-spacing:.12em;font-weight:800;color:var(--ink-4);
+  flex:0 0 auto;}
+.t td.tcell .cq > b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;flex:1 1 auto;}
+.t .cq .sel{padding:3px 8px;font-size:var(--fs-dado);min-width:0;}
+.t .cq .sel-mini{padding:2px 6px;font-size:var(--fs-micro);}
+/* O botão da ação PODE quebrar em duas linhas, e é de propósito: obrigá-lo a
+   uma linha só faz a coluna exigir largura, e quem paga é a coluna do lado —
+   "Malharia Lu" virou "M". Numa tabela de doze colunas, largura é um jogo de
+   soma zero: o que um ganha, outro perde. Duas linhas dentro de um registro
+   que já tem três não custam altura nenhuma. */
+
+/* ============================================================================
+   NÚMERO NÃO QUEBRA, CABEÇALHO NÃO PARTE PALAVRA
+   ----------------------------------------------------------------------------
+   Na Demanda o cabeçalho saía "PEDIDO / S" e "NECESSIDAD / E", e o mínimo
+   ajustado saía "117 aj." cortado no meio. Número partido ao meio não é
+   densidade, é erro de leitura: `1.200` que aparece como `1.20` muda a decisão
+   de quem está olhando. Estas duas linhas valem para todas as tabelas, porque
+   a regra é da tabela, não da tela.
+   ============================================================================ */
+table.t th{white-space:nowrap;}
+table.t td.num,table.t td.num .s,table.t td.num b{white-space:nowrap;}
+
+/* ============================================================================
+   TABELA LARGA EM JANELA ESTREITA — rola a TABELA, não perde o dado
+   ----------------------------------------------------------------------------
+   Pedidos tem doze colunas e Demanda tem dezesseis. Em 1024px elas não cabem,
+   e até aqui o que acontecia era o pior dos mundos: as colunas encolhiam até o
+   número ser cortado no meio — `1.200` virando `1.20`, `117 aj.` virando
+   `117 a`. Ninguém percebe que está lendo o valor errado.
+   Console industrial resolve isso rolando a TABELA de lado dentro do cartão. A
+   página continua sem rolagem horizontal (a `.tw` já é `overflow:auto`), o
+   cabeçalho continua grudado no topo, e nenhum número desaparece.
+   O piso é a soma das colunas: abaixo dele a tabela para de encolher.
+   ============================================================================ */
+/* O piso não é um número redondo: é a soma das colunas em pixel (792px)
+   dividida pelo que sobra para as duas em porcentagem (33%). Abaixo disso o
+   navegador espreme as porcentagens, e foi assim que `ATRASADA 57d` apareceu
+   cortado em 1280px depois de eu ter apertado a coluna do SKU. */
+.t-ped{min-width:1220px;}
+.t-dem{min-width:1180px;}
+.t-prod{min-width:860px;}   /* 10 colunas: SKU, produto, embalagem, processo, pacote, programado, loja, ação */
+
+/* ============================================================================
+   PRODUTOS EM GRADE — catálogo de fábrica, não vitrine
+   ----------------------------------------------------------------------------
+   A grade nasceu com azulejo de 190px e foto quadrada: seis produtos ocupavam
+   uma tela inteira, e numa fábrica com centenas de SKUs isso é rolagem, não
+   consulta. Pior: sem foto, o quadrado vira um retângulo cinza gigante escrito
+   "sem foto" — meia tela de nada.
+   A grade continua sendo grade (é ela que serve para reconhecer o produto pela
+   imagem), mas em escala de console: azulejo menor, foto em 4:3, e o vazio da
+   foto reduzido a uma faixa, porque ausência de foto não é informação que
+   mereça o tamanho da foto.
+   ============================================================================ */
+.cards{grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:10px;padding:12px;}
+.pcard img{aspect-ratio:4/3;}
+.pcard .ph{aspect-ratio:16/7;font-size:var(--fs-nano);}
+.pcard .body{padding:7px 9px 9px;}
+
+/* ============================================================================
+   TAREFAS — a lista do dia, não uma vitrine de miniaturas
+   ----------------------------------------------------------------------------
+   Cada tarefa carregava um quadrado de 44px escrito "sem foto". Com zero fotos
+   cadastradas, a coluna inteira virava uma fileira de caixas cinzas dizendo que
+   não havia nada para ver — 44px de altura mínima por linha para informar uma
+   ausência. A miniatura continua quando existe foto (é ela que faz reconhecer a
+   peça de relance); quando não existe, ela some e a linha encolhe.
+   ============================================================================ */
+.lista-tarefas .foto-ph,.mt .foto-ph{display:none;}
+.lista-tarefas .tarefa{padding:11px 14px;gap:13px;}
+.lista-tarefas .tarefa .meta{line-height:1.5;}
+.lista-tarefas .tarefa .acao{min-width:138px;gap:5px;}
+
+/* ============================================================================
+   ESTADO VAZIO — explicação com medida de leitura, não de coluna de jornal
+   ----------------------------------------------------------------------------
+   A explicação do "ainda não há insumos" quebrava em cinco linhas curtas no
+   meio de um cartão de 1600px: "compra para produzir —" numa linha, "vende."
+   sozinho na outra. 470px é medida de parágrafo de texto corrido; uma
+   explicação de três frases dentro de um console pede uma medida maior e menos
+   quebras. 68 caracteres é o limite clássico de leitura confortável.
+   ============================================================================ */
+.empty p{max-width:68ch;}
+.empty{padding:44px 26px;}
+/* `vazio()` usa `.vaz`, que tinha 44ch — medida de legenda, não de
+   explicação. A mesma regra vale para os dois. */
+.vaz p{max-width:62ch;}
+
+/* ============================================================================
+   NO TELEFONE
+   ----------------------------------------------------------------------------
+   Três coisas que só apareceram medindo a tela de 390px:
+
+   1. O CABEÇALHO DO CARTÃO virava coluna. Título, legenda e botão dividiam a
+      largura em três, e a legenda de oito palavras descia em nove linhas de uma
+      palavra. Abaixo de 720px eles empilham: título, legenda, botão.
+
+   2. A TABELA DO HOJE esmagava as colunas até o nome do produto quebrar em três
+      linhas por pedido. Mesma decisão que Pedidos e Demanda: a tabela rola de
+      lado dentro do cartão, e a linha continua sendo uma linha.
+
+   3. A BARRA DE ESTADO no topo empilhava quatro etiquetas de referência antes
+      de qualquer dado aparecer. "Prazo típico 12d" é consulta, não alarme: ele
+      sai no telefone. A idade do estoque FICA — ela é aviso, e aviso não se
+      esconde por falta de espaço.
+   ============================================================================ */
+@media (max-width:720px){
+  .card-h{flex-direction:column;align-items:stretch;gap:5px;}
+  .card-h .btn,.card-h .seg{margin-left:0 !important;align-self:flex-start;}
+}
+@media (max-width:560px){
+  .topbar .right > .tag:not(.amber):not(.perigo){display:none;}
+  .topbar{padding:var(--sp2) var(--sp3);}
+}
+
+/* A LINHA DE CONTEXTO DO SKU — curva, setor, processo e a lupa.
+   Ela quebrava em duas linhas quando o setor tinha nome comprido ("Bandana e
+   Laço Tecido"), e uma terceira linha no registro inteiro custa 21px em vinte e
+   seis pedidos. Agora ela é uma linha só: os nomes cedem com reticências, a
+   curva e a lupa nunca cedem (uma é código de uma letra, a outra é alvo de
+   clique), e a linha inteira está no `title`. */
+.t-ped td.tcell .s.s-contexto{flex-wrap:nowrap !important;overflow:hidden;min-width:0;}
+.t-ped td.tcell .s.s-contexto .s-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+/* Quem cede é o SETOR, que é nome comprido e repetido; o PROCESSO fica
+   inteiro, porque é ele que diz o que a peça é, e cabe em oito letras. */
+.t-ped td.tcell .s.s-contexto .abc,.t-ped td.tcell .s.s-contexto .lupa,
+.t-ped td.tcell .s.s-contexto .s-fixo{flex:0 0 auto;white-space:nowrap;}
+
+/* O grupo de ações da barra de filtros tem `margin-left:auto` para colar na
+   direita — e no telefone isso empurrava "Novo pedido" para fora da tela, meio
+   botão visível. Abaixo de 720px ele quebra em linha própria e enche a largura:
+   botão pela metade não é botão. */
+@media (max-width:720px){
+  .fb-grupo{margin-left:0 !important;flex-wrap:wrap;width:100%;}
+  .fb-grupo .btn{flex:1 1 auto;justify-content:center;}
+}
+
+/* ============================================================================
+   AS JANELAS NO TELEFONE
+   ----------------------------------------------------------------------------
+   `.modal-b` limita o CORPO a 72vh, mas cabeçalho e rodapé ficam de fora da
+   conta: numa tela de 844px a janela de "revisar mínimo" fechava em 852px —
+   oito pixels para fora, com o rodapé (onde mora o botão que resolve) abaixo da
+   dobra e sem rolagem que o alcance.
+   O teto passa a ser da JANELA INTEIRA, e é o corpo que cede.
+   ============================================================================ */
+@media (max-width:720px){
+  .modal{max-height:calc(100vh - 24px);display:flex;flex-direction:column;}
+  .modal-b{max-height:none;flex:1 1 auto;min-height:0;overflow:auto;}
+  .modal-h,.modal-f{flex:0 0 auto;}
+  .modal-f{flex-wrap:wrap;gap:6px;}
+  .modal-f .btn{flex:1 1 auto;justify-content:center;}
+}
+
+/* ============================================================================
+   PASSE C · RÓTULO DE FILTRO E CONTEXTO DE IMPORTAÇÃO
+   ----------------------------------------------------------------------------
+   `.flabel` ("PERÍODO", "FILTROS", "FLUXO") dava 4,45 sobre a barra de filtros —
+   quatro centésimos abaixo do mínimo, em letra de 9px maiúscula. Não é
+   perfeccionismo: é a legenda que diz o que o grupo de chips ao lado significa,
+   e 9px maiúsculo já é o tamanho mais difícil da tela. Sobe um degrau de tinta.
+   ============================================================================ */
+.flabel{color:var(--ink-3);}
+
+/* Na aba Dados, o botão de exportar nascia colado à direita de um bloco que não
+   quebra, e no telefone metade dele ficava fora da tela. Mesma regra do grupo
+   de ações da barra de filtros: abaixo de 720px ele enche a largura. */
+@media (max-width:720px){
+  .page .btn[data-act^="exp-"]{width:100%;justify-content:center;}
+}
+
+/* ============================================================================
+   PASSE C · A ENTRADA
+   ----------------------------------------------------------------------------
+   O chão da entrada SEGUE O TEMA, como qualquer outra tela: claro no claro,
+   navy no escuro. Eu tinha travado navy nos dois por analogia com o trilho —
+   mas o trilho é cromo dentro do app, e a entrada é a tela inteira. Tela
+   inteira escura em quem escolheu tema claro é a preferência da pessoa sendo
+   ignorada logo na primeira tela do dia.
+   Nada aqui é valor literal: `--canvas` e `--surface-2` já são o chão e o
+   degrau acima dele em cada tema, e é só com eles que o gradiente é feito.
+   ============================================================================ */
+.auth{background:
+  radial-gradient(1200px 680px at 50% -22%, var(--surface-2) 0%, transparent 66%),
+  var(--canvas);}
+.auth-card{box-shadow:var(--sh-3);}
+/* a arte do logotipo acompanha o CARTÃO, que é onde ele fica — e o cartão
+   segue o tema. `--logo-auth` é quem decide: arte escura no claro, clara no
+   escuro. */
+.auth-logo{background-image:var(--logo-auth);}
+/* o rodapé da entrada está sobre o chão da PÁGINA, então usa tinta de página,
+   que vira com o tema — e não a tinta do trilho, que é sempre sobre navy */
+.auth-foot{color:var(--ink-4);}
+.auth-foot b{color:var(--ink-3);}
+/* ---------- o crédito de quem fez ----------
+   Discreto e presente: uma linha abaixo da assinatura da empresa. Ele aparece
+   em dois lugares com fundos diferentes — sobre o chão da página, na entrada,
+   e sobre o navy do trilho, dentro do app — então a tinta é declarada nos dois
+   contextos, e não uma vez só.
+   O `desenvolvido por:` é texto por definição. O nome da SINAL fica em
+   `.sinal-marca`: hoje é texto, e vira imagem trocando UMA linha (o
+   `background-image` do bloco abaixo) quando o arquivo da marca chegar. Não se
+   desenha a marca de ninguém em CSS. */
+.sinal{display:flex;align-items:center;justify-content:center;gap:7px;
+  margin-top:6px;font-size:var(--fs-micro);letter-spacing:.04em;}
+/* `desenvolvido por:` é texto. O nome da SINAL é a MARCA DELA — imagem, não
+   letra: recriar a marca de alguém em CSS é desenhar outra marca. */
+.sinal-marca{display:block;width:62px;height:22px;flex:0 0 62px;
+  background:var(--logo-sinal) left center/contain no-repeat;}
+.auth-foot .sinal{color:var(--ink-4);}
+.rail-foot .sinal{margin:9px 0 0;font-size:var(--fs-nano);color:var(--rail-txt-2);}
+/* o trilho é navy nos dois temas, então lá a arte é sempre a clara */
+.rail-foot .sinal-marca{background-image:var(--logo-sinal-trilho);
+  width:56px;height:20px;flex:0 0 56px;}
+.shell.mini .rail-foot .sinal{display:none;}
+
+/* ============================================================================
+   PASSE C · ACESSIBILIDADE
+   ----------------------------------------------------------------------------
+   O FOCO DO TECLADO tem de ser visível em TUDO. A regra geral põe um anel de
+   sombra no `:focus-visible` — mas o botão primário tem sombra própria, e a
+   sombra própria ganhava: quem navega por Tab passava pelo botão principal da
+   tela sem nada acontecer na imagem. Aqui o anel vem com contorno de verdade,
+   que sombra nenhuma sobrescreve, e com `outline-offset` para não sumir dentro
+   do próprio botão preenchido.
+   ============================================================================ */
+.btn:focus-visible,.chip:focus-visible,.seg button:focus-visible,
+.ic-btn:focus-visible,.lupa:focus-visible,
+.barra-mob button:focus-visible,.nav button:focus-visible,
+.pcard:focus-visible,.kpi.clicavel:focus-visible{
+  outline:2px solid var(--coral);outline-offset:2px;}
+.nav button:focus-visible,.barra-mob button:focus-visible{outline-color:var(--rail-acento);}
+
+/* ---------- segundo fator · o campo do código ----------
+   Seis números lidos de um celular e digitados aqui: o que ajuda é caractere
+   largo, espaçado e alinhado ao centro — não é um campo de texto comum. */
+.mfa-cod{font-family:var(--mono,ui-monospace,SFMono-Regular,Menlo,monospace);
+  font-size:26px;letter-spacing:.34em;text-align:center;padding-block:12px;
+  text-indent:.34em;}
+.mfa-fatores{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;
+  margin-bottom:var(--sp3);}
+.auth-nota.mfa-erro{color:var(--perigo);font-weight:600;}
+@media (max-width:520px){ .mfa-cod{font-size:22px;letter-spacing:.26em;text-indent:.26em;} }
+
+/* ---------- cadastro do autenticador ---------- */
+.mfa-qr{display:flex;justify-content:center;margin-bottom:var(--sp3);}
+.mfa-qr-img{width:190px;height:190px;display:block;padding:10px;border-radius:var(--r2);
+  background:#FFFFFF;border:1px solid var(--linha);}
+.mfa-qr-img svg,.mfa-qr-img img{width:100%;height:100%;display:block;}
+.mfa-chave{margin:0 0 var(--sp3);text-align:center;}
+.mfa-chave summary{cursor:pointer;font-size:var(--fs-micro);color:var(--ink-3);}
+.mfa-segredo{display:block;margin-top:6px;padding:8px 10px;border-radius:var(--r1);
+  background:var(--surface-2);border:1px solid var(--linha);
+  font-family:var(--mono,ui-monospace,SFMono-Regular,Menlo,monospace);
+  font-size:15px;letter-spacing:.12em;color:var(--ink);user-select:all;word-break:break-all;}
+.mfa-lista{list-style:none;margin:0 0 var(--sp3);padding:0;display:grid;gap:6px;}
+.mfa-lista li{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--r1);
+  background:var(--surface-2);border:1px solid var(--linha);font-weight:600;color:var(--ink);}
+.mfa-ok{color:var(--ok);font-weight:700;}
+@media (max-width:520px){ .mfa-qr-img{width:164px;height:164px;} }
+.mfa-esperando{height:4px;border-radius:2px;background:var(--surface-2);overflow:hidden;position:relative;}
+.mfa-esperando::after{content:"";position:absolute;inset:0;width:40%;border-radius:2px;
+  background:var(--acao-cheio);animation:mfa-vai 1.1s ease-in-out infinite;}
+@keyframes mfa-vai{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
+@media (prefers-reduced-motion:reduce){ .mfa-esperando::after{animation:none;width:100%;opacity:.5;} }
+
+/* ============================================================================
+   UNIR PRODUTOS · a lista de achados e a janela de confirmação
+   ----------------------------------------------------------------------------
+   Cada achado da busca oferece DUAS ações que fazem coisas muito diferentes:
+   "base histórica" só projeta; "unir" mexe no cadastro. Por isso a de unir é
+   botão cheio e a outra é fantasma — o peso visual conta o que cada uma custa.
+   ============================================================================ */
+.fest-achado{display:flex;align-items:center;gap:var(--sp3);flex-wrap:wrap;
+  padding:8px 10px;border:1px solid var(--line-2);border-radius:var(--r-sm);
+  background:var(--surface);}
+.fest-achado-sku{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;
+  font-size:var(--fs-dado);}
+.fest-achado-sku span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fest-achado-bts{display:flex;gap:6px;flex:0 0 auto;}
+@media (max-width:620px){
+  .fest-achado{align-items:stretch;flex-direction:column;gap:7px;}
+  .fest-achado-bts{width:100%;}
+  .fest-achado-bts .btn{flex:1;justify-content:center;}
+}
+/* os dois lados da união, lado a lado — a seta diz quem vira quem */
+.uniao-par{display:grid;grid-template-columns:1fr auto 1fr;gap:var(--sp3);align-items:stretch;}
+.uniao-lado{display:flex;flex-direction:column;gap:4px;align-items:flex-start;
+  padding:var(--sp3);border:1px solid var(--line);border-radius:var(--r-sm);
+  background:var(--surface-2);min-width:0;}
+.uniao-lado.atual{border-color:var(--ok);background:var(--ok-fundo);}
+.uniao-rot{font-size:var(--fs-nano);font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--ink-4);}
+.uniao-lado b.sku{font-size:var(--fs-h3);}
+.uniao-desc{font-size:var(--fs-apoio);color:var(--ink-3);line-height:1.4;
+  overflow:hidden;text-overflow:ellipsis;width:100%;}
+.uniao-seta{display:grid;place-items:center;color:var(--ink-4);}
+.uniao-seta svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;}
+.uniao-lista{margin:0;padding-left:18px;font-size:var(--fs-corpo);line-height:1.65;color:var(--ink-2);}
+.uniao-lista li{margin-bottom:5px;}
+@media (max-width:560px){
+  .uniao-par{grid-template-columns:1fr;}
+  .uniao-seta{transform:rotate(90deg);}
+}
+/* v8.98 · a comparação dos dois selecionados e a pergunta de quem fica */
+.uniao-cmp th[scope="row"]{text-align:left;font-weight:600;color:var(--ink-3);white-space:nowrap;}
+.uniao-cmp td{vertical-align:top;}
+.uniao-cmp thead th{font-size:var(--fs-dado);}
+.uniao-pergunta{margin:14px 0 0;padding:0;border:0;}
+.uniao-pergunta legend{font-weight:700;font-size:var(--fs-corpo);margin-bottom:8px;}
+.uniao-opcao{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;margin-bottom:6px;
+  border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);cursor:pointer;}
+.uniao-opcao input{margin-top:3px;}
+.uniao-opcao.nao{opacity:.62;cursor:not-allowed;}
+.uniao-opcao .hint{display:block;margin:2px 0 0;}
