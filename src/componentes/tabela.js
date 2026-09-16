@@ -56,5 +56,3 @@ function idx() {
   return _idx;
 }
 
-const produtoDe = (sku) => idx().prodSku.get(sku) || null; /* SKU antigo também encontra o produto */
-const produtoPorIdProd = (id) => S.produtos.find((p) => p.id === id) || null;

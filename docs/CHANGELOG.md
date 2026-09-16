@@ -6,6 +6,28 @@ Registro resumido das mudanças por versão. Este arquivo deve ser atualizado a 
 
 ---
 
+## v8.101 — 16/09/2026
+
+**MD5 (LF):** `5920df146156d2566b868ec5c2c25a3a` · **Tamanho:** 2.104.026 bytes · **Linhas:** 31.846 · **Marcador:** `<!--PCP:8.101-->` · **Base:** v8.100 (`3296f5a1de067bdee9481d5c5058d4af`) · montado por `node build.js`
+
+### Reorganização estrutural · etapa 1 — dono da identidade do produto
+
+- `produtoDe` e `produtoPorIdProd` saem de `src/componentes/tabela.js` para o novo `src/produtos/identidade.js`, sem reescrever (byte a byte iguais).
+- No manifesto, `produtos/identidade.js` fica logo depois de `componentes/tabela.js`: as duas declarações mantêm a mesma posição relativa no HTML e a ordem de inicialização não muda.
+- Diff do HTML montado: só o marcador de versão, `VERSAO` e 3 linhas de comentário de cabeçalho.
+- Não mexido: `idx()`, `skusDoProduto`, normalização, `skuNormal`, `migrarProdutosV2`, Demanda, Festivas, Pedidos, OPs, Supabase e Realtime.
+
+### Testes (v8.100 → v8.101, mesma sessão)
+
+- `conflito-pedido`: **8 ok · 0** → **8 ok · 0**.
+- `datas-festivas-uniao`: **78 ok · 0** → **78 ok · 0**.
+- Fotografia de identidade: **idêntica** (`produtoDe` `7a85faf7`, `produtoPorIdProd` `8b58a8fd`, Demanda `09810fd0`, Festivas `b8e509eb`).
+- Boot: 242 requisições, todas 200, sem erro novo. Nenhuma chamada durante a carga.
+
+Detalhes: `versions/v8.101/README.md`.
+
+---
+
 ## v8.100 — 16/09/2026
 
 **MD5 (repositório, LF):** `3296f5a1de067bdee9481d5c5058d4af` · **Tamanho:** 2.103.807 bytes · **Linhas:** 31.842 · **Marcador:** `<!--PCP:8.100-->` · **Base:** v8.99 (`8ba314bba0c39ece264951bf6826bbfb`)
