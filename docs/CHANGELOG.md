@@ -6,6 +6,31 @@ Registro resumido das mudanças por versão. Este arquivo deve ser atualizado a 
 
 ---
 
+## v8.100 — 16/09/2026
+
+**MD5 (repositório, LF):** `3296f5a1de067bdee9481d5c5058d4af` · **Tamanho:** 2.103.807 bytes · **Linhas:** 31.842 · **Marcador:** `<!--PCP:8.100-->` · **Base:** v8.99 (`8ba314bba0c39ece264951bf6826bbfb`)
+
+### Simplificação segura — sem mudança de comportamento
+
+Itens 1, 2 e 3 da dívida de simplificação da v8.99 (os itens 4, 5 e 6 ficaram fora):
+
+- `pxSincronizarConfirmado`: removido o ramo antigo atrás de `typeof telaAplicarRegistro === "function"`, que nunca rodava (declaração de função no mesmo script).
+- `pxDrenar`: removido o `typeof TELA_ENVIO_EM_CURSO !== "undefined"`; a referência continua dentro do mesmo `try/catch`.
+- `telaDesfazerNaoConfirmados`: removido `foto.revision != null`, já garantido por `regVelho`.
+
+−7 linhas. `versaoNum("8.100")` = 8100 > 8099: a atualização é detectada.
+
+### Testes (v8.99 → v8.100, idênticos)
+
+- `conflito-pedido` completa: **8 ok · 0** → **8 ok · 0**, com os mesmos toasts por cenário.
+- Captura com ordem sorteada: 30/30 → 30/30. Conflito verdadeiro sorteado: 24/24 → 24/24.
+- `datas-festivas-uniao`: **78 ok · 0** → **78 ok · 0**.
+- Caminhos diretos dos três itens (dreno, replay velho, rejeição, desfazer): resultado idêntico.
+
+Detalhes: `versions/v8.100/README.md`.
+
+---
+
 ## v8.99 — 16/09/2026
 
 **MD5 (repositório, LF):** `8ba314bba0c39ece264951bf6826bbfb` · **Tamanho:** 2.104.305 bytes · **Linhas:** 31.849 · **Marcador:** `<!--PCP:8.99-->` · **Base:** v8.98 (`bde01e39c6e0abc8d71db6b2aa7e35dd`)
