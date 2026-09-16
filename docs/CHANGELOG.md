@@ -8,7 +8,7 @@ Registro resumido das mudanças por versão. Este arquivo deve ser atualizado a 
 
 ## v8.98 — 16/09/2026
 
-**MD5:** `675754aeb660047452a6e33c827323cc` · **Tamanho:** 2.129.046 bytes · **Linhas:** 31.730 · **Marcador:** `<!--PCP:8.98-->` · **Base:** v8.97 (`ec592e045ce407cc846a880cce454687`)
+**MD5 (repositório, LF):** `bde01e39c6e0abc8d71db6b2aa7e35dd` · **Tamanho:** 2.097.316 bytes · **Linhas:** 31.730 · **Marcador:** `<!--PCP:8.98-->` · **Base:** v8.97 (`ba69d6f7f1c32fbf3791359af82cb671`)
 
 > v8.94–v8.97 não foram registradas neste arquivo; a v8.97 está em `PCP-v8.97.html`.
 

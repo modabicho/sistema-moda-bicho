@@ -2,10 +2,13 @@
 
 **Data:** 16/09/2026
 **Arquivo:** `PCP-v8.98.html`
-**MD5:** `675754aeb660047452a6e33c827323cc`
-**Tamanho:** 2.129.046 bytes · 31.730 linhas
+**MD5 (arquivo no repositório, fim de linha LF):** `bde01e39c6e0abc8d71db6b2aa7e35dd`
+**Tamanho:** 2.097.316 bytes · 31.730 linhas
+
+> Com `core.autocrlf=true`, a cópia local no Windows fica com CRLF e outro MD5 (`675754aeb660047452a6e33c827323cc`). O hash de referência é o do repositório.
+
 **Marcador:** `<!--PCP:8.98-->` · `VERSAO = "8.98"`
-**Base:** v8.97 (`ec592e045ce407cc846a880cce454687`, 31.525 linhas)
+**Base:** v8.97 (`ba69d6f7f1c32fbf3791359af82cb671` no repositório, 31.525 linhas)
 
 ## Causa raiz
 
