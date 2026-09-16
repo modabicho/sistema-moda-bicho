@@ -6,6 +6,28 @@ Registro resumido das mudanças por versão. Este arquivo deve ser atualizado a 
 
 ---
 
+## v8.99 — 16/09/2026
+
+**MD5 (repositório, LF):** `8ba314bba0c39ece264951bf6826bbfb` · **Tamanho:** 2.104.305 bytes · **Linhas:** 31.849 · **Marcador:** `<!--PCP:8.99-->` · **Base:** v8.98 (`bde01e39c6e0abc8d71db6b2aa7e35dd`)
+
+### Corrigido — falso conflito de pedido consigo mesmo
+
+- **Causa:** `telaEnviarIntencoes` roda no `finally` de todo `salvarTudo` e não tinha trava. Salvamentos sobrepostos (criar pedido + salvar produto) rodavam em paralelo, cada um criava seu próprio reenvio da mesma intenção, e os perdedores viravam mensagem vermelha, mesmo com o servidor já tendo os valores desejados.
+- **Por que dois textos:** o reenvio de merge automático não anotava a revisão como desta sessão ("outra pessoa"), e os outros caminhos anotavam ("gravação sua"). O `ok` de um replay também podia rebaixar a revisão da foto.
+- **Correção:** uma rodada de envio por vez; revisão nunca anda para trás e toda gravação aceita desta aba é anotada; operação já satisfeita no servidor sai da fila sem aviso também na falha do reenvio; uma mensagem por pedido. Conflito real (outra pessoa, mesmo campo, valor diferente) continua vermelho.
+- Supabase, Produto, Demanda e Datas Festivas não foram alterados.
+
+### Testes
+
+- `testes/conflito-pedido-bancada.js` (A, B, C, C2, D, D2, E): v8.98 **4 ok · 3 falhas** → v8.99 **7 ok · 0 falhas**.
+- Captura com ordem de rede sorteada: v8.98 com falso conflito em 70 de 75 execuções medidas (5 com os dois textos, 2 perdas de dado) → v8.99 **80/80 sem toast e sem perda**.
+- Conflito verdadeiro com ordem sorteada: **48/48**. `datas-festivas-uniao`: **78 ok · 0**.
+- Servidor simulado pelo contrato do app; falta confirmar no app publicado.
+
+Detalhes: `versions/v8.99/README.md`.
+
+---
+
 ## v8.98 — 16/09/2026
 
 **MD5 (repositório, LF):** `bde01e39c6e0abc8d71db6b2aa7e35dd` · **Tamanho:** 2.097.316 bytes · **Linhas:** 31.730 · **Marcador:** `<!--PCP:8.98-->` · **Base:** v8.97 (`ba69d6f7f1c32fbf3791359af82cb671`)
