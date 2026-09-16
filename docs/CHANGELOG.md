@@ -6,6 +6,31 @@ Registro resumido das mudanças por versão. Este arquivo deve ser atualizado a 
 
 ---
 
+## v8.98 — 16/09/2026
+
+**MD5:** `675754aeb660047452a6e33c827323cc` · **Tamanho:** 2.129.046 bytes · **Linhas:** 31.730 · **Marcador:** `<!--PCP:8.98-->` · **Base:** v8.97 (`ec592e045ce407cc846a880cce454687`)
+
+> v8.94–v8.97 não foram registradas neste arquivo; a v8.97 está em `PCP-v8.97.html`.
+
+### Datas Festivas — Unir produtos
+
+- A união passa a ser feita em **Produtos da campanha**: com exatamente 2 selecionados (`selProd`), aparece **Unir produtos (2)**.
+- A janela compara os dois lado a lado e pergunta **"Qual produto deve permanecer?"**, sem escolha automática. Só um SKU com cadastro pode permanecer; se nenhum dos dois tiver cadastro, a união é bloqueada.
+- O botão "Unir produtos" saiu da busca da base histórica, onde o principal era sempre o produto aberto. "Usar como base histórica" continua.
+- **Corrigido:** depois da união, a conta da campanha reconhece o SKU atual mais `skusAnteriores` em venda anterior, vendido, em produção, pronto e pedidos. Antes, o "A produzir" inflava. O estoque continua por SKU. Pedido concluído, OP encerrada e `vendasBase`/`vendasAtual` não são reescritos.
+- A análise não é reaplicada sozinha: o app avisa quando a meta sugerida do principal mudou.
+- **Corrigido:** o SKU absorvido não volta mais à Demanda como produto independente. `skusSoFestivos` passa a considerar também `skusDoProduto()` dos itens "só na data". O estoque de cada SKU continua separado, o aviso "N em Datas festivas" conta os mesmos produtos e o reforço explícito continua na Demanda.
+
+### Testes
+
+- `testes/datas-festivas-uniao.js`: v8.97 **45 ok · 12 falhas** → v8.98 **78 ok · 0 falhas**.
+- Halloween com dados reais: 90/90 linhas e zero diferença numérica entre v8.97 e v8.98.
+- Demanda com dados reais: 1.617 linhas visíveis, as mesmas 66 escondidas e `foraDaDemanda` = 90, idênticos antes e depois.
+
+Detalhes, fora do escopo e riscos: `versions/v8.98/README.md`.
+
+---
+
 ## v8.79 — 14/09/2026
 
 **MD5 verificado do arquivo recebido:** `f4b9a5003a7535a93352abb0191e81a2`
