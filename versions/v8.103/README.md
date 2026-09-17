@@ -35,9 +35,11 @@ Medido na cópia de teste, com dados reais: contador do servidor em **2778**, pe
 
 O navegador **não** é autoridade da numeração. `pxCriar` descarta o número da tela (ele vai só em `extra.numeroSugerido`) e quem grava é `pcp_pedido_criar`, com `pcp_proximo_numero` e o índice único `pcp_pedido_numero_uk`.
 
-## Pendente, fora desta versão
+## Decisão de negócio · pedido e remessa têm numerações independentes
 
-**Pedido × remessa ainda pode duplicar.** A remessa de semiacabados pega o número pelo navegador e não passa pela sequência do servidor; `pcp_semi_remessa` não tem índice único em `numero` e não há proteção cruzada. Esta versão apenas **pula** números de remessa na sugestão. A correção de verdade é no servidor e precisa de uma etapa própria.
+Pedido de produção e remessa de semiacabados são domínios diferentes e **podem ter o mesmo número**. Não há proteção cruzada a criar, e a sequência dos pedidos não se mistura com a das remessas.
+
+Consequência para esta versão: `numeroLivreDesde` pula também números de remessa, porque usa o `numeroEmUso` que já existia. É conservador — só adianta a sugestão, nunca repete número de pedido —, mas pela regra acima não seria necessário. A numeração das remessas será analisada dentro do módulo de semiacabados, com sequência e regra próprias.
 
 ## Testes
 

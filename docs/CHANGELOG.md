@@ -21,7 +21,7 @@ A janela sugeria `2778` e avisava `Já existe: 2778` no mesmo formulário. Duas 
 
 Contador **à frente** da lista continua prevalecendo (v8.75). Servidor, sequência, Supabase, remessas e a reorganização estrutural não foram tocados.
 
-**Pendente, fora desta versão:** pedido × remessa ainda pode duplicar no banco — a remessa é numerada pelo navegador e `pcp_semi_remessa` não tem índice único. Correção no servidor, em etapa própria.
+**Decisão de negócio:** pedido de produção e remessa de semiacabados têm numerações **independentes** e podem ter o mesmo número — não há proteção cruzada a criar. A numeração das remessas, se precisar de ajuste, é analisada dentro do módulo de semiacabados, com sequência própria.
 
 ### Testes
 
