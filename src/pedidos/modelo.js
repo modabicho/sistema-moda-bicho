@@ -1,18 +1,5 @@
 /* ---------- regras do modelo OP + Pedido ---------- */
 const OP_ATIVA = ["pendente", "em_producao"];
-/* TODOS os SKUs pelos quais este produto já passou — o atual primeiro.
-   `opSku` é montado só com `o.sku` exato: sem isto, renomear o SKU fazia o
-   pedido seguinte NÃO achar a OP viva e nascer uma OP PARALELA, partindo o
-   histórico de programado × produzido. E em silêncio, porque `produtoDe`
-   continuava achando o produto pelo `skusAnteriores`. */
-function skusDoProduto(sku) {
-  const p = typeof produtoDe === "function" ? produtoDe(sku) : null;
-  if (!p) return [sku];
-  const l = [p.sku];
-  for (const h of (p.skusAnteriores || [])) { const sk = (h && h.sku) || h; if (sk) l.push(sk); }
-  if (!l.includes(sku)) l.push(sku);
-  return Array.from(new Set(l.filter(Boolean)));
-}
 const opAtivaDe = (sku) => {
   const i = idx();
   for (const sk of skusDoProduto(sku)) {

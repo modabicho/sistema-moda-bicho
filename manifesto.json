@@ -158,8 +158,8 @@
   },
   {
    "arquivo": "produtos/identidade.js",
-   "linhas": 5,
-   "porque": "v8.101 · dono de produtoDe e produtoPorIdProd, movidas de componentes/tabela.js sem mudança; logo depois dele, para a ordem de inicialização não mudar"
+   "linhas": 19,
+   "porque": "v8.101 · dono de produtoDe e produtoPorIdProd (de componentes/tabela.js); v8.102 · skusDoProduto (de pedidos/modelo.js); sem mudança de código, logo depois de componentes/tabela.js"
   },
   {
    "arquivo": "regras/estoque-minimo.js",
@@ -171,7 +171,7 @@
   },
   {
    "arquivo": "pedidos/modelo.js",
-   "linhas": 427
+   "linhas": 414
   },
   {
    "arquivo": "pedidos/cancelamento.js",

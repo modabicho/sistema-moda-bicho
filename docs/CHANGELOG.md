@@ -6,6 +6,28 @@ Registro resumido das mudanças por versão. Este arquivo deve ser atualizado a 
 
 ---
 
+## v8.102 — 16/09/2026
+
+**MD5 (LF):** `70fccff211db98df5787eeb4e6297fbb` · **Tamanho:** 2.104.109 bytes · **Linhas:** 31.847 · **Marcador:** `<!--PCP:8.102-->` · **Base:** v8.101 (`5920df146156d2566b868ec5c2c25a3a`) · montado por `node build.js`
+
+### Reorganização estrutural · etapa 2 — `skusDoProduto` em `produtos/identidade.js`
+
+- `skusDoProduto` (com o comentário) sai de `src/pedidos/modelo.js` para o fim de `src/produtos/identidade.js`, sem mudar o texto.
+- Declaração de função (içada), sem chamadas durante a carga; chamadores: `opAtivaDe` e `skusSoFestivos`.
+- Diff do HTML montado: versão, cabeçalho de `identidade.js` e 13 linhas reposicionadas, idênticas byte a byte.
+- Não mexido: `opAtivaDe`, `OP_ATIVA`, `idx()`, `skuNormal`, `produtoPorSkuFrouxo`, Demanda, Festivas, Supabase, Realtime, conflito e a posição de `identidade.js` no manifesto.
+
+### Testes (v8.101 → v8.102, mesma sessão)
+
+- `conflito-pedido`: **8 ok · 0** → **8 ok · 0**.
+- `datas-festivas-uniao`: **78 ok · 0** → **78 ok · 0**.
+- Fotografia de identidade: **idêntica** (`skusDoProduto` `ef7b72d3`, Demanda `09810fd0`, Festivas `b8e509eb`).
+- Boot: 242 requisições, todas 200, sem erro novo.
+
+Detalhes: `versions/v8.102/README.md`.
+
+---
+
 ## v8.101 — 16/09/2026
 
 **MD5 (LF):** `5920df146156d2566b868ec5c2c25a3a` · **Tamanho:** 2.104.026 bytes · **Linhas:** 31.846 · **Marcador:** `<!--PCP:8.101-->` · **Base:** v8.100 (`3296f5a1de067bdee9481d5c5058d4af`) · montado por `node build.js`
