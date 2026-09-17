@@ -2,11 +2,15 @@
 const remessas = () => S.remessas || (S.remessas = []);
 const remessaPorId = (id) => remessas().find((r) => r.id === id) || null;
 const retornosDe = (r) => (r?.retornos || []);
-/* ---------- o número da remessa É um número de pedido ----------
-   Sai da mesma sequência dos pedidos de produção, no mesmo formato de quatro
-   dígitos, e nunca se repete — nem com outra remessa, nem com um pedido, nem
-   com um cancelado. Uma sequência paralela faria "o 1549" deixar de ser uma
-   resposta: duas coisas diferentes atenderiam pelo mesmo nome.
+/* ---------- o número da remessa ----------
+   v8.104 · DECISÃO DE NEGÓCIO: pedido de produção e remessa de semiacabados são
+   DOMÍNIOS DIFERENTES. Os dois podem ter o mesmo número, e as sequências não se
+   unificam. Não existe unicidade cruzada a criar.
+
+   LEGADO, ainda de pé: o número da remessa sai de `proximoNumeroPedido()`, no
+   formato de quatro dígitos. É herança de quando as duas coisas dividiam a
+   sequência. A sequência PRÓPRIA de remessa — o servidor entregando o número, e
+   unicidade só entre remessas — é etapa separada, e é lá que esta linha muda.
 
    O que fica em aberto é a QUANTIDADE, nunca a identificação. */
 const proximoNumeroRemessa = () => String(proximoNumeroPedido()).padStart(4, "0");
@@ -62,8 +66,8 @@ function migrarNumerosRemessa() {
    como qualquer pedido. Até a 7.99 a remessa era só um controle de material —
    ela aparecia em Semiacabados, não aparecia em lugar nenhum do dinheiro.
 
-   A ponte é curta de propósito. A remessa já tem número da sequência dos
-   pedidos, prestadora e data; faltavam três coisas:
+   A ponte é curta de propósito. A remessa já tem número, prestadora e data;
+   faltavam três coisas:
 
      processo      qual estrutura de etapas ela usa (de onde sai o valor/peça)
      etapas        o que foi lançado na conferência — o mesmo formato do pedido
@@ -241,9 +245,9 @@ function movimentosSemi(semiId, limite = 200) {
     const q = (ret.itens || []).reduce((t, it) => it.semiId === semiId ? t + (Number(it.qtd) || 0) : t, 0);
     if (!q) continue;
     lin.push({ em: ret.em, quando: ret.data || ret.em, tipo: "retorno", qtd: q,
-      /* auditoria: a entrada no estoque diz de qual pedido e de quem ela veio.
+      /* auditoria: a entrada no estoque diz de qual remessa e de quem ela veio.
          Sem isso, um saldo estranho vira arqueologia. */
-      texto: `pedido ${r.numero} · retorno de ${primeiroNome(r.prestadora)}`,
+      texto: `remessa ${r.numero} · retorno de ${primeiroNome(r.prestadora)}`,
       remessaId: r.id, por: ret.por, obs: ret.obs });
   }
   for (const a of semiAjustes()) {

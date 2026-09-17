@@ -101,7 +101,7 @@ function telaRemessa(r) {
   return `<div class="card">
     <div class="card-h">
       <button class="btn sm ghost" data-act="semi-voltar">${svg(IC.setaEsq)}Remessas</button>
-      <div style="margin-left:6px"><h3>Pedido ${esc(r.numero)} · ${esc(r.prestadora)}
+      <div style="margin-left:6px"><h3>Remessa ${esc(r.numero)} · ${esc(r.prestadora)}
           <span class="sit" style="vertical-align:middle" title="Remessa de semiacabado — o mesmo registro aparece na aba Pedidos">REMESSA</span></h3>
         <div class="hint">Saiu em ${fdate(r.data || r.em)}${d != null ? ` · há ${d === 0 ? "menos de um dia" : n0(d) + (d === 1 ? " dia" : " dias")}` : ""}${r.por ? ` · anotada por ${esc(r.por)}` : ""}</div></div>
       <span class="tag dot ${st.tom}" style="margin-left:8px">${esc(st.nome)}</span>

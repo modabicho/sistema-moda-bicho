@@ -37,7 +37,7 @@ const CFG_PADRAO = {
      Este campo só sobe. Ver `numeroMarcarUsado()`. */
   maiorNumeroUsado: 0,
 };
-const VERSAO = "8.103";
+const VERSAO = "8.104";
 
 /* ---------------------------------------------------------------------------
    railMini · o menu recolhido é preferência DE QUEM ESTÁ NESTA MÁQUINA

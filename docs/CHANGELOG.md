@@ -6,6 +6,31 @@ Registro resumido das mudanças por versão. Este arquivo deve ser atualizado a 
 
 ---
 
+## v8.104 — 17/09/2026
+
+**MD5 (LF):** `4170d1bed5430fc24e82970200d40d64` · **Tamanho:** 2.105.511 bytes · **Linhas:** 31.874 · **Marcador:** `<!--PCP:8.104-->` · **Base:** v8.103 (`a80abae863687cdc90834d135c35b096`) · montado por `node build.js`
+
+### Semiacabados — remessa deixa de se chamar "pedido"
+
+Só texto e comentário, seguindo a decisão de que pedido e remessa são domínios diferentes:
+
+- janelas: "Nova remessa · nº N", "Remessa N", "Retorno da remessa N", "Encerrar a remessa N", "Abrir a remessa que originou esta entrada";
+- tela da remessa: cabeçalho "Remessa N · prestadora";
+- histórico e extrato, **só registros novos**: "Remessa N alterada", "Retorno de X peças na remessa N", "remessa N · retorno de …";
+- comentários de `semiacabados/modelo.js`: registram a decisão de negócio e marcam como legado a dependência de `proximoNumeroPedido()`.
+
+Registros antigos não foram reescritos. Nada de lógica mudou: `proximoNumeroRemessa`, `migrarNumerosRemessa`, `numeroEmUso`, a sequência dos pedidos, o Supabase e os nomes internos seguem iguais.
+
+### Testes (v8.103 → v8.104)
+
+- Fotografia de identidade: **idêntica**. Boot: 179 requisições, todas 200, sem erro novo.
+- `numeracao-pedido` **18 ok · 0**, `conflito-pedido` **8 ok · 0**, `datas-festivas-uniao` **78 ok · 0**.
+- Telas e janelas de remessa renderizadas com registro sintético: todos os textos trocados, nada mais.
+
+Detalhes: `versions/v8.104/README.md`.
+
+---
+
 ## v8.103 — 17/09/2026
 
 **MD5 (LF):** `a80abae863687cdc90834d135c35b096` · **Tamanho:** 2.105.351 bytes · **Linhas:** 31.870 · **Marcador:** `<!--PCP:8.103-->` · **Base:** v8.102 (`70fccff211db98df5787eeb4e6297fbb`) · montado por `node build.js`

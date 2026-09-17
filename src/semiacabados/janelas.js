@@ -12,7 +12,7 @@ function modaisSemi(m) {
     const tipos = semiAtivos();
     const marcados = new Set(r.itens || []);
     return `<div class="ov" data-fechar="1"><div class="modal" style="max-width:min(640px, 96vw)" role="dialog" aria-label="Remessa">
-      <div class="modal-h"><h2>${nova ? `Nova remessa · pedido ${esc(proximoNumeroRemessa())}` : `Pedido ${esc(r.numero)} · remessa`}</h2>
+      <div class="modal-h"><h2>${nova ? `Nova remessa · nº ${esc(proximoNumeroRemessa())}` : `Remessa ${esc(r.numero)}`}</h2>
         <button class="btn sm ghost" style="margin-left:auto" data-fechar="1">Fechar</button></div>
       <div class="modal-b">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -47,7 +47,7 @@ function modaisSemi(m) {
           <b>Aqui não se conta peça.</b> Uma caixa é uma caixa — o app nunca vai traduzir isso em bandanas.
           A quantidade só existe quando a prestadora devolver e contar.
           ${nova ? `<div style="margin-top:6px">O que <b>não</b> fica em aberto é a identificação: esta remessa nasce com o número
-            <b>${esc(proximoNumeroRemessa())}</b>, da mesma sequência dos pedidos, e ele acompanha tudo até o encerramento.</div>` : ""}</div>
+            <b>${esc(proximoNumeroRemessa())}</b>, e ele acompanha a remessa até o encerramento.</div>` : ""}</div>
         <div class="secao">O que foi na remessa <span style="font-weight:500;color:var(--ink-3)">— opcional, e pode misturar tamanhos</span></div>
         ${tipos.length ? `<div style="display:flex;flex-wrap:wrap;gap:7px">
           ${tipos.map((tp) => `<button type="button" class="chip ${marcados.has(tp.id) ? "on" : ""}" data-rmitem="${esc(tp.id)}"
@@ -82,7 +82,7 @@ function modaisSemi(m) {
         <input class="inp num" type="number" min="0" step="1" data-retq="${esc(id)}" placeholder="—" style="width:110px">
       </div>`; };
     return `<div class="ov" data-fechar="1"><div class="modal" style="max-width:min(600px, 96vw)" role="dialog" aria-label="Registrar retorno">
-      <div class="modal-h"><h2>Retorno do pedido ${esc(r.numero)}</h2>
+      <div class="modal-h"><h2>Retorno da remessa ${esc(r.numero)}</h2>
         <button class="btn sm ghost" style="margin-left:auto" data-fechar="1">Fechar</button></div>
       <div class="modal-b">
         <p style="margin:0 0 14px;font-size:13.5px;line-height:1.6">
@@ -112,7 +112,7 @@ function modaisSemi(m) {
     if (!r) return "";
     const vt = voltouNaRemessa(r);
     return `<div class="ov" data-fechar="1"><div class="modal" style="max-width:480px" role="dialog" aria-label="Encerrar remessa">
-      <div class="modal-h"><h2>Encerrar o pedido ${esc(r.numero)}</h2>
+      <div class="modal-h"><h2>Encerrar a remessa ${esc(r.numero)}</h2>
         <button class="btn sm ghost" style="margin-left:auto" data-fechar="1">Fechar</button></div>
       <div class="modal-b">
         <p style="margin:0 0 14px;font-size:13.5px;line-height:1.6">
@@ -220,7 +220,7 @@ function modaisSemi(m) {
         ${lin.length ? `<div class="tl">${lin.map((x) => `<div class="tl-i ${x.qtd < 0 ? "saida" : "ok"}">
           <div class="tl-d">${fdate(x.quando)}</div>
           <div class="tl-c"><b>${x.qtd >= 0 ? "+" : ""}${n0(x.qtd)}</b> ${x.remessaId
-            ? `<button class="btn sm ghost" data-abrirrem="${esc(x.remessaId)}" title="Abrir o pedido que originou esta entrada">${esc(x.texto)}</button>`
+            ? `<button class="btn sm ghost" data-abrirrem="${esc(x.remessaId)}" title="Abrir a remessa que originou esta entrada">${esc(x.texto)}</button>`
             : esc(x.texto)}
             ${x.obs ? `<div style="color:var(--ink-3)">${esc(x.obs)}</div>` : ""}
             <i>${x.por ? esc(x.por) : "—"} · ${fdataHora(x.em)}</i></div>

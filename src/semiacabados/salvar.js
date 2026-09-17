@@ -42,7 +42,7 @@ async function salvarRemessa() {
     r.obs = String(base.obs || "").trim() || null;
     r.atualizado = new Date().toISOString();
     S.modal = null;
-    await gravarSemi(`Remessa ${r.numero} (pedido) alterada`);
+    await gravarSemi(`Remessa ${r.numero} alterada`);
     toast("Remessa salva.");
     return;
   }
@@ -73,7 +73,7 @@ async function salvarRetornoSemi() {
   /* só reposiciona a tela de Semiacabados se for dela que veio o clique — o
      mesmo botão existe na aba Pedidos, e de lá ninguém pediu para navegar */
   if (S.aba === "semiacabados") S.semiView.aberta = r.id;
-  await gravarSemi(`Retorno de ${q} peças no pedido ${r.numero}`);
+  await gravarSemi(`Retorno de ${q} peças na remessa ${r.numero}`);
   toastPasso(`${n0(q)} ${q === 1 ? "peça entrou" : "peças entraram"} no estoque de semiacabado.`,
     `a remessa nº ${r.numero} continua em aberto`,
     "encerre quando não vier mais nada dela");
