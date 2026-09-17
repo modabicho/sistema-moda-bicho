@@ -146,24 +146,6 @@ const thumb = (p, cls = "") => p?.foto
    OP encerrada e pedido concluído ficam com o código da época.
    ========================================================================== */
 
-/* a única normalização de SKU deste módulo. O resto do app tem ~10 cópias de
-   `.trim().toUpperCase()` soltas; unificar todas é outra conversa (etapa 1 da
-   reorganização). Aqui a comparação é sempre por esta função. */
-function skuNormal(x) { return String(x == null ? "" : x).trim().toUpperCase(); }
-
-/* acha o produto mesmo quando o SKU vem com caixa ou espaço diferentes.
-   `produtoDe` usa `Map.get` exato, então a busca crua falha em "bbb.002". */
-function produtoPorSkuFrouxo(sku) {
-  const alvo = skuNormal(sku);
-  if (!alvo) return null;
-  const direto = typeof produtoDe === "function" ? (produtoDe(sku) || produtoDe(alvo)) : null;
-  if (direto) return direto;
-  return (S.produtos || []).find((p) =>
-    skuNormal(p.sku) === alvo
-    || skuNormal(p.skuAtual) === alvo
-    || (p.skusAnteriores || []).some((h) => skuNormal(h?.sku || h) === alvo)) || null;
-}
-
 /* ---------- 1. BASE HISTÓRICA · as validações ----------
    Elas moram AQUI, e não na tela, porque esconder a opção na busca não impede
    um clique repetido, um `data-` forjado nem um caminho futuro. A tela também

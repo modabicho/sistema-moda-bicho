@@ -6,6 +6,30 @@ Registro resumido das mudanças por versão. Este arquivo deve ser atualizado a 
 
 ---
 
+## v8.105 — 17/09/2026
+
+**MD5 (LF):** `394fda2d56dfac786d6499135c7aef60` · **Tamanho:** 2.105.599 bytes · **Linhas:** 31.875 · **Marcador:** `<!--PCP:8.105-->` · **Base:** v8.104 (`4170d1bed5430fc24e82970200d40d64`) · montado por `node build.js`
+
+### Reorganização, Fase 3 — a normalização de SKU ganha dono
+
+`skuNormal` e `produtoPorSkuFrouxo` saíram de `src/produtos/provisorios.js` e passaram a morar em `src/produtos/identidade.js`, junto de `produtoDe`, `produtoPorIdProd` (v8.101) e `skusDoProduto` (v8.102). **Nada foi reescrito**: as 16 linhas do bloco, incluindo os dois corpos de função, saíram e entraram byte a byte. O único texto alterado é um comentário — "a única normalização de SKU deste **módulo**" virou "deste **domínio**", porque a frase deixaria de ser verdade no arquivo novo.
+
+Seguro porque as duas são `function` declaradas e o build monta os 85 arquivos JS dentro de **um único `<script>`**: o içamento vale para o script inteiro, e a posição do arquivo não participa da resolução do nome.
+
+Não mexido: `idx()`, `migrarProdutosV2()`, `trocarSkuDoProduto()`, `opAtivaDe()`, `OP_ATIVA`, pedidos, remessas, Supabase, Realtime, Demanda e Datas Festivas. As ~55 cópias soltas de `.trim().toUpperCase()` continuam onde estavam — nem todas são de SKU, e unificá-las é outra conversa.
+
+### Testes (v8.104 → v8.105, mesma sessão autenticada)
+
+- Fotografia de identidade: **0 diferenças** em todos os campos (`produtoDe`, `produtoPorIdProd`, `skusDoProduto`, `opAtivaDe`, `skuNormal`, `produtoPorSkuFrouxo`, `migrarProdutosV2`, `proximoCodigoProvisorio`, `candidatosSkuReal`).
+- Demanda: 1.683 linhas comparadas uma a uma, **0 diferenças**. Datas Festivas: 90 linhas, **0 diferenças**, comparadas entre cargas vizinhas nos dois sentidos, porque o hash absoluto da campanha se move sozinho ao longo do dia (`vendasAtual` é venda do ano corrente).
+- Boot: 242 requisições ao Supabase, todas 200, sem "Erro ao calcular".
+- `numeracao-pedido` **18 ok · 0**, `conflito-pedido` **8 ok · 0**, `datas-festivas-uniao` **78 ok · 0**.
+- `node --check` ok; três builds seguidos com o mesmo MD5.
+
+Detalhes: `versions/v8.105/README.md`.
+
+---
+
 ## v8.104 — 17/09/2026
 
 **MD5 (LF):** `4170d1bed5430fc24e82970200d40d64` · **Tamanho:** 2.105.511 bytes · **Linhas:** 31.874 · **Marcador:** `<!--PCP:8.104-->` · **Base:** v8.103 (`a80abae863687cdc90834d135c35b096`) · montado por `node build.js`

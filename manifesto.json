@@ -158,7 +158,7 @@
   },
   {
    "arquivo": "produtos/identidade.js",
-   "linhas": 19,
+   "linhas": 38,
    "porque": "v8.101 · dono de produtoDe e produtoPorIdProd (de componentes/tabela.js); v8.102 · skusDoProduto (de pedidos/modelo.js); sem mudança de código, logo depois de componentes/tabela.js"
   },
   {
@@ -167,7 +167,7 @@
   },
   {
    "arquivo": "produtos/provisorios.js",
-   "linhas": 439
+   "linhas": 421
   },
   {
    "arquivo": "pedidos/modelo.js",
