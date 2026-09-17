@@ -171,7 +171,7 @@
   },
   {
    "arquivo": "pedidos/modelo.js",
-   "linhas": 414
+   "linhas": 423
   },
   {
    "arquivo": "pedidos/cancelamento.js",
@@ -261,7 +261,7 @@
   },
   {
    "arquivo": "componentes/modal.js",
-   "linhas": 2536
+   "linhas": 2550
   },
   {
    "arquivo": "festivas/modelo.js",

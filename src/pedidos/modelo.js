@@ -75,10 +75,19 @@ function numeroMarcarUsado(n) {
    promete um número ou avisa que quem decide é a gravação. */
 const numeroTemContadorOficial = () => !!(PED_CICLO && Number(PED_CICLO.proximo) > 0);
 
+/* v8.103 · o primeiro número LIVRE a partir de `n`: pula o que já é de um pedido
+   ou de uma remessa na memória. O contador do servidor pode estar atrasado (a
+   releitura falhou, ou o pedido chegou pelo Realtime antes da releitura) — e a
+   tela não pode sugerir um número que ela mesma acusa como "Já existe".
+   Não sobe além do que EXISTE: não é a marca d'água que a v8.75 tirou. */
+function numeroLivreDesde(n) {
+  while (numeroEmUso(String(n)) || numeroEmUso(String(n).padStart(4, "0"))) n++;
+  return n;
+}
 function proximoNumeroPedido() {
   /* CAMADA 1 · o contador do servidor. Quando ele respondeu, é ele e ponto:
      nenhum Math.max com a lista, nenhum Math.max com a marca d'água. */
-  if (numeroTemContadorOficial()) return Number(PED_CICLO.proximo);
+  if (numeroTemContadorOficial()) return numeroLivreDesde(Number(PED_CICLO.proximo));
   /* --- daqui para baixo é o CAMINHO LEGADO: sem contador nenhum --- */
   let max = 0;
   const olhar = (n) => { const m = String(n || "").match(/^(\d+)/); if (m) max = Math.max(max, +m[1]); };
@@ -149,7 +158,7 @@ function pedCicloRefrescar(tiposDeModal) {
            (v8.83) escreve as duas no lugar onde elas estão — nada é trocado, a
            janela nem pisca, e o número novo chega igual. É o caminho mais barato
            e o único que deixa a animação de abertura terminar inteira. */
-        if (t2 === "novoPedido" && typeof npNumRefrescar === "function" && npNumRefrescar()) return;
+        if (t2 === "novoPedido" && typeof npNumRefrescar === "function" && npNumRefrescar(true)) return;
         /* Nas outras (a da Demanda mostra "números 0003 a 0007"), o desenho
            depende do contador em mais de um ponto: repinta a janela — e só ela. */
         if (typeof repintarModal === "function"

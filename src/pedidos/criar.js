@@ -80,7 +80,7 @@ async function confirmarPedidos() {
       const prioNum = Number(l.prioridade);
       const prioridadeDaLinha = (l.prioridade === null || l.prioridade === undefined
         || l.prioridade === "" || !Number.isFinite(prioNum)) ? 4 : prioNum;
-      const r = pedEsqueleto({ numero: String(num++).padStart(4, "0"), opId: op.id, sku: g.sku,
+      const r = pedEsqueleto({ numero: String((num = numeroLivreDesde(num), num++)).padStart(4, "0"), opId: op.id, sku: g.sku,
         qtd: q, prioridade: prioridadeDaLinha, criadoEm: agora });
       /* daqui para baixo é a MESMA montagem do avulso */
       pedAplicarComuns(r, {

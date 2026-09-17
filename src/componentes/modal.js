@@ -45,9 +45,23 @@ function npNumVeredito(numDoRascunho, sugPronta) {
   return { sug, atual, conflito, igualAoSugerido, dica };
 }
 /* devolve true se conseguiu atualizar em pé; false se a janela não está lá */
-function npNumRefrescar() {
+function npNumRefrescar(contadorMudou) {
   const inp = document.getElementById("np-num");
   if (!inp) return false;
+  /* v8.103 · o contador do servidor mudou com a janela aberta: a sugestão
+     desenhada (`data-sug`) envelheceu. Recalcula — e troca o CAMPO só se ele
+     ainda está com a sugestão velha. Número digitado pela pessoa não é tocado. */
+  if (contadorMudou) {
+    const velha = inp.dataset.sug;
+    const nova = String(proximoNumeroPedido()).padStart(4, "0");
+    if (nova !== velha) {
+      if (inp.value.trim().toUpperCase() === String(velha || "").trim().toUpperCase()) {
+        inp.value = nova;
+        if (S.modal && S.modal.v && S.modal.v.num === velha) S.modal.v.num = undefined;
+      }
+      inp.dataset.sug = nova;
+    }
+  }
   /* a checagem é LOCAL — `numeroEmUso` olha `S.pedidos` e `S.remessas`, que já
      estão na memória. Responde na tecla, sem ida ao servidor e sem debounce. */
   const vd = npNumVeredito(inp.value, inp.dataset.sug);

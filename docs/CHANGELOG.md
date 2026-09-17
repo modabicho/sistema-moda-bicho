@@ -6,6 +6,34 @@ Registro resumido das mudanças por versão. Este arquivo deve ser atualizado a 
 
 ---
 
+## v8.103 — 17/09/2026
+
+**MD5 (LF):** `a80abae863687cdc90834d135c35b096` · **Tamanho:** 2.105.351 bytes · **Linhas:** 31.870 · **Marcador:** `<!--PCP:8.103-->` · **Base:** v8.102 (`70fccff211db98df5787eeb4e6297fbb`) · montado por `node build.js`
+
+### Corrigido — número de pedido sugerido já em uso
+
+A janela sugeria `2778` e avisava `Já existe: 2778` no mesmo formulário. Duas causas, as duas no navegador:
+
+- a releitura do contador (`pedCicloRefrescar`) não chegava ao campo: `npNumRefrescar` reaproveitava o `data-sug` já desenhado;
+- `proximoNumeroPedido()` devolvia só `PED_CICLO.proximo`, sem conferir a lista, então um contador atrasado sugeria número ocupado.
+
+**Correção:** nova `numeroLivreDesde(n)` (primeiro número livre, pulando pedidos e remessas na memória), usada pelo caminho com contador e pela criação em lote da Demanda; `npNumRefrescar(contadorMudou)` recalcula a sugestão e troca o campo só se ele ainda tiver a sugestão antiga — número digitado à mão não é tocado.
+
+Contador **à frente** da lista continua prevalecendo (v8.75). Servidor, sequência, Supabase, remessas e a reorganização estrutural não foram tocados.
+
+**Pendente, fora desta versão:** pedido × remessa ainda pode duplicar no banco — a remessa é numerada pelo navegador e `pcp_semi_remessa` não tem índice único. Correção no servidor, em etapa própria.
+
+### Testes
+
+- `testes/numeracao-pedido.js` (nova): v8.102 **7 ok · 11 falhas** → v8.103 **18 ok · 0 falhas**.
+- `conflito-pedido`: **8 ok · 0** → **8 ok · 0**. `datas-festivas-uniao`: **78 ok · 0** → **78 ok · 0**.
+- Fotografia de identidade (17 campos): **idêntica**. Boot: 179 requisições, todas 200, sem erro novo.
+- Dados reais: contador 2778 com pedidos até 2784 — v8.102 sugeria 2778 (em uso), v8.103 sugere 2785.
+
+Detalhes: `versions/v8.103/README.md`.
+
+---
+
 ## v8.102 — 16/09/2026
 
 **MD5 (LF):** `70fccff211db98df5787eeb4e6297fbb` · **Tamanho:** 2.104.109 bytes · **Linhas:** 31.847 · **Marcador:** `<!--PCP:8.102-->` · **Base:** v8.101 (`5920df146156d2566b868ec5c2c25a3a`) · montado por `node build.js`
