@@ -244,25 +244,56 @@ function tagsClasses(classes) {
 }
 /* As classificações do processo/padrão — e a criação delas ali mesmo, sem sair
    da janela. O que se cria aqui vai para a biblioteca e serve aos próximos. */
+/* Nome de classificação que parece DADO DO TRABALHO (número, medida, código…):
+   não bloqueia nada, só sugere que isso seria um campo. */
+const PARECE_CAMPO = ["numero", "nº", "no.", "comprimento", "tamanho", "medida", "largura", "codigo", "sku", "angulo", "quantidade", "qtd"];
+const pareceCampo = (nome) => { const n = ` ${semAcento(nome)} `; return PARECE_CAMPO.some((p) => n.includes(` ${p}`)); };
 function chipsClasses(classes) {
   const nova = topo()?.novaClasse;
+  /* linguagem de quem cadastra, não de sistema: uma pergunta por campo e exemplos à vista.
+     Os exemplos são de ORGANIZAÇÃO (setor, fornecedor, família) — nunca dado do trabalho. */
   const form = nova ? `<div class="pc-cl-nova">
+      <div class="pc-cl-expl">Crie um nome e depois diga quais opções existem.
+        <div class="pc-cl-ex"><span>Classificação: <b>Setor</b></span><span>Opções: <b>Corte, Costura, Expedição</b></span></div></div>
       <div class="grid2">
-        <label class="fld"><span>Nome da classificação</span><input class="inp" id="ncl-nome" value="${esc(nova.nome)}" placeholder="Ex.: Gênero, Ângulo do corte, Fornecedor"></label>
-        <label class="fld"><span>Valores · um por linha</span><textarea class="inp" id="ncl-valores" rows="4" placeholder="Um valor em cada linha">${esc(nova.valores)}</textarea></label>
+        <label class="fld"><span>O que você quer organizar?</span>
+          <input class="inp" id="ncl-nome" value="${esc(nova.nome)}" placeholder="Ex.: Setor">
+          <small class="hint">Ex.: Setor, Fornecedor, Família</small></label>
+        <label class="fld"><span>Quais opções podem ser escolhidas?</span>
+          <textarea class="inp" id="ncl-valores" rows="4" placeholder="Corte&#10;Costura&#10;Expedição">${esc(nova.valores)}</textarea>
+          <small class="hint">Digite uma opção por linha.</small></label>
       </div>
-      ${nova.erro ? `<div class="pc-erros">${esc(nova.erro)}</div>` : ""}
+      ${pareceCampo(nova.nome) ? `<div class="pc-cl-dica"><span>“${esc(nova.nome.trim())}” parece uma <b>informação do trabalho</b>. Isso normalmente é um <b>campo</b> do processo
+        (ex.: campo “Número da fita”, do tipo seleção, com as opções 9, 12 e 14), e não uma classificação.</span>
+        ${topo()?.t === "tipo" ? `<button class="btn sm primary" data-a="ncl-virar-campo">Criar como campo</button>` : ""}</div>` : ""}
+      <div class="pc-cl-exs"><span class="hint">Outros exemplos:</span>
+        <span><b>Fornecedor</b> → Fornecedor X · Fornecedor Y</span>
+        <span><b>Família</b> → Bandanas · Gravatas · Laços</span></div>
+      ${nova.erro ? `<div class="pc-erros">${nova.erro}</div>` : ""}
       <div class="pc-cl-nova-a"><button class="btn sm" data-a="ncl-cancelar">Cancelar</button>
-        <button class="btn sm primary" data-a="ncl-criar">${svg(IC.ok)}Criar classificação</button></div></div>` : "";
+        <button class="btn sm primary" data-a="ncl-criar">${svg(IC.ok)}Salvar classificação</button></div></div>` : "";
   if (!E.classes.length) return `<div class="pc-cls">
-      <div class="pc-cl"><span class="pc-cl-n">Classificação</span>
-        ${nova ? "" : `<span class="hint">Nenhuma classificação criada ainda.</span>
-          <button class="btn sm" data-a="ncl-abrir">${svg(IC.mais)}Criar classificação</button>`}</div>${form}
-      ${nova ? "" : `<div class="hint">Opcional. Serve para agrupar e filtrar processos — por setor, fornecedor, gênero… o que você quiser.</div>`}</div>`;
+      ${nova ? "" : `<div class="pc-cl"><span class="hint">Nenhuma classificação criada ainda.</span>
+          <button class="btn sm ghost" data-a="ncl-abrir">${svg(IC.mais)}Criar classificação</button></div>`}${form}</div>`;
   return `<div class="pc-cls">${E.classes.map((cl) => `<div class="pc-cl"><span class="pc-cl-n">${esc(cl.nome)}</span>
     ${cl.valores.map((v) => `<button class="chip ${(classes[cl.id] || []).includes(v.id) ? "on" : ""}" data-a="cl-tg" data-c="${cl.id}" data-v="${v.id}">${esc(v.nome)}</button>`).join("")}
-    <span class="bc-op nova"><input class="inp" id="clv-in-${cl.id}" placeholder="+ valor" data-enter="clv-inline" data-c="${cl.id}" aria-label="Novo valor para ${esc(cl.nome)}"></span></div>`).join("")}
+    <span class="bc-op nova"><input class="inp" id="clv-in-${cl.id}" placeholder="+ opção" data-enter="clv-inline" data-c="${cl.id}" aria-label="Nova opção para ${esc(cl.nome)}"></span></div>`).join("")}
     ${form || `<div><button class="btn sm ghost" data-a="ncl-abrir">${svg(IC.mais)}Criar classificação</button></div>`}</div>`;
+}
+/* CLASSIFICAÇÃO (opcional) · no fim da janela e fechada: o centro do cadastro são os
+   campos. Fechada, mostra só o que está marcado; aberta, explica para que serve. */
+function secaoClasses(classes, m) {
+  const aberta = m.clsAberta || !!m.novaClasse;
+  const marcadas = tagsClasses(classes);
+  return `<section class="pc-cls-opc ${aberta ? "aberta" : ""}">
+    <button class="pc-cls-tg" data-a="cls-abrir" aria-expanded="${aberta}">
+      <span class="pc-cls-seta">${aberta ? "▾" : "▸"}</span> Classificação <span class="pc-opc">opcional</span>
+      ${!aberta ? `<span class="pc-cls-res">${marcadas || `<span class="hint">nenhuma · serve só para organizar e filtrar</span>`}</span>` : ""}</button>
+    ${aberta ? `<div class="pc-cls-corpo">
+      <div class="pc-cls-ajuda">Classificações são opcionais e servem somente para organizar e filtrar processos.
+        Os dados usados para executar o trabalho devem ser criados como <b>campos</b>, acima.</div>
+      ${chipsClasses(classes)}</div>` : ""}
+  </section>`;
 }
 function casaFiltro(classes, extra) {
   for (const [cid, vid] of Object.entries(E.fc)) {
@@ -351,7 +382,7 @@ function viewClasses() {
       <button class="btn sm ghost so-icone" data-a="cl-del" data-c="${cl.id}" title="Excluir classificação" aria-label="Excluir classificação">${svg(IC.lixeira)}</button></div>
       <div class="bc-ops">${cl.valores.map((v) => `<span class="bc-op"><input class="inp" data-clv="${cl.id}|${v.id}" value="${esc(v.nome)}" aria-label="Valor">
         <button data-a="clv-del" data-c="${cl.id}" data-v="${v.id}" aria-label="Excluir ${esc(v.nome)}">×</button></span>`).join("")}
-        <span class="bc-op nova"><input class="inp" id="clv-novo-${cl.id}" placeholder="Novo valor" data-enter="clv-add" data-c="${cl.id}"><button data-a="clv-add" data-c="${cl.id}" aria-label="Adicionar">+</button></span></div></div>`; }).join("")}
+        <span class="bc-op nova"><input class="inp" id="clv-novo-${cl.id}" placeholder="Nova opção" data-enter="clv-add" data-c="${cl.id}"><button data-a="clv-add" data-c="${cl.id}" aria-label="Adicionar">+</button></span></div></div>`; }).join("")}
     <div class="pc-clcard nova"><div class="hint" style="margin-bottom:8px">Qualquer forma de organizar: setor, fornecedor, tipo de produto, tipo de estampa…</div>
       <div class="pc-lin-add"><input class="inp" id="cl-novo" placeholder="Nova classificação" data-enter="cl-add"><button class="btn sm" data-a="cl-add">${svg(IC.mais)}Criar</button></div></div>
   </div>`;
@@ -569,7 +600,7 @@ const addCampo = (g) => topo()?.picker === (g || "raiz")
       <button class="btn sm ghost" data-a="bc-picker" data-g="">Fechar</button></div>
       <div class="bc-picker-g">${TIPOS_CAMPO.filter((t) => !g || !t.soRaiz).map((t) => `<button class="bc-tp t-${t.k}" data-a="bc-add" data-g="${g}" data-k="${t.k}">
         <span class="bc-ic">${t.ic}</span><span><b>${t.nome}</b><small>${t.ex}</small></span></button>`).join("")}</div></div>`
-  : `<div class="bc-add"><button class="btn sm ${g ? "" : "primary"}" data-a="bc-picker" data-g="${g || "raiz"}">${svg(IC.mais)}Adicionar campo${g ? " ao grupo" : ""}</button></div>`;
+  : `<div class="bc-add"><button class="btn ${g ? "sm" : "primary pc-add-campo"}" data-a="bc-picker" data-g="${g || "raiz"}">${svg(IC.mais)}Adicionar campo${g ? " ao grupo" : ""}</button></div>`;
 
 function modalTipo(m) {
   const r = m.rasc;
@@ -578,15 +609,20 @@ function modalTipo(m) {
     <div class="grid2"><label class="fld"><span>Nome do processo *</span><input class="inp" data-t="nome" value="${esc(r.nome)}" placeholder="Ex.: Corte de fitas, Montagem, Embalagem"></label>
       <label class="fld"><span>Descrição</span><input class="inp" data-t="descricao" value="${esc(r.descricao || "")}"></label></div>
     ${!m.novo ? `<div class="pc-uso-cab">${usoBotao(r.id)}</div>` : ""}
-    <div class="hint" style="margin-top:6px">O processo é a <b>etapa</b> (ex.: Corte de fitas). O que se mede, escolhe ou anota dentro dela — número da fita, tamanho em cm, ângulo — vira <b>campo</b>, logo abaixo.</div>
-    <div style="margin:12px 0 4px">${chipsClasses(r.classes)}</div>
     ${erros(m)}
-    <div class="seg" style="margin:12px 0" role="group"><button class="${aba === "campos" ? "on" : ""}" data-a="tipo-aba" data-v="campos">Campos · ${r.campos.length}</button>
-      <button class="${aba === "previa" ? "on" : ""}" data-a="tipo-aba" data-v="previa">Prévia do formulário</button></div>
-    ${aba === "campos" ? `<div class="bc-lista">${r.campos.map((c, i) => campoBuilder(c, "", i, r.campos.length)).join("")
-      || `<div class="hint">Nenhum campo ainda. Quando o produto tem várias partes iguais (várias fitas, vários insumos), comece por um <b>Grupo repetível</b> e ponha os campos dentro dele.</div>`}</div>${addCampo("")}
-      <datalist id="dl-un">${UNIDADES.map((u) => `<option value="${u}">`).join("")}</datalist>`
-    : `<div class="aviso" style="margin-bottom:10px">Assim o formulário aparece para quem preencher um padrão ou um produto. O que você digitar aqui não é salvo.</div>${formValores(r, m.previa)}`}`,
+    <!-- o centro do cadastro: as informações do trabalho. Classificação é acessório e vem no fim, fechada -->
+    <section class="pc-campos-sec">
+      <div class="pc-campos-h"><h3>Quais informações precisam ser preenchidas neste processo?</h3>
+        <p>Cada informação é um <b>campo</b>: número da fita, comprimento, código da fita, ângulo, tipo de estampa…
+          Quando o produto tem várias partes iguais (várias fitas, vários insumos), use um <b>grupo repetível</b> e ponha os campos dentro dele.</p></div>
+      <div class="seg" style="margin:4px 0 12px" role="group"><button class="${aba === "campos" ? "on" : ""}" data-a="tipo-aba" data-v="campos">Campos · ${r.campos.length}</button>
+        <button class="${aba === "previa" ? "on" : ""}" data-a="tipo-aba" data-v="previa">Prévia do formulário</button></div>
+      ${aba === "campos" ? `<div class="bc-lista">${r.campos.map((c, i) => campoBuilder(c, "", i, r.campos.length)).join("")
+        || `<div class="hint">Nenhum campo ainda. Comece pelo botão abaixo.</div>`}</div>${addCampo("")}
+        <datalist id="dl-un">${UNIDADES.map((u) => `<option value="${u}">`).join("")}</datalist>`
+      : `<div class="aviso" style="margin-bottom:10px">Assim o formulário aparece para quem preencher um padrão ou um produto. O que você digitar aqui não é salvo.</div>${formValores(r, m.previa)}`}
+    </section>
+    ${secaoClasses(r.classes, m)}`,
     `${!m.novo ? `<button class="btn danger" data-a="tipo-del">Excluir tipo</button>
        <button class="btn ghost" data-a="tipo-dup" title="Começar um processo novo a partir deste">Duplicar processo</button>` : ""}<button class="btn" data-a="fechar">Cancelar</button><span style="margin-left:auto"></span>
      <button class="btn primary" data-a="tipo-salvar">${svg(IC.ok)}Salvar tipo de processo</button>`, "1100px");
@@ -607,7 +643,6 @@ function modalValores(m) {
       : `${esc(t.nome)} · <span class="mono">${esc(cfg.sku)}</span>`, `
     ${ehPadrao
       ? `<div class="grid2"><label class="fld"><span>Nome do padrão *</span><input class="inp" data-r="nome" value="${esc(r.nome)}" placeholder="Ex.: Chuca P"></label><div></div></div>
-         <div style="margin:10px 0">${chipsClasses(r.classes)}</div>
          ${outros.length ? `<div class="aviso" style="margin-bottom:12px">Já aplicado em <b>${outros.join(", ")}</b>. Editar o padrão <b>não muda</b> esses produtos: cada um tem a própria cópia.</div>` : ""}`
       : `<div class="aviso" style="margin-bottom:12px">Vale <b>só para ${esc(cfg.sku)}</b>${produtoDe(cfg.sku) ? ` · ${esc(produtoDe(cfg.sku).descricao)}` : ""}. ${cfg.padraoId ? `Veio do padrão <b>${esc(cfg.padraoNome)}</b>, mas é uma cópia: mudar aqui não muda o padrão nem outro produto.` : "Não altera outro produto."}
           É instrução: não mexe em cadastro, estoque ou insumos.</div>
@@ -615,7 +650,8 @@ function modalValores(m) {
             Cada um tem o seu <b>↺ padrão</b> para voltar só aquele campo.` : `Igual ao padrão <b>${esc(cfg.padraoNome)}</b> aplicado em ${fdata(cfg.aplicadoEm)}. O que você mudar aparece marcado.`}</div>` : ""}
          <div class="grid2"><label class="fld"><span>Título (opcional)</span><input class="inp" data-r="titulo" value="${esc(r.titulo || "")}" placeholder="Ex.: fitas do laço — útil quando o mesmo processo aparece duas vezes"></label><div></div></div>`}
     ${erros(m)}
-    <div style="margin-top:12px">${form}</div>`,
+    <div style="margin-top:12px">${form}</div>
+    ${ehPadrao ? secaoClasses(r.classes, m) : ""}`,
     `<button class="btn" data-a="fechar">Cancelar</button>
      ${!ehPadrao ? `<button class="btn ghost" data-a="virar-padrao">Salvar esta configuração como novo padrão</button>` : (!m.novo ? `<button class="btn ghost" data-a="aplicar" data-id="${m.id}">Aplicar a produtos</button>` : "")}
      <span style="margin-left:auto"></span>
@@ -905,18 +941,23 @@ const ACOES = {
     cl.valores = cl.valores.filter((v) => v.id !== d.v); [...E.tipos, ...E.padroes].forEach((x) => { if (x.classes?.[cl.id]) x.classes[cl.id] = x.classes[cl.id].filter((v) => v !== d.v); }); render(); },
   "cl-tg": (d) => { const r = topo().rasc; const l = (r.classes[d.c] ||= []); const i = l.indexOf(d.v); i < 0 ? l.push(d.v) : l.splice(i, 1); render(); },
   /* criar classificação sem sair da janela do processo/padrão */
+  "cls-abrir": () => { const m = topo(); m.clsAberta = !(m.clsAberta || m.novaClasse); if (!m.clsAberta) delete m.novaClasse; render(); },
   "ncl-abrir": () => { topo().novaClasse = { nome: "", valores: "" }; E.foco = "#ncl-nome"; render(); },
+  /* desiste da classificação e vai direto escolher o tipo do campo */
+  "ncl-virar-campo": () => { const m = topo(); delete m.novaClasse; m.clsAberta = false; m.aba = "campos"; m.picker = "raiz"; render();
+    document.querySelector(".bc-picker")?.scrollIntoView({ block: "center" }); },
   "ncl-cancelar": () => { delete topo().novaClasse; render(); },
   "ncl-criar": () => {
     const m = topo(), n = m.novaClasse, nome = n.nome.trim();
     const valores = [...new Set(n.valores.split(/\r?\n/).map((v) => v.trim()).filter(Boolean))];
-    n.erro = !nome ? "Dê um nome à classificação."
-      : E.classes.some((c) => c.nome.trim().toLowerCase() === nome.toLowerCase()) ? `Já existe uma classificação “${nome}”.`
-      : !valores.length ? "Escreva pelo menos um valor (um por linha)." : "";
+    /* as mensagens vão como HTML (quebra de linha): o que a pessoa digitou entra escapado */
+    n.erro = !nome ? "Escreva o que você quer organizar.<br>Ex.: Setor."
+      : E.classes.some((c) => c.nome.trim().toLowerCase() === nome.toLowerCase()) ? `Já existe uma classificação “${esc(nome)}”. Use outro nome.`
+      : !valores.length ? "Adicione pelo menos uma opção.<br>Ex.: Corte, Costura ou Expedição." : "";
     if (n.erro) { render(); return; }
     E.classes.push({ id: novoId("cl"), nome, valores: valores.map((v) => V(novoId("v"), v)) });
     delete m.novaClasse;
-    toast(`Classificação “${nome}” criada com ${plural(valores.length, "valor", "valores")}. Já serve para os próximos processos.`);
+    toast(`Classificação “${nome}” salva com ${plural(valores.length, "opção", "opções")}. Já serve para os próximos processos.`);
     render();
   },
   "clv-inline": (d) => { const inp = document.getElementById(`clv-in-${d.c}`); const v = inp.value.trim(); if (!v) return; inp.value = "";
@@ -1143,7 +1184,7 @@ document.addEventListener("input", (e) => {
   const el = e.target, d = el.dataset, m = topo();
   if (d.ins) { refSet(valoresDoTopo(), d.ins, el.value);   /* só a lista de sugestões se refaz */
     const box = [...document.querySelectorAll("[data-sug]")].find((x) => x.dataset.sug === d.ins); if (box) box.innerHTML = sugestoes(el.value, d.ins); return; }
-  if (el.id === "ncl-nome" || el.id === "ncl-valores") { m.novaClasse[el.id === "ncl-nome" ? "nome" : "valores"] = el.value; return; }
+  if (el.id === "ncl-nome" || el.id === "ncl-valores") { m.novaClasse[el.id === "ncl-nome" ? "nome" : "valores"] = el.value; if (el.id === "ncl-nome") render(); return; }
   if (el.id === "q-apl" || el.id === "q-uso") { m.busca = el.value; render(); return; }
   if (el.id === "q-proc") { E.busca = el.value; render(); return; }
   if (el.id === "q-prod") { E.buscaProd = el.value; render(); return; }

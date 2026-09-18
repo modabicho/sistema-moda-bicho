@@ -119,10 +119,33 @@
 .pc-un-sel{flex:0 0 auto;width:auto !important;min-width:64px;}
 .bc-un-n{padding:3px 6px;font-weight:700;font-family:var(--ff-mono);}
 
+/* hierarquia do cadastro de processo: CAMPOS em destaque, classificação discreta no fim */
+.pc-campos-sec{margin-top:14px;padding:14px 16px 16px;border:2px solid var(--teal);border-radius:var(--r-3);background:var(--surface);}
+.pc-campos-h h3{margin:0 0 4px;font-size:var(--fs-h2);}
+.pc-campos-h p{margin:0 0 8px;font-size:var(--fs-apoio);color:var(--ink-2);line-height:1.55;}
+.btn.pc-add-campo{padding:10px 18px;font-size:var(--fs-h3);}
+.pc-cls-opc{margin-top:14px;border:1px dashed var(--line);border-radius:var(--r-3);}
+.pc-cls-tg{display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;padding:9px 12px;border:0;background:none;color:var(--ink-2);font:inherit;font-size:var(--fs-apoio);font-weight:700;text-align:left;cursor:pointer;}
+.pc-cls-tg:hover{color:var(--ink);}
+.pc-cls-seta{width:12px;color:var(--ink-3);}
+.pc-opc{padding:1px 8px;border-radius:var(--r-pill);background:var(--slate-soft);color:var(--ink-3);font-size:var(--fs-micro);font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+.pc-cls-res{margin-left:auto;font-weight:500;}
+.pc-cls-corpo{padding:0 12px 12px;}
+.pc-cls-ajuda{margin-bottom:10px;padding:8px 12px;border-radius:var(--r-2);background:var(--surface-2);font-size:var(--fs-apoio);color:var(--ink-2);line-height:1.55;}
+.pc-cl-dica{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:8px 12px;border-radius:var(--r-2);background:var(--atencao-fundo);color:var(--atencao);font-size:var(--fs-apoio);line-height:1.5;}
+.pc-cl-dica .btn{margin-left:auto;}
+
 /* criar classificação sem sair da janela */
 .pc-cl-nova{margin:4px 0 6px;padding:12px;border:1px dashed var(--teal);border-radius:var(--r-3);background:var(--surface-2);}
 .pc-cl-nova textarea{width:100%;resize:vertical;}
 .pc-cl-nova-a{display:flex;justify-content:flex-end;gap:6px;margin-top:8px;}
+/* aqui o rótulo é uma PERGUNTA: em caixa normal, não no estilo de etiqueta em maiúsculas */
+.pc-cl-nova .fld > span{text-transform:none;letter-spacing:0;font-size:var(--fs-h3);font-weight:700;color:var(--ink);margin-bottom:6px;}
+.pc-cl-nova .fld .hint{display:block;margin-top:5px;}
+.pc-cl-expl{margin-bottom:12px;font-size:var(--fs-apoio);color:var(--ink-2);line-height:1.55;}
+.pc-cl-expl b{color:var(--ink);}
+.pc-cl-ex{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:8px;padding:8px 12px;border-radius:var(--r-2);background:var(--surface);border:1px solid var(--line);}
+.pc-cl-exs{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:8px;font-size:var(--fs-apoio);color:var(--ink-2);}
 .pc-cl .bc-op.nova .inp{width:90px;}
 
 /* o caminho em três passos */
