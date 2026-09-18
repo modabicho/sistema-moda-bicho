@@ -26,6 +26,11 @@ Os estilos e os helpers de desenho (`esc`, `IC`, `svg`, `kpi`) saem do próprio 
 
 O código só conhece os tipos de campo. Fita, chuca, bandana e coleira aparecem apenas nos dados de exemplo.
 
+## Na produção
+
+- **Modo bancada:** as instruções do produto abrem em tela cheia para consulta na produção. Tem navegação entre os processos e dá para marcar os passos com o toque. A marcação é temporária: fica só na tela, some ao fechar e não é gravada.
+- **Campo de insumo:** busca por SKU ou pelo nome. É só referência de qual material usar: não movimenta estoque.
+
 ## Arquivos
 
 | Arquivo | O que é |

@@ -106,6 +106,103 @@
 .pf-tela .pf-longo{margin:0;white-space:pre-wrap;}
 .pf-ins{color:var(--ink-3);font-size:.92em;}
 
+/* ---------- rodada 3 · uso no dia a dia ---------- */
+/* o caminho em três passos */
+.pc-guia{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.pc-passo-g{display:flex;gap:12px;align-items:center;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-3);background:var(--surface);cursor:pointer;color:inherit;font:inherit;}
+.pc-passo-g:hover{border-color:var(--teal);background:var(--surface-2);}
+.pc-passo-g b{display:block;font-size:var(--fs-h3);}
+.pc-passo-g small{display:block;color:var(--ink-3);font-size:var(--fs-apoio);margin-top:2px;}
+.pc-g-n{display:grid;place-items:center;flex:0 0 34px;height:34px;border-radius:50%;background:var(--teal);color:var(--em-acao,#fff);font-weight:800;font-size:16px;}
+
+/* construtor: tipo de campo com ícone, e a grade de escolha */
+.bc-ic{display:inline-grid;place-items:center;min-width:34px;height:26px;padding:0 5px;border-radius:var(--r-2);background:var(--slate-soft);color:var(--ink-2);font:700 11px/1 var(--ff-mono);}
+.bc-campo.t-grupo > .bc-lin .bc-ic{background:var(--teal);color:var(--em-acao,#fff);}
+.bc-picker{margin-top:10px;padding:12px;border:1px dashed var(--teal);border-radius:var(--r-3);background:var(--surface-2);}
+.bc-picker-h{display:flex;align-items:center;margin-bottom:10px;}
+.bc-picker-h .btn{margin-left:auto;}
+.bc-picker-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;}
+.bc-tp{display:flex;gap:10px;align-items:center;text-align:left;padding:9px 10px;border:1px solid var(--line);border-radius:var(--r-2);background:var(--surface);cursor:pointer;color:inherit;font:inherit;min-height:52px;}
+.bc-tp:hover,.bc-tp:focus-visible{border-color:var(--teal);}
+.bc-tp b{display:block;font-size:var(--fs-apoio);}
+.bc-tp small{display:block;color:var(--ink-3);font-size:var(--fs-micro);}
+.bc-tp.t-grupo{border-color:var(--teal);}
+.bc-tp.t-grupo .bc-ic{background:var(--teal);color:var(--em-acao,#fff);}
+
+/* "alterado neste produto" */
+.pc-dif{display:inline-flex;align-items:center;gap:6px;margin-left:8px;padding:1px 4px 1px 8px;border-radius:var(--r-pill);background:var(--atencao-fundo);color:var(--atencao);
+  font-size:var(--fs-micro);font-weight:700;text-transform:none;letter-spacing:0;vertical-align:1px;}
+.pc-dif.novo{background:var(--acao-fundo);color:var(--acao);padding-right:8px;}
+.pc-dif button{border:0;background:var(--surface);color:var(--ink-2);border-radius:var(--r-pill);padding:1px 7px;font:inherit;font-weight:700;cursor:pointer;}
+.pc-dif button:hover{color:var(--teal);}
+.pc-dif-res{margin:-4px 0 12px;font-size:var(--fs-apoio);color:var(--ink-2);display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.pc-dif-res .pc-dif{margin-left:0;padding-right:8px;}
+
+/* insumo: busca por SKU ou nome */
+.pc-ins{position:relative;}
+.pc-ins-sug{display:none;position:absolute;left:0;right:0;top:calc(100% - 18px);z-index:5;max-height:240px;overflow:auto;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-2);box-shadow:var(--sh-3);}
+.pc-ins:focus-within .pc-ins-sug{display:block;}
+.pc-ins-sug button{display:flex;gap:8px;width:100%;text-align:left;padding:8px 10px;border:0;background:none;color:inherit;font:inherit;cursor:pointer;border-bottom:1px solid var(--line-2);}
+.pc-ins-sug button:hover{background:var(--surface-2);}
+.pc-sku-h.fora{color:var(--atencao);font-weight:600;}
+
+/* avisos com o próximo passo */
+.pc-toast{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.pc-toast .btn{margin-left:auto;}
+
+/* menu "Mais" do cartão do processo */
+.pc-mais{position:relative;display:inline-block;}
+.pc-menu{position:absolute;left:0;top:calc(100% + 4px);z-index:6;display:flex;flex-direction:column;min-width:220px;padding:4px;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-2);box-shadow:var(--sh-3);}
+.pc-menu button{display:flex;gap:8px;align-items:center;padding:9px 10px;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:var(--r-1);}
+.pc-menu button:hover{background:var(--surface-2);}
+.pc-menu button.danger{color:var(--perigo);}
+.pc-menu svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;}
+
+/* ---------- MODO BANCADA: tela cheia, letra grande, alvo de toque ≥ 48px ---------- */
+.pc-bov{padding:0;align-items:stretch;}
+.pc-banc{display:flex;flex-direction:column;width:100%;height:100vh;height:100dvh;background:var(--bg,var(--surface));color:var(--ink);}
+.pc-banc-h{display:flex;gap:12px;align-items:center;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--surface);}
+.pc-banc-id{display:flex;flex-direction:column;line-height:1.2;}
+.pc-banc-id .mono{font-size:var(--fs-apoio);color:var(--ink-3);}
+.pc-banc-id b{font-size:20px;}
+.pc-banc-imp{margin-left:auto;display:flex;gap:6px;}
+.pc-banc-tabs{display:flex;gap:6px;overflow-x:auto;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--surface);}
+.pc-banc-tabs button{display:flex;gap:8px;align-items:center;flex:0 0 auto;min-height:48px;padding:6px 16px 6px 8px;border:1px solid var(--line);border-radius:var(--r-pill);
+  background:var(--surface);color:var(--ink-2);font:600 16px/1 var(--ff-corpo);cursor:pointer;}
+.pc-banc-tabs button.on{background:var(--coral);border-color:var(--coral);color:var(--em-coral);}
+.pc-banc-tabs button.on .pf-num{background:var(--em-coral);color:var(--coral);}
+.pc-banc-b{flex:1;overflow:auto;padding:20px 22px 30px;font-size:18px;line-height:1.5;}
+.bn-tit{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 18px;font-size:26px;}
+.bn-tit .pf-num{width:34px;height:34px;flex-basis:34px;font-size:16px;}
+.bn-kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin:0 0 20px;}
+.bn-kv > div{padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-3);background:var(--surface);}
+.bn-kv dt{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;}
+.bn-kv dd{margin:4px 0 0;font-size:22px;font-weight:700;}
+.bn-bl{margin-bottom:22px;}
+.bn-bl h3{display:flex;gap:10px;align-items:center;margin:0 0 10px;font-size:15px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);}
+.bn-itens{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;}
+.bn-item{border:2px solid var(--teal);border-radius:var(--r-3);padding:10px 14px 12px;background:var(--surface);}
+.bn-item-h{font-weight:800;font-size:18px;color:var(--teal);margin-bottom:6px;}
+.bn-lin{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid var(--line-2);}
+.bn-lin:last-child{border-bottom:0;}
+.bn-lin span{color:var(--ink-3);font-size:15px;}
+.bn-lin b{text-align:right;}
+/* SKU do insumo: o código numa linha, o nome embaixo — lido de relance na bancada */
+.bn-lin .pf-ins,.bn-kv .pf-ins{display:block;font-weight:500;font-size:14px;color:var(--ink-3);}
+.bn-passos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.bn-passos button{display:flex;gap:14px;align-items:center;width:100%;min-height:56px;padding:10px 14px;text-align:left;border:1px solid var(--line);border-radius:var(--r-3);
+  background:var(--surface);color:inherit;font:inherit;cursor:pointer;}
+.bn-passos button.feito{background:var(--ok-fundo);border-color:var(--ok);color:var(--ink-3);}
+.bn-passos button.feito span:last-child{text-decoration:line-through;}
+.bn-n{display:grid;place-items:center;flex:0 0 36px;height:36px;border-radius:50%;border:2px solid var(--ink-3);font-weight:800;font-size:16px;}
+.feito .bn-n{background:var(--ok);border-color:var(--ok);color:var(--em-acao,#fff);}
+.bn-longo{margin:0;white-space:pre-wrap;}
+.pc-banc-f{display:flex;gap:10px;align-items:center;padding:10px 18px;border-top:1px solid var(--line);background:var(--surface);}
+.pc-banc-f .hint{flex:1;text-align:center;}
+.pc-banc-f .btn.grande{min-height:52px;}
+
 @media (max-width:720px){
   .grid2{grid-template-columns:1fr;}
   .pr-cadastro{grid-template-columns:1fr 1fr;}
@@ -115,6 +212,27 @@
   .bc-ops,.bc-sub{margin-left:0;}
   .pc-cfg-r,.pc-cfg-a{margin-left:0;}
   .pf-tela .pf-grp{display:block;overflow-x:auto;}
+  .pc-guia{grid-template-columns:1fr;}
+  .pc-banc-h{flex-wrap:wrap;padding:8px 12px;}
+  .pc-banc-imp{width:100%;margin-left:0;}
+  .pc-banc-tabs{padding:8px 12px;}
+  .pc-banc-b{padding:14px 12px 24px;font-size:17px;}
+  .bn-tit{font-size:22px;}
+  .pc-banc-f{padding:8px 12px;}
+  .pc-banc-f .hint{display:none;}
+  .pc-banc-f .btn.grande{flex:1;justify-content:center;font-size:14px;}
+}
+/* tela baixa (celular deitado): cabeçalho numa linha só e barras mais finas, sobra altura para a instrução */
+@media (max-height:520px){
+  .pc-banc-h{flex-wrap:nowrap;padding:4px 10px;}
+  .pc-banc-id b{font-size:16px;}
+  .pc-banc-imp{width:auto;margin-left:auto;}
+  .pc-banc-imp .btn{padding:4px 8px;}
+  .pc-banc-tabs{padding:4px 10px;}
+  .pc-banc-tabs button{min-height:40px;font-size:14px;}
+  .pc-banc-f{padding:4px 10px;}
+  .pc-banc-f .btn.grande{min-height:44px;padding:6px 12px;}
+  .bn-tit{font-size:20px;margin-bottom:10px;}
 }
 
 /* ---------- papel ---------- */
@@ -135,6 +253,6 @@
   .folha .pf-passos{margin:2px 0 0;padding-left:22px;font-size:12.5px;line-height:1.75;}
   .folha .pf-passos .cx{margin-right:8px;vertical-align:-2px;}
   .folha .pf-longo{margin:0;font-size:11.5px;white-space:pre-wrap;}
-  .folha .pf-ins{color:var(--neutro);font-size:10px;}
+  .folha .pf-ins{display:block;color:var(--neutro);font-size:10px;}
   .folha .mono{font-family:'IBM Plex Mono',monospace;}
 }
