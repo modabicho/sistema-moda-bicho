@@ -1,8 +1,8 @@
 /* ===========================================================================
    AMOSTRA · Processos / Como fazer — construtor genérico de instruções
    ---------------------------------------------------------------------------
-   Prova de conceito. Dados fictícios, só na memória desta aba: recarregar
-   volta aos exemplos. Não fala com o servidor e não lê nem escreve produto,
+   Prova de conceito. Começa VAZIA: tudo é criado por quem usa e fica guardado
+   só neste navegador (localStorage). Não fala com o servidor e não lê nem escreve produto,
    estoque, insumo, pedido, OP, demanda ou remessa. O SKU de insumo é texto de
    referência: diz QUAL material usar, não movimenta nada.
 
@@ -11,7 +11,7 @@
    só conhece os TIPOS DE CAMPO abaixo.
 
    O MODELO
-     Classificação   { nome, valores[] }                  ex.: Setor, Fornecedor
+     Classificação   { nome, valores[] }                  criada por ela: ex. Gênero, Ângulo do corte
      Tipo de processo{ nome, classes, campos[] }          o formulário, montado por ela
        Campo         { nome, tipo, unidade, obrigatorio, opcoes[] | listaId, rotulo, campos[] }
      Lista de opções { nome, opcoes[] }                   compartilhada entre campos: editar a
@@ -37,7 +37,7 @@ const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
 const TIPOS_CAMPO = [
   { k: "texto", nome: "Texto", ic: "Aa", ex: "Número da fita, molde" },
   { k: "numero", nome: "Número", un: "", ic: "123", ex: "Voltas, pontos" },
-  { k: "medida", nome: "Medida", un: "cm", ic: "↔", ex: "Comprimento, largura" },
+  { k: "medida", nome: "Medida", ic: "↔", ex: "Comprimento: 20 cm, 25 mm, 6 un" },
   { k: "quantidade", nome: "Quantidade", un: "un", ic: "×", ex: "Peças por pacote" },
   { k: "selecao", nome: "Seleção única", op: true, ic: "◉", ex: "Ângulo de corte" },
   { k: "multipla", nome: "Seleção múltipla", op: true, ic: "☑", ex: "Etiquetas" },
@@ -51,105 +51,49 @@ const TC = Object.fromEntries(TIPOS_CAMPO.map((t) => [t.k, t]));
 const NUMERICOS = ["numero", "medida", "quantidade"];
 const UNIDADES = ["cm", "mm", "m", "un", "g", "par", "folhas", "voltas"];
 
-/* ---------- dados fictícios ---------- */
+/* ---------- construtores de dado (usados pela tela, não por dados prontos) ---------- */
 const V = (id, nome) => ({ id, nome });
-const C = (id, nome, tipo, x = {}) => ({ id, nome, tipo, obrigatorio: false, ...(TC[tipo].un != null ? { unidade: TC[tipo].un } : {}), ...x });
-const O = (p, ...nomes) => nomes.map((nome, i) => ({ id: `${p}-${i + 1}`, nome }));
+const C = (id, nome, tipo, x = {}) => ({ id, nome, tipo, obrigatorio: false, ...(TC[tipo].un != null ? { unidade: TC[tipo].un } : {}),
+  ...(tipo === "medida" ? { unidades: ["cm"], unidadeFixa: true } : {}), ...x });
 const G = (id, v) => ({ id, v });
 const S = (id, t) => ({ id, t });
 
+/* ---------- o que SIMULA outras partes do PCP ----------
+   Produtos e insumos NÃO são configuração deste módulo: no PCP eles viriam do
+   cadastro de Produtos e da aba Insumos, só para leitura. Aqui são poucos, com
+   SKU "EX-" de propósito, para ninguém confundir com cadastro real. */
 const PRODUTOS = [
-  { sku: "BAN-XAD-P", descricao: "Bandana Xadrez P", categoria: "Bandana" },
-  { sku: "BAN-XAD-M", descricao: "Bandana Xadrez M", categoria: "Bandana" },
-  { sku: "COL-NYL-M", descricao: "Coleira Nylon M", categoria: "Coleira" },
-  { sku: "CHU-LAC-RS", descricao: "Chuca Laço P Rosa", categoria: "Chuca" },
-  { sku: "CHU-LAC-AZ", descricao: "Chuca Laço P Azul", categoria: "Chuca" },
+  { sku: "EX-LACO-P", descricao: "Laço de exemplo P", categoria: "Laço" },
+  { sku: "EX-GRAV-M", descricao: "Gravata de exemplo M", categoria: "Gravata" },
+  { sku: "EX-GARG-M", descricao: "Gargantilha de exemplo M", categoria: "Gargantilha" },
+  { sku: "EX-BAND-P", descricao: "Bandana de exemplo P", categoria: "Bandana" },
+  { sku: "EX-CHUC-P", descricao: "Chuca de exemplo P", categoria: "Chuca" },
 ];
 const INSUMOS = [
-  { sku: "INS-FIT-09", nome: "Fita gorgurão nº 9" }, { sku: "INS-FIT-01", nome: "Fitilho cetim 7 mm" },
-  { sku: "INS-FIT-25", nome: "Fita nylon 25 mm" }, { sku: "INS-ELA-02", nome: "Elástico roliço 2 mm" },
-  { sku: "INS-ELA-03", nome: "Elástico roliço 3 mm" }, { sku: "INS-CRI-04", nome: "Cristal acrílico 4 mm" },
-  { sku: "INS-PER-06", nome: "Pérola 6 mm" }, { sku: "INS-TRI-150", nome: "Tricoline 100% algodão 1,50 m" },
+  { sku: "EX-FITA-05", nome: "Fita nº 5 (exemplo)" }, { sku: "EX-FITA-09", nome: "Fita nº 9 (exemplo)" },
+  { sku: "EX-FITA-12", nome: "Fita nº 12 (exemplo)" }, { sku: "EX-RENDA-50", nome: "Renda 50 mm (exemplo)" },
+  { sku: "EX-FITILHO", nome: "Fitilho (exemplo)" }, { sku: "EX-ELAST-02", nome: "Elástico roliço 2 mm (exemplo)" },
 ];
 const produtoDe = (sku) => PRODUTOS.find((p) => p.sku === skuN(sku)) || null;
 const insumoDe = (sku) => INSUMOS.find((i) => i.sku === skuN(sku)) || null;
 
+/* ---------- a configuração começa VAZIA ----------
+   Classificações, listas, processos, padrões e o que foi aplicado nos produtos
+   são criados por quem usa — nada vem pronto. Fica guardado SÓ neste navegador
+   (localStorage) para sobreviver a um recarregar; "Recomeçar do zero" apaga. */
 const E = {
   aba: "processos", sub: "tipos", busca: "", fc: {}, buscaProd: "",
   pilha: [], foco: null,
-  listas: [
-    { id: "ls-est", nome: "Tipos de estampa", opcoes: O("est", "Premium", "Digital", "Rotativa", "Macho", "Fêmea", "Neutro") },
-    { id: "ls-ang", nome: "Ângulos de corte", opcoes: O("ang", "Reto", "45 graus", "Biqueira") },
-  ],
-  classes: [
-    { id: "cl-setor", nome: "Setor", valores: [V("s-corte", "Corte"), V("s-fitas", "Fitas"), V("s-acab", "Acabamento"), V("s-mont", "Montagem"), V("s-exp", "Expedição")] },
-    { id: "cl-prod", nome: "Tipo de produto", valores: [V("tp-band", "Bandana"), V("tp-col", "Coleira"), V("tp-chu", "Chuca")] },
-    { id: "cl-forn", nome: "Fornecedor", valores: [V("f-aur", "Tecelagem Aurora"), V("f-fb", "Fitas Brasil")] },
-    { id: "cl-est", nome: "Tipo de estampa", valores: [V("e-dig", "Digital"), V("e-rot", "Rotativa")] },
-  ],
-  tipos: [
-    { id: "tp-fitas", nome: "Fitas", descricao: "Corte e preparo das fitas do produto.", classes: { "cl-setor": ["s-fitas"] }, campos: [
-      C("f-fitas", "Fitas", "grupo", { rotulo: "Fita", obrigatorio: true, campos: [
-        C("f-num", "Número/tipo da fita", "texto", { obrigatorio: true }), C("f-sku", "Código/SKU da fita", "sku"),
-        C("f-comp", "Comprimento", "medida", { unidade: "cm", obrigatorio: true }),
-        C("f-est", "Tipo de estampa", "selecao", { listaId: "ls-est" }),
-        C("f-ang", "Ângulo de corte", "selecao", { listaId: "ls-ang" }),
-        C("f-obs", "Observação", "texto")] }),
-      C("f-passos", "Passo a passo", "passos"), C("f-geral", "Observação geral", "longo")] },
-    { id: "tp-acab", nome: "Acabamento", descricao: "Aplicações e acabamento final.", classes: { "cl-setor": ["s-acab"] }, campos: [
-      C("a-tipo", "Tipo de acabamento", "selecao", { obrigatorio: true, opcoes: O("a-tipo", "Laço", "Aplique", "Bordado", "Sem acabamento") }),
-      C("a-apl", "Aplicações", "grupo", { rotulo: "Aplicação", campos: [
-        C("a-mat", "Material", "selecao", { opcoes: O("a-mat", "Fita", "Cristal", "Pérola", "Botão") }), C("a-sku", "SKU do insumo", "sku"),
-        C("a-qtd", "Quantidade", "quantidade", { unidade: "un" }), C("a-tam", "Tamanho", "medida", { unidade: "mm" }), C("a-esp", "Especificação", "texto")] }),
-      C("a-cola", "Usa cola quente", "simnao"), C("a-passos", "Passo a passo", "passos")] },
-    { id: "tp-chuca", nome: "Montagem de chuca", descricao: "Insumos e travas da chuca.", classes: { "cl-setor": ["s-mont"], "cl-prod": ["tp-chu"] }, campos: [
-      C("c-ins", "Insumos", "grupo", { rotulo: "Insumo", obrigatorio: true, campos: [
-        C("c-sku", "SKU do insumo", "sku"), C("c-nome", "Nome", "texto", { obrigatorio: true }),
-        C("c-qtd", "Quantidade de referência", "quantidade", { unidade: "un" }), C("c-tam", "Tamanho", "medida", { unidade: "cm" }), C("c-obs", "Observação", "texto")] }),
-      C("c-trv", "Trava-elástico", "grupo", { rotulo: "Trava", campos: [
-        C("t-tipo", "Tipo", "selecao", { opcoes: O("t-tipo", "Redondo", "Bolinha", "Mola") }), C("t-tam", "Tamanho", "medida", { unidade: "mm" }),
-        C("t-qtd", "Quantidade", "quantidade", { unidade: "un" }), C("t-esp", "Especificações", "texto")] }),
-      C("c-passos", "Passo a passo", "passos")] },
-    { id: "tp-corte", nome: "Corte", descricao: "Enfesto e corte a partir do molde.", classes: { "cl-setor": ["s-corte"] }, campos: [
-      C("k-molde", "Molde", "texto", { obrigatorio: true }), C("k-tecido", "Tecido (SKU)", "sku"),
-      C("k-fio", "Fio do tecido", "selecao", { opcoes: O("k-fio", "Reto", "Viés") }),
-      C("k-folhas", "Folhas por enfesto", "quantidade", { unidade: "folhas" }), C("k-final", "Medida final", "medida", { unidade: "cm" }),
-      C("k-passos", "Passo a passo", "passos")] },
-    { id: "tp-emb", nome: "Embalagem", descricao: "Como embalar para a loja.", classes: { "cl-setor": ["s-exp"] }, campos: [
-      C("e-emb", "Embalagem", "selecao", { obrigatorio: true, opcoes: O("e-emb", "Saquinho", "Cartela", "Caixa") }),
-      C("e-un", "Unidades por embalagem", "quantidade", { unidade: "un" }),
-      C("e-etq", "Etiquetas", "multipla", { opcoes: O("e-etq", "Preço", "Composição", "Marca", "Lote") }),
-      C("e-passos", "Passo a passo", "passos")] },
-  ],
-  padroes: [
-    { id: "pd-chuca-p", nome: "Chuca P", tipoId: "tp-chuca", classes: { "cl-prod": ["tp-chu"] }, atualizadoEm: "2026-09-12T10:00:00", valores: {
-      "c-ins": [G("i1", { "c-sku": "INS-ELA-02", "c-nome": "Elástico roliço 2 mm", "c-qtd": "1", "c-tam": "12" })],
-      "c-trv": [G("t1", { "t-tipo": "t-tipo-1", "t-tam": "6", "t-qtd": "1" })],
-      "c-passos": [S("s1", "Passar o elástico pela trava."), S("s2", "Dar dois nós e esconder a ponta."), S("s3", "Testar abrindo e fechando.")] } },
-    { id: "pd-fitas-laco", nome: "Fitas · laço de bandana", tipoId: "tp-fitas", classes: { "cl-prod": ["tp-band"], "cl-forn": ["f-fb"] }, atualizadoEm: "2026-09-08T10:00:00", valores: {
-      "f-fitas": [G("fa", { "f-num": "nº 9", "f-sku": "INS-FIT-09", "f-comp": "32", "f-est": "est-1", "f-ang": "ang-2" }),
-        G("fb", { "f-num": "fitilho", "f-sku": "INS-FIT-01", "f-comp": "18", "f-est": "est-6", "f-ang": "ang-1" })],
-      "f-passos": [S("s1", "Medir e marcar com giz."), S("s2", "Cortar no ângulo indicado."), S("s3", "Selar a ponta com isqueiro.")] } },
-    { id: "pd-corte-bp", nome: "Corte bandana P", tipoId: "tp-corte", classes: { "cl-prod": ["tp-band"], "cl-forn": ["f-aur"] }, atualizadoEm: "2026-09-05T10:00:00", valores: {
-      "k-molde": "Bandana P", "k-tecido": "INS-TRI-150", "k-fio": "k-fio-2", "k-folhas": "12", "k-final": "35",
-      "k-passos": [S("s1", "Passar o tecido."), S("s2", "Enfestar no viés."), S("s3", "Cortar com a faca elétrica.")] } },
-  ],
-  configs: [],
+  classes: [], listas: [], tipos: [], padroes: [], configs: [],
 };
-/* configurações de exemplo: nascem pelo MESMO caminho que a tela usa */
-function semear() {
-  const ban = "BAN-XAD-P";
-  aplicarPadrao("pd-corte-bp", ban); aplicarPadrao("pd-fitas-laco", ban);
-  E.configs.push({ id: novoId("cf"), sku: ban, tipoId: "tp-acab", titulo: "", padraoId: null, criadoEm: "2026-09-14T10:00:00", valores: {
-    "a-tipo": "a-tipo-1", "a-cola": true,
-    "a-apl": [G("x1", { "a-mat": "a-mat-2", "a-sku": "INS-CRI-04", "a-qtd": "3", "a-tam": "4", "a-esp": "no centro do laço" }),
-      G("x2", { "a-mat": "a-mat-3", "a-sku": "INS-PER-06", "a-qtd": "1", "a-tam": "6" })],
-    "a-passos": [S("s1", "Montar o laço com as duas fitas."), S("s2", "Colar os cristais em linha."), S("s3", "Esperar 5 minutos antes de embalar.")] } });
-  E.configs.push({ id: novoId("cf"), sku: ban, tipoId: "tp-emb", titulo: "", padraoId: null, criadoEm: "2026-09-14T10:00:00", valores: {
-    "e-emb": "e-emb-1", "e-un": "1", "e-etq": ["e-etq-1", "e-etq-3"], "e-passos": [S("s1", "Dobrar em triângulo."), S("s2", "Colocar no saquinho e lacrar.")] } });
-  E.configs.push({ id: novoId("cf"), sku: "COL-NYL-M", tipoId: "tp-fitas", titulo: "", padraoId: null, criadoEm: "2026-09-14T10:00:00", valores: {
-    "f-fitas": [G("c1", { "f-num": "nylon 25 mm", "f-sku": "INS-FIT-25", "f-comp": "45", "f-ang": "ang-1", "f-obs": "selar as duas pontas" })] } });
-  aplicarPadrao("pd-chuca-p", "CHU-LAC-RS");
+const GUARDA = "pcp-prototipo-processos:v1";
+const PERSISTE = ["classes", "listas", "tipos", "padroes", "configs"];
+function carregar() {
+  try { const s = JSON.parse(localStorage.getItem(GUARDA) || "null");
+    if (s) for (const k of PERSISTE) if (Array.isArray(s[k])) E[k] = s[k]; } catch {}
+}
+function guardar() {
+  try { localStorage.setItem(GUARDA, JSON.stringify(Object.fromEntries(PERSISTE.map((k) => [k, E[k]])))); } catch {}
 }
 
 const tipoPorId = (id) => E.tipos.find((t) => t.id === id) || null;
@@ -159,7 +103,15 @@ const configsDe = (sku) => E.configs.filter((c) => c.sku === sku);
 const valorClasse = (cid, vid) => E.classes.find((c) => c.id === cid)?.valores.find((v) => v.id === vid) || null;
 
 /* ---------- valores ---------- */
+/* medida guardada como { n: "20", u: "cm" }; aceita o texto antigo ("20") sem quebrar */
+function medidaDe(c, v) {
+  const pad = (c.unidades || [])[0] || c.unidade || "";
+  const o = v && typeof v === "object" ? { n: v.n ?? "", u: v.u || pad } : { n: v == null ? "" : String(v), u: pad };
+  if (c.unidadeFixa) o.u = pad;
+  return o;
+}
 function ehVazio(c, v) {
+  if (c.tipo === "medida") return !String(medidaDe(c, v).n).trim();
   if (c.tipo === "grupo") return !(v || []).some((it) => c.campos.some((s) => !ehVazio(s, it.v[s.id])));
   if (c.tipo === "passos") return !(v || []).some((s) => String(s.t || "").trim());
   if (c.tipo === "multipla") return !(v || []).length;
@@ -174,6 +126,7 @@ function fmt(c, v) {
   if (c.tipo === "selecao") return esc(nomeOpcao(c, v));
   if (c.tipo === "multipla") return esc(v.map((o) => nomeOpcao(c, o)).join(", "));
   if (c.tipo === "simnao") return v ? "Sim" : "Não";
+  if (c.tipo === "medida") { const m = medidaDe(c, v); return `<b>${esc(m.n)}</b>${m.u ? ` ${esc(m.u)}` : ""}`; }   /* "20 cm", uma informação só */
   if (NUMERICOS.includes(c.tipo)) return `<b>${esc(v)}</b>${c.unidade ? ` ${esc(c.unidade)}` : ""}`;
   if (c.tipo === "sku") { const i = insumoDe(v); return `<span class="mono">${esc(skuN(v))}</span>${i ? ` <span class="pf-ins">${esc(i.nome)}</span>` : ""}`; }
   return esc(v);
@@ -190,7 +143,8 @@ function limpo(x) {
 const canon = (v) => JSON.stringify(limpo(v) ?? {});
 function faltas(tipo, vals) {
   const f = [];
-  const num = (c, v, onde) => { if (NUMERICOS.includes(c.tipo) && String(v ?? "").trim() && isNaN(Number(String(v).replace(",", "."))))
+  const num = (c, v, onde) => { if (c.tipo === "medida") v = medidaDe(c, v).n;
+    if (NUMERICOS.includes(c.tipo) && String(v ?? "").trim() && isNaN(Number(String(v).replace(",", "."))))
     f.push(`${onde}${c.nome}: não é um número`); };
   for (const c of tipo.campos) {
     const v = vals[c.id];
@@ -288,10 +242,27 @@ function tagsClasses(classes) {
   return E.classes.flatMap((cl) => (classes?.[cl.id] || []).map((vid) => valorClasse(cl.id, vid))
     .filter(Boolean).map((v) => `<span class="tag" title="${esc(cl.nome)}">${esc(v.nome)}</span>`)).join(" ");
 }
+/* As classificações do processo/padrão — e a criação delas ali mesmo, sem sair
+   da janela. O que se cria aqui vai para a biblioteca e serve aos próximos. */
 function chipsClasses(classes) {
+  const nova = topo()?.novaClasse;
+  const form = nova ? `<div class="pc-cl-nova">
+      <div class="grid2">
+        <label class="fld"><span>Nome da classificação</span><input class="inp" id="ncl-nome" value="${esc(nova.nome)}" placeholder="Ex.: Gênero, Ângulo do corte, Fornecedor"></label>
+        <label class="fld"><span>Valores · um por linha</span><textarea class="inp" id="ncl-valores" rows="4" placeholder="Um valor em cada linha">${esc(nova.valores)}</textarea></label>
+      </div>
+      ${nova.erro ? `<div class="pc-erros">${esc(nova.erro)}</div>` : ""}
+      <div class="pc-cl-nova-a"><button class="btn sm" data-a="ncl-cancelar">Cancelar</button>
+        <button class="btn sm primary" data-a="ncl-criar">${svg(IC.ok)}Criar classificação</button></div></div>` : "";
+  if (!E.classes.length) return `<div class="pc-cls">
+      <div class="pc-cl"><span class="pc-cl-n">Classificação</span>
+        ${nova ? "" : `<span class="hint">Nenhuma classificação criada ainda.</span>
+          <button class="btn sm" data-a="ncl-abrir">${svg(IC.mais)}Criar classificação</button>`}</div>${form}
+      ${nova ? "" : `<div class="hint">Opcional. Serve para agrupar e filtrar processos — por setor, fornecedor, gênero… o que você quiser.</div>`}</div>`;
   return `<div class="pc-cls">${E.classes.map((cl) => `<div class="pc-cl"><span class="pc-cl-n">${esc(cl.nome)}</span>
-    ${cl.valores.map((v) => `<button class="chip ${(classes[cl.id] || []).includes(v.id) ? "on" : ""}" data-a="cl-tg" data-c="${cl.id}" data-v="${v.id}">${esc(v.nome)}</button>`).join("")}</div>`).join("")}
-    <div class="hint">Classificações e valores são seus: crie e edite em Processos › Classificações.</div></div>`;
+    ${cl.valores.map((v) => `<button class="chip ${(classes[cl.id] || []).includes(v.id) ? "on" : ""}" data-a="cl-tg" data-c="${cl.id}" data-v="${v.id}">${esc(v.nome)}</button>`).join("")}
+    <span class="bc-op nova"><input class="inp" id="clv-in-${cl.id}" placeholder="+ valor" data-enter="clv-inline" data-c="${cl.id}" aria-label="Novo valor para ${esc(cl.nome)}"></span></div>`).join("")}
+    ${form || `<div><button class="btn sm ghost" data-a="ncl-abrir">${svg(IC.mais)}Criar classificação</button></div>`}</div>`;
 }
 function casaFiltro(classes, extra) {
   for (const [cid, vid] of Object.entries(E.fc)) {
@@ -322,16 +293,16 @@ function viewProcessos() {
         return `<tr class="pc-lin" data-a="tipo-editar" data-id="${t.id}" tabindex="0"><td><b>${esc(t.nome)}</b><div class="hint">${esc(t.descricao || "")}</div></td>
         <td>${tagsClasses(t.classes) || `<span class="hint">—</span>`}</td>
         <td class="pc-campos-res">${t.campos.map((c) => `<span class="pc-cp t-${c.tipo}">${esc(c.nome)}${c.tipo === "grupo" ? ` <i>× ${plural(c.campos.length, "campo", "campos")}</i>` : ""}</span>`).join("")}</td>
-        <td>${E.padroes.filter((p) => p.tipoId === t.id).length}</td><td>${nProd}</td></tr>`; }).join("")}</tbody></table></div>` : vazio("Nenhum tipo de processo com esses filtros.");
+        <td>${E.padroes.filter((p) => p.tipoId === t.id).length}</td><td>${usoBotao(t.id)}</td></tr>`; }).join("")}</tbody></table></div>` : (E.tipos.length ? vazio("Nenhum tipo de processo com esses filtros.") : vazio("Nenhum processo criado ainda", "Um processo é uma etapa do trabalho — corte de fitas, montagem, embalagem. Você cria e decide os campos.", `<button class="btn primary" data-a="tipo-novo">${svg(IC.mais)}Criar o primeiro processo</button>`));
   } else if (E.sub === "padroes") {
     const l = E.padroes.filter((p) => casaFiltro(p.classes, tipoPorId(p.tipoId)?.classes) && (!q || `${p.nome} ${tipoPorId(p.tipoId)?.nome}`.toLowerCase().includes(q)));
     corpo = l.length ? `<div class="tw"><table class="t pc-tab"><thead><tr><th>Padrão</th><th>Processo</th><th>Classificação</th><th>O que tem</th><th>Aplicado em</th><th></th></tr></thead><tbody>
-      ${l.map((p) => { const t = tipoPorId(p.tipoId); const skus = [...new Set(E.configs.filter((c) => c.padraoId === p.id).map((c) => c.sku))];
+      ${l.map((p) => { const t = tipoPorId(p.tipoId);
         return `<tr class="pc-lin" data-a="padrao-editar" data-id="${p.id}" tabindex="0"><td><b>${esc(p.nome)}</b><div class="hint">atualizado em ${fdata(p.atualizadoEm)}</div></td>
         <td>${esc(t?.nome || "—")}</td><td>${tagsClasses(p.classes) || `<span class="hint">—</span>`}</td>
         <td class="hint">${resumo(t, p.valores)}</td>
-        <td>${skus.length ? skus.map((s) => `<span class="tag mono">${esc(s)}</span>`).join(" ") : `<span class="hint">nenhum produto</span>`}</td>
-        <td style="white-space:nowrap"><button class="btn sm" data-a="aplicar" data-id="${p.id}">Aplicar a produtos</button></td></tr>`; }).join("")}</tbody></table></div>` : vazio("Nenhum padrão com esses filtros.");
+        <td>${usoBotao(p.tipoId, p.id)}</td>
+        <td style="white-space:nowrap"><button class="btn sm" data-a="aplicar" data-id="${p.id}">Aplicar a produtos</button></td></tr>`; }).join("")}</tbody></table></div>` : (E.padroes.length ? vazio("Nenhum padrão com esses filtros.") : !E.tipos.length ? vazio("Nenhum padrão ainda", "Um padrão é um processo já preenchido, pronto para aplicar em vários produtos. Primeiro crie um processo.", `<button class="btn primary" data-a="tipo-novo">${svg(IC.mais)}Criar um processo</button>`) : vazio("Nenhum padrão ainda", "Preencha um processo uma vez e aplique em vários produtos.", `<button class="btn primary" data-a="padrao-novo">${svg(IC.mais)}Criar o primeiro padrão</button>`));
   } else corpo = E.sub === "listas" ? viewListas() : viewClasses();
 
   /* o caminho inteiro em três passos, cada um com o botão que o começa */
@@ -355,7 +326,7 @@ function resumo(t, vals) {
     : c.tipo === "longo" ? esc(c.nome) : `${esc(c.nome)}: ${fmt(c, vals[c.id]).replace(/<[^>]+>/g, "")}`);
   return p.slice(0, 4).join(" · ") + (p.length > 4 ? " …" : "");
 }
-const vazio = (msg) => `<div class="empty" style="padding:40px"><div class="ic">${svg(IC.processos)}</div><h3>${msg}</h3></div>`;
+const vazio = (msg, texto, botao) => `<div class="empty" style="padding:40px"><div class="ic">${svg(IC.processos)}</div><h3>${msg}</h3>${texto ? `<p>${texto}</p>` : ""}${botao || ""}</div>`;
 
 function viewListas() {
   return `<div class="pc-clgrade">${E.listas.map((l) => {
@@ -390,7 +361,7 @@ function viewClasses() {
 function viewProdutos() {
   const q = E.buscaProd.trim().toLowerCase();
   const lista = PRODUTOS.filter((p) => !q || `${p.sku} ${p.descricao} ${p.categoria}`.toLowerCase().includes(q));
-  return `<div class="aviso" style="margin-bottom:12px">Tela de Produtos <b>simulada</b>, só para mostrar a seção nova <b>Processos / como fazer</b>. O cadastro do produto aparece só para leitura.</div>
+  return `<div class="aviso" style="margin-bottom:12px">Tela de Produtos <b>simulada</b>, com produtos <b>de exemplo</b> (SKU “EX-…”), só para mostrar a seção <b>Processos / como fazer</b>. No PCP, os produtos viriam do cadastro, só para leitura.</div>
   <div class="card"><div class="filters"><div class="search">${svg(IC.busca)}<input class="inp" id="q-prod" style="width:240px" placeholder="Buscar SKU ou descrição" value="${esc(E.buscaProd)}" aria-label="Buscar produto"></div></div>
     <div class="tw"><table class="t pc-tab"><thead><tr><th>SKU</th><th>Descrição</th><th>Categoria</th><th>Processos</th><th></th></tr></thead><tbody>
     ${lista.map((p) => { const cs = configsDe(p.sku);
@@ -471,6 +442,13 @@ function campoForm(c, vals, ref) {
         <div class="pc-ins-sug" data-sug="${ref}">${sugestoes(v, ref)}</div>
         <div class="pc-sku-h ${v && !i ? "fora" : ""}">${v ? (i ? `<b>${esc(i.nome)}</b> · só referência` : "SKU fora da lista de insumos · confira")
           : "referência · não movimenta estoque"}</div></div>`; }
+    case "medida": { const mv = medidaDe(c, v), us = c.unidades || [];
+      const escolhe = !c.unidadeFixa && us.length > 1;
+      return `<label class="fld"><span>${rot}</span><div class="pc-un-w">
+        <input class="inp" inputmode="decimal" data-vn="${ref}" data-un="${esc(mv.u)}" value="${esc(mv.n)}" aria-label="${esc(c.nome)}">
+        ${escolhe ? `<select class="sel pc-un-sel" data-vu="${ref}" aria-label="Unidade de ${esc(c.nome)}">${us.map((u) => `<option ${mv.u === u ? "selected" : ""}>${esc(u)}</option>`).join("")}
+            ${mv.u && !us.includes(mv.u) ? `<option selected>${esc(mv.u)}</option>` : ""}</select>`
+          : `<span class="pc-un">${esc(us[0] || "")}</span>`}</div></label>`; }
     default: return `<label class="fld"><span>${rot}</span><div class="pc-un-w"><input class="inp" ${NUMERICOS.includes(c.tipo) ? `inputmode="decimal"` : ""} data-v="${ref}" value="${esc(v ?? "")}">${un}</div></label>`;
   }
 }
@@ -551,14 +529,14 @@ function campoBuilder(c, g, i, total) {
       <button data-a="op-del" ${d} data-o="${o.id}" aria-label="Excluir opção ${esc(o.nome)}">×</button></span>`).join("")}
       <span class="bc-op nova"><input class="inp" id="op-novo-${c.id}" placeholder="Nova opção" data-enter="op-add" ${d}><button data-a="op-add" ${d} aria-label="Adicionar opção">+</button></span></div>`;
   const grupo = c.tipo === "grupo" ? `<div class="bc-sub">
-      <label class="fld bc-rotulo"><span>Nome de cada item</span><input class="inp" data-bc="${g}|${c.id}|rotulo" value="${esc(c.rotulo || "")}" placeholder="Ex.: Fita, Insumo"></label>
+      <label class="fld bc-rotulo"><span>Nome de cada item</span><input class="inp" data-bc="${g}|${c.id}|rotulo" value="${esc(c.rotulo || "")}" placeholder="Ex.: Fita, Parte, Insumo"></label>
       <div class="bc-rot">Campos de cada ${esc((c.rotulo || "item").toLowerCase())}</div>
       ${c.campos.map((s, j) => campoBuilder(s, c.id, j, c.campos.length)).join("") || `<div class="hint">Nenhum campo ainda.</div>`}
       ${addCampo(c.id)}</div>` : "";
   return `<div class="bc-campo t-${c.tipo}">
     <div class="bc-lin">
       <span class="bc-n mono">${i + 1}</span><span class="bc-ic" title="${tc.nome}">${tc.ic}</span>
-      <input class="inp bc-nome" data-bc="${g}|${c.id}|nome" value="${esc(c.nome)}" placeholder="Nome do campo" aria-label="Nome do campo">
+      <input class="inp bc-nome" data-bc="${g}|${c.id}|nome" value="${esc(c.nome)}" placeholder="Ex.: Número da fita, Tamanho em cm" aria-label="Nome do campo">
       <select class="sel" data-bct="${g}|${c.id}" aria-label="Tipo do campo">${TIPOS_CAMPO.filter((t) => !g || !t.soRaiz).map((t) => `<option value="${t.k}" ${t.k === c.tipo ? "selected" : ""}>${t.nome}</option>`).join("")}</select>
       ${tc.un != null ? `<input class="inp bc-un" list="dl-un" data-bc="${g}|${c.id}|unidade" value="${esc(c.unidade || "")}" placeholder="unidade" aria-label="Unidade">` : ""}
       <label class="selbar-chk"><input type="checkbox" data-bco="${g}|${c.id}" ${c.obrigatorio ? "checked" : ""}> Obrigatório</label>
@@ -566,9 +544,26 @@ function campoBuilder(c, g, i, total) {
         <button class="btn sm ghost so-icone" data-a="bc-mv" ${d} data-d="-1" ${i ? "" : "disabled"} aria-label="Subir">${svg(IC.setaCima)}</button>
         <button class="btn sm ghost so-icone" data-a="bc-mv" ${d} data-d="1" ${i < total - 1 ? "" : "disabled"} aria-label="Descer">${svg(IC.setaBaixo)}</button>
         <button class="btn sm ghost so-icone" data-a="bc-del" ${d} aria-label="Excluir campo">${svg(IC.lixeira)}</button></span>
-    </div>${origem}${opcoes}${grupo}</div>`;
+    </div>${origem}${opcoes}${c.tipo === "medida" ? unidadesBuilder(c, g, d) : ""}${grupo}</div>`;
 }
 /* "+ Adicionar campo" abre uma grade com os tipos: um clique escolhe e cria */
+/* as unidades de UMA medida: nada de cm/mm/un fixos no código — a lista é do campo */
+function unidadesBuilder(c, g, d) {
+  const us = c.unidades || [];
+  return `<div class="bc-ops"><span class="bc-rot">Unidade</span>
+    <div class="seg" role="group" aria-label="Como a unidade funciona">
+      <button class="${c.unidadeFixa ? "on" : ""}" data-a="un-modo" ${d} data-v="fixa">Fixa</button>
+      <button class="${c.unidadeFixa ? "" : "on"}" data-a="un-modo" ${d} data-v="escolha">Quem preenche escolhe</button></div>
+    ${c.unidadeFixa
+      ? `<input class="inp bc-un" list="dl-un" data-bun="${g}|${c.id}" value="${esc(us[0] || "")}" placeholder="ex.: cm" aria-label="Unidade fixa">
+         <span class="hint">sempre “20 ${esc(us[0] || "cm")}”, sem perguntar</span>`
+      : `${us.map((u, j) => `<span class="bc-op"><span class="bc-un-n">${esc(u)}</span>
+          <button data-a="un-mv" ${d} data-u="${esc(u)}" data-d="-1" ${j ? "" : "disabled"} aria-label="Mover ${esc(u)} para a esquerda">‹</button>
+          <button data-a="un-mv" ${d} data-u="${esc(u)}" data-d="1" ${j < us.length - 1 ? "" : "disabled"} aria-label="Mover ${esc(u)} para a direita">›</button>
+          <button data-a="un-del" ${d} data-u="${esc(u)}" aria-label="Tirar ${esc(u)}">×</button></span>`).join("")}
+        <span class="bc-op nova"><input class="inp" list="dl-un" id="un-novo-${c.id}" placeholder="+ unidade" data-enter="un-add" ${d} aria-label="Nova unidade"><button data-a="un-add" ${d} aria-label="Adicionar unidade">+</button></span>
+        <span class="hint">a primeira vem sugerida</span>`}</div>`;
+}
 const addCampo = (g) => topo()?.picker === (g || "raiz")
   ? `<div class="bc-picker"><div class="bc-picker-h"><b>Que tipo de campo${g ? " dentro do grupo" : ""}?</b>
       <button class="btn sm ghost" data-a="bc-picker" data-g="">Fechar</button></div>
@@ -580,13 +575,16 @@ function modalTipo(m) {
   const r = m.rasc;
   const aba = m.aba || "campos";
   return janela(m.novo ? "Novo tipo de processo" : `Tipo de processo · ${esc(r.nome)}`, `
-    <div class="grid2"><label class="fld"><span>Nome do processo *</span><input class="inp" data-t="nome" value="${esc(r.nome)}" placeholder="Ex.: Fitas, Acabamento, Chuca"></label>
+    <div class="grid2"><label class="fld"><span>Nome do processo *</span><input class="inp" data-t="nome" value="${esc(r.nome)}" placeholder="Ex.: Corte de fitas, Montagem, Embalagem"></label>
       <label class="fld"><span>Descrição</span><input class="inp" data-t="descricao" value="${esc(r.descricao || "")}"></label></div>
+    ${!m.novo ? `<div class="pc-uso-cab">${usoBotao(r.id)}</div>` : ""}
+    <div class="hint" style="margin-top:6px">O processo é a <b>etapa</b> (ex.: Corte de fitas). O que se mede, escolhe ou anota dentro dela — número da fita, tamanho em cm, ângulo — vira <b>campo</b>, logo abaixo.</div>
     <div style="margin:12px 0 4px">${chipsClasses(r.classes)}</div>
     ${erros(m)}
     <div class="seg" style="margin:12px 0" role="group"><button class="${aba === "campos" ? "on" : ""}" data-a="tipo-aba" data-v="campos">Campos · ${r.campos.length}</button>
       <button class="${aba === "previa" ? "on" : ""}" data-a="tipo-aba" data-v="previa">Prévia do formulário</button></div>
-    ${aba === "campos" ? `<div class="bc-lista">${r.campos.map((c, i) => campoBuilder(c, "", i, r.campos.length)).join("") || `<div class="hint">Comece adicionando o primeiro campo.</div>`}</div>${addCampo("")}
+    ${aba === "campos" ? `<div class="bc-lista">${r.campos.map((c, i) => campoBuilder(c, "", i, r.campos.length)).join("")
+      || `<div class="hint">Nenhum campo ainda. Quando o produto tem várias partes iguais (várias fitas, vários insumos), comece por um <b>Grupo repetível</b> e ponha os campos dentro dele.</div>`}</div>${addCampo("")}
       <datalist id="dl-un">${UNIDADES.map((u) => `<option value="${u}">`).join("")}</datalist>`
     : `<div class="aviso" style="margin-bottom:10px">Assim o formulário aparece para quem preencher um padrão ou um produto. O que você digitar aqui não é salvo.</div>${formValores(r, m.previa)}`}`,
     `${!m.novo ? `<button class="btn danger" data-a="tipo-del">Excluir tipo</button>
@@ -629,6 +627,7 @@ function modalAdicionar(m) {
   return janela(m.paraPadrao ? "Novo padrão · de qual processo?" : `${m.soPadroes ? "Aplicar padrão" : "Adicionar processo"} · <span class="mono">${esc(m.sku)}</span>`, `
     <div class="hint" style="margin-bottom:12px">${m.paraPadrao ? "Escolha o processo. Comece em branco ou a partir de um padrão que já existe." : m.soPadroes ? "Aplicar copia a configuração do padrão para este produto. Depois você personaliza à vontade — só este produto muda."
       : "Comece em branco ou a partir de um padrão. O mesmo processo pode entrar mais de uma vez."}</div>
+    ${!E.tipos.length ? vazio("Nenhum processo criado ainda", "Crie o processo primeiro; depois volte aqui.", `<button class="btn primary" data-a="tipo-novo-daqui">${svg(IC.mais)}Criar processo</button>`) : ""}
     <div class="pc-escolha">${E.tipos.map((t) => { const pds = E.padroes.filter((p) => p.tipoId === t.id);
       if (m.soPadroes && !pds.length) return "";
       return `<div class="pc-esc"><div class="pc-esc-h"><b>${esc(t.nome)}</b> ${tagsClasses(t.classes)}</div>
@@ -748,9 +747,61 @@ function modalBancada(m) {
     </footer></div></div>`;
 }
 
+/* ---------- QUEM USA · o vínculo no sentido processo → produtos ----------
+   Só consulta: lista, filtra e abre. Nada aqui altera produto ou configuração.
+   (O outro sentido, produto → processos, é a seção do próprio produto.) */
+const estadoCfg = (c) => !c.padraoId ? "montado" : canon(c.valores) === c.base ? "igual" : "personalizado";
+const ESTADO_NOME = { montado: "montado no produto", igual: "igual ao padrão", personalizado: "personalizado" };
+function usoBotao(tipoId, padraoId) {
+  const cs = E.configs.filter((c) => c.tipoId === tipoId && (!padraoId || c.padraoId === padraoId));
+  const n = new Set(cs.map((c) => c.sku)).size;
+  if (!n) return `<span class="hint">${padraoId ? "ainda não aplicado" : "nenhum produto ainda"}</span>`;
+  return `<span class="pc-uso">Usado por <b>${plural(n, "produto", "produtos")}</b>
+    <button class="btn sm" data-a="uso" data-t="${tipoId}" ${padraoId ? `data-p="${padraoId}"` : ""}>Ver produtos</button></span>`;
+}
+function linhasUso(m) {
+  const k = semAcento(m.busca || "").trim();
+  return E.configs.filter((c) => c.tipoId === m.tipoId).filter((c) => {
+    const p = produtoDe(c.sku);
+    if (k && !semAcento(`${c.sku} ${p?.descricao || ""} ${c.titulo || ""}`).includes(k)) return false;
+    if (m.origem === "branco" && c.padraoId) return false;
+    if (m.origem && m.origem !== "branco" && c.padraoId !== m.origem) return false;
+    if (m.estado && estadoCfg(c) !== m.estado) return false;
+    if (m.cat && p?.categoria !== m.cat) return false;
+    return true;
+  });
+}
+function modalUso(m) {
+  const t = tipoPorId(m.tipoId); if (!t) return "";
+  const todas = E.configs.filter((c) => c.tipoId === t.id);
+  const l = linhasUso(m);
+  const cats = [...new Set(todas.map((c) => produtoDe(c.sku)?.categoria).filter(Boolean))];
+  const pds = [...new Set(todas.map((c) => c.padraoId).filter(Boolean))].map(padraoPorId).filter(Boolean);
+  const sel = (id, atual, opcoes) => `<select class="sel" data-uf="${id}" aria-label="${id}">${opcoes.map(([v, n]) => `<option value="${esc(v)}" ${atual === v ? "selected" : ""}>${esc(n)}</option>`).join("")}</select>`;
+  return janela(`Quem usa “${esc(t.nome)}”`, `
+    <div class="pc-cab"><span>Usado por <b>${plural(new Set(todas.map((c) => c.sku)).size, "produto", "produtos")}</b>
+      <span class="hint">· ${plural(todas.length, "configuração", "configurações")} · só consulta, nada aqui é alterado</span></span></div>
+    <div class="filters" style="padding:0 0 10px;border:0">
+      <div class="search">${svg(IC.busca)}<input class="inp" id="q-uso" style="width:220px" placeholder="Buscar SKU ou nome" value="${esc(m.busca || "")}" aria-label="Buscar produto"></div>
+      ${sel("origem", m.origem || "", [["", "Toda origem"], ["branco", "Em branco"], ...pds.map((p) => [p.id, `Padrão ${p.nome}`])])}
+      ${sel("estado", m.estado || "", [["", "Todo estado"], ["igual", "Igual ao padrão"], ["personalizado", "Personalizado"], ["montado", "Montado no produto"]])}
+      ${cats.length ? sel("cat", m.cat || "", [["", "Toda categoria"], ...cats.map((c) => [c, c])]) : ""}
+    </div>
+    ${l.length ? `<div class="tw"><table class="t pc-tab"><thead><tr><th>SKU</th><th>Produto · categoria</th><th>Título no produto</th><th>Origem</th><th>Estado</th><th></th></tr></thead><tbody>
+      ${l.map((c) => { const p = produtoDe(c.sku), e = estadoCfg(c);
+        return `<tr><td class="mono pc-nowrap"><b>${esc(c.sku)}</b></td><td>${esc(p?.descricao || "")}${p?.categoria ? `<div class="hint">${esc(p.categoria)}</div>` : ""}</td>
+          <td>${c.titulo ? esc(c.titulo) : `<span class="hint">—</span>`}</td>
+          <td>${c.padraoId ? `padrão <b>${esc(c.padraoNome)}</b>` : `<span class="hint">em branco</span>`}</td>
+          <td><span class="tag ${e === "personalizado" ? "amber" : e === "igual" ? "acao" : "neutro"}">${ESTADO_NOME[e]}</span></td>
+          <td><div class="pc-uso-a"><button class="btn sm" data-a="cfg-ver" data-id="${c.id}">${svg(IC.olho)}Abrir instrução</button>
+            <button class="btn sm ghost" data-a="produto" data-sku="${esc(c.sku)}">Abrir produto</button></div></td></tr>`; }).join("")}
+      </tbody></table></div>` : `<div class="hint" style="padding:14px 0">Nenhum produto com esses filtros.</div>`}`,
+    `<span style="margin-left:auto"></span><button class="btn" data-a="fechar">Fechar</button>`, "1040px");
+}
+
 function renderModal() {
   const m = topo(); if (!m) return "";
-  return ({ tipo: modalTipo, valores: modalValores, adicionar: modalAdicionar, aplicar: modalAplicar, produto: modalProduto, bancada: modalBancada })[m.t](m);
+  return ({ tipo: modalTipo, valores: modalValores, adicionar: modalAdicionar, aplicar: modalAplicar, produto: modalProduto, bancada: modalBancada, uso: modalUso })[m.t](m);
 }
 const topo = () => E.pilha[E.pilha.length - 1];
 const abrir = (m) => { E.pilha.push(m); render(); };
@@ -760,31 +811,68 @@ function descartar(m) { if (m?.t === "valores" && m.modo === "config" && configP
 const fechar = () => { descartar(E.pilha.pop()); render(); };
 
 /* ======================= DESENHO ======================= */
+/* ATUALIZAR, NÃO SUBSTITUIR. Trocar o innerHTML inteiro a cada clique recriava a
+   janela: a animação de entrada dela rodava de novo (a "piscada"), o foco caía e
+   o cursor voltava ao início. Aqui o HTML novo é comparado com o que já está na
+   tela e só o que mudou é mexido: o mesmo nó da janela continua de pé, com foco,
+   cursor, rolagem e o que foi digitado. É um lugar só, e vale para toda ação. */
+function atualizar(raiz, html) {
+  const t = document.createElement("template");
+  t.innerHTML = html;
+  atualizarFilhos(raiz, t.content);
+}
+function atualizarFilhos(de, para) {
+  const a = [...de.childNodes], b = [...para.childNodes];
+  b.forEach((n, i) => (i < a.length ? atualizarNo(a[i], n) : de.appendChild(n)));
+  for (let i = b.length; i < a.length; i++) a[i].remove();
+}
+function atualizarNo(de, para) {
+  if (de.nodeType !== para.nodeType || de.nodeName !== para.nodeName) { de.replaceWith(para); return; }
+  if (de.nodeType !== 1) { if (de.nodeValue !== para.nodeValue) de.nodeValue = para.nodeValue; return; }
+  for (const at of [...de.attributes]) if (!para.hasAttribute(at.name)) de.removeAttribute(at.name);
+  for (const at of [...para.attributes]) if (de.getAttribute(at.name) !== at.value) de.setAttribute(at.name, at.value);
+  const tag = de.nodeName, focado = de === document.activeElement;
+  /* o campo em que a pessoa está digitando não é tocado: o que ela digitou já
+     está no estado, e mexer no valor jogaria o cursor para o fim */
+  if (tag === "TEXTAREA") { if (!focado && de.value !== para.value) de.value = para.value; return; }
+  if (tag === "INPUT") {
+    if (de.type === "checkbox" || de.type === "radio") de.checked = para.hasAttribute("checked");
+    else if (!focado && de.value !== para.value) de.value = para.value;
+    return;
+  }
+  const escolhido = tag === "SELECT" ? ([...para.options].find((o) => o.hasAttribute("selected")) || para.options[0])?.value ?? "" : null;
+  atualizarFilhos(de, para);
+  if (escolhido != null && de.value !== escolhido) de.value = escolhido;
+}
 function render() {
   const ativo = document.activeElement;
   const guarda = ativo && ativo.id ? { id: ativo.id, i: ativo.selectionStart, f: ativo.selectionEnd } : null;
-  const rolagem = E._janela === topo() ? document.querySelector(".modal-b, .pc-banc-b")?.scrollTop : null;
+  const mesmaJanela = E._janela === topo();
+  const rolagem = mesmaJanela ? document.querySelector(".modal-b, .pc-banc-b")?.scrollTop : null;
   E._janela = topo();
   const nav = [["sec", "Operação"], ["demanda", "Demanda"], ["pedidos", "Pedidos"], ["conferencia", "Conferência"],
     ["sec", "Cadastros"], ["produtos", "Produtos", true], ["processos", "Processos", true], ["insumos", "Insumos"], ["prestadoras", "Prestadoras"]];
   const tit = E.aba === "produtos" ? ["Produtos", "Tela simulada · para ver a seção Processos / como fazer"]
     : ["Processos", "Construtor de instruções: tipos, campos, padrões e classificações — tudo cadastrável"];
-  document.getElementById("app").innerHTML = `
+  atualizar(document.getElementById("app"), `
   <div class="shell"><nav class="rail"><div class="brand"><div class="brand-logo" role="img" aria-label="Moda Bicho Acessórios"></div></div>
     <div class="nav">${nav.map(([id, nome, vivo]) => id === "sec" ? `<div class="sec">${nome}</div>`
       : `<button ${vivo ? `data-a="aba" data-v="${id}"` : `disabled title="Fora desta amostra"`} class="${E.aba === id ? "on" : ""} ${vivo ? "" : "pr-off"}">${svg(IC[id])}<span>${nome}</span>${id === "processos" ? `<span class="badge">novo</span>` : ""}</button>`).join("")}</div></nav>
   <div class="main"><div class="topbar"><div><h1>${tit[0]}</h1><p>${tit[1]}</p></div>
-    <div class="right"><span class="tag amber" title="Nada aqui fala com o servidor. Recarregar volta aos exemplos.">Amostra · dados fictícios · nada é gravado</span></div></div>
+    <div class="right"><span class="tag amber" title="Nada aqui fala com o servidor. O que você cria fica só neste navegador.">Protótipo · salvo só neste navegador</span>
+      <button class="btn sm ghost" data-a="zerar" title="Apaga tudo o que foi criado nesta amostra">Recomeçar do zero</button></div></div>
     <div class="page">${E.aba === "produtos" ? viewProdutos() : viewProcessos()}</div></div></div>
   <nav class="barra-mob" aria-label="Navegação">
     <button data-a="aba" data-v="processos" class="${E.aba === "processos" ? "on" : ""}">${svg(IC.processos)}<span>Processos</span></button>
     <button data-a="aba" data-v="produtos" class="${E.aba === "produtos" ? "on" : ""}">${svg(IC.produtos)}<span>Produtos</span></button></nav>
-  ${renderModal()}`;
+  ${renderModal()}`);
+  /* janela nova abre no topo; a mesma janela fica onde estava */
   const caixa = document.querySelector(".modal-b, .pc-banc-b");
-  if (rolagem != null && caixa) caixa.scrollTop = rolagem;
+  if (caixa) { if (!mesmaJanela) caixa.scrollTop = 0; else if (rolagem != null && caixa.scrollTop !== rolagem) caixa.scrollTop = rolagem; }
   const alvo = E.foco ? document.querySelector(E.foco) : guarda && document.getElementById(guarda.id);
-  if (alvo) { alvo.focus(); if (!E.foco && guarda?.i != null && alvo.setSelectionRange) try { alvo.setSelectionRange(guarda.i, guarda.f); } catch {} }
+  if (alvo && alvo !== document.activeElement) { alvo.focus(); if (!E.foco && guarda?.i != null && alvo.setSelectionRange) try { alvo.setSelectionRange(guarda.i, guarda.f); } catch {} }
   E.foco = null;
+  guardar();   /* toda mudança de estado termina num desenho: é aqui que ela fica guardada */
 }
 
 /* ======================= AÇÕES ======================= */
@@ -803,27 +891,52 @@ const ACOES = {
   fundo: () => fechar(), fechar: () => fechar(), "fechar-tudo": () => { E.pilha.forEach(descartar); E.pilha = []; render(); },
 
   /* ---- classificações ---- */
-  "cl-add": () => { const n = document.getElementById("cl-novo").value.trim(); if (!n) return;
+  "cl-add": () => { const inp = document.getElementById("cl-novo"); const n = inp.value.trim(); if (!n) return; inp.value = "";
     E.classes.push({ id: novoId("cl"), nome: n, valores: [] }); toast(`Classificação “${n}” criada.`); render(); },
   "cl-del": (d) => { const cl = E.classes.find((c) => c.id === d.c);
     const uso = [...E.tipos, ...E.padroes].filter((x) => (x.classes?.[cl.id] || []).length).length;
     if (!confirm(`Excluir a classificação “${cl.nome}”?${uso ? `\n\nEla está em ${plural(uso, "processo/padrão", "processos/padrões")}; a marcação sai deles.` : ""}`)) return;
     E.classes = E.classes.filter((c) => c !== cl); [...E.tipos, ...E.padroes].forEach((x) => delete x.classes?.[cl.id]); render(); },
-  "clv-add": (d) => { const inp = document.getElementById(`clv-novo-${d.c}`); const n = inp.value.trim(); if (!n) return;
+  "clv-add": (d) => { const inp = document.getElementById(`clv-novo-${d.c}`); const n = inp.value.trim(); if (!n) return; inp.value = "";
     E.classes.find((c) => c.id === d.c).valores.push(V(novoId("v"), n)); E.foco = `#clv-novo-${d.c}`; render(); },
   "clv-del": (d) => { const cl = E.classes.find((c) => c.id === d.c);
     const uso = [...E.tipos, ...E.padroes].filter((x) => (x.classes?.[cl.id] || []).includes(d.v)).length;
     if (uso && !confirm(`Este valor marca ${plural(uso, "processo/padrão", "processos/padrões")}. Excluir mesmo assim?`)) return;
     cl.valores = cl.valores.filter((v) => v.id !== d.v); [...E.tipos, ...E.padroes].forEach((x) => { if (x.classes?.[cl.id]) x.classes[cl.id] = x.classes[cl.id].filter((v) => v !== d.v); }); render(); },
   "cl-tg": (d) => { const r = topo().rasc; const l = (r.classes[d.c] ||= []); const i = l.indexOf(d.v); i < 0 ? l.push(d.v) : l.splice(i, 1); render(); },
+  /* criar classificação sem sair da janela do processo/padrão */
+  "ncl-abrir": () => { topo().novaClasse = { nome: "", valores: "" }; E.foco = "#ncl-nome"; render(); },
+  "ncl-cancelar": () => { delete topo().novaClasse; render(); },
+  "ncl-criar": () => {
+    const m = topo(), n = m.novaClasse, nome = n.nome.trim();
+    const valores = [...new Set(n.valores.split(/\r?\n/).map((v) => v.trim()).filter(Boolean))];
+    n.erro = !nome ? "Dê um nome à classificação."
+      : E.classes.some((c) => c.nome.trim().toLowerCase() === nome.toLowerCase()) ? `Já existe uma classificação “${nome}”.`
+      : !valores.length ? "Escreva pelo menos um valor (um por linha)." : "";
+    if (n.erro) { render(); return; }
+    E.classes.push({ id: novoId("cl"), nome, valores: valores.map((v) => V(novoId("v"), v)) });
+    delete m.novaClasse;
+    toast(`Classificação “${nome}” criada com ${plural(valores.length, "valor", "valores")}. Já serve para os próximos processos.`);
+    render();
+  },
+  "clv-inline": (d) => { const inp = document.getElementById(`clv-in-${d.c}`); const v = inp.value.trim(); if (!v) return; inp.value = "";
+    const cl = E.classes.find((c) => c.id === d.c);
+    if (!cl.valores.some((x) => x.nome.toLowerCase() === v.toLowerCase())) cl.valores.push(V(novoId("v"), v));
+    E.foco = `#clv-in-${d.c}`; render(); },
+  zerar: () => {
+    if (!confirm("Apagar tudo o que foi criado nesta amostra — classificações, listas, processos, padrões e o que foi aplicado nos produtos?\n\nIsso só existe neste navegador. Não há como desfazer.")) return;
+    for (const k of PERSISTE) E[k] = [];
+    E.pilha = []; E.fc = {}; E.busca = ""; E.sub = "tipos";
+    try { localStorage.removeItem(GUARDA); } catch {}
+    toast("Amostra zerada. Começando do zero."); render(); },
 
   /* ---- listas de opções compartilhadas ---- */
-  "ls-add": () => { const n = document.getElementById("ls-novo").value.trim(); if (!n) return;
+  "ls-add": () => { const inp = document.getElementById("ls-novo"); const n = inp.value.trim(); if (!n) return; inp.value = "";
     const l = { id: novoId("ls"), nome: n, opcoes: [] }; E.listas.push(l); E.foco = `#lso-novo-${l.id}`; toast(`Lista “${n}” criada.`); render(); },
   "ls-del": (d) => { const l = listaPorId(d.l); const usam = camposDaLista(l.id);
     if (usam.length) { alert(`“${l.nome}” é usada por ${usam.map((x) => `${x.t.nome} › ${x.c.nome}`).join(", ")}. Troque esses campos para outra lista ou para opções próprias antes de excluir.`); return; }
     if (!confirm(`Excluir a lista “${l.nome}”?`)) return; E.listas = E.listas.filter((x) => x !== l); render(); },
-  "lso-add": (d) => { const inp = document.getElementById(`lso-novo-${d.l}`); const n = inp.value.trim(); if (!n) return;
+  "lso-add": (d) => { const inp = document.getElementById(`lso-novo-${d.l}`); const n = inp.value.trim(); if (!n) return; inp.value = "";
     listaPorId(d.l).opcoes.push({ id: novoId("o"), nome: n }); E.foco = `#lso-novo-${d.l}`; render(); },
   "lso-del": (d) => { const l = listaPorId(d.l); const o = l.opcoes.find((x) => x.id === d.o); const uso = usoOpcaoLista(l.id, o.id);
     if (uso && !confirm(`“${o.nome}” está escolhida em ${plural(uso, "padrão/produto", "padrões/produtos")}. Lá ela vai aparecer como “(opção excluída)”. Excluir?`)) return;
@@ -849,9 +962,26 @@ const ACOES = {
     toast(`Lista “${l.nome}” criada com ${plural(l.opcoes.length, "opção", "opções")}. Outros campos já podem usá-la.`); render(); },
 
   /* ---- tipo de processo (construtor) ---- */
+  "tipo-novo-daqui": () => { E.pilha = []; ACOES["tipo-novo"](); },
   "tipo-novo": () => abrir({ t: "tipo", novo: true, previa: {}, rasc: { id: novoId("tp"), nome: "", descricao: "", classes: {}, campos: [] } }),
   "tipo-editar": (d) => abrir({ t: "tipo", previa: {}, rasc: copia(tipoPorId(d.id)) }),
   "tipo-aba": (d) => { topo().aba = d.v; render(); },
+  "un-modo": (d) => { const r = topo().rasc, c = acharCampo(r, d.g, d.id); const fixa = d.v === "fixa";
+    if (fixa && !c.unidadeFixa) {
+      /* virar fixa muda o que se lê em valores já preenchidos com OUTRA unidade: avisar antes */
+      const u0 = (c.unidades || [])[0]; const cs = campoSalvo(d.g, d.id);
+      const outros = cs ? portadores(r.id).filter((x) => (d.g ? (x.valores[d.g] || []).map((it) => it.v[d.id]) : [x.valores[d.id]])
+        .some((v) => v && typeof v === "object" && v.u && v.u !== u0)).length : 0;
+      if (outros && !confirm(`Há ${plural(outros, "padrão/produto", "padrões/produtos")} com esta medida em outra unidade. Com unidade fixa, eles passam a mostrar “${u0}”. Fixar mesmo assim?`)) return;
+    }
+    c.unidadeFixa = fixa; if (!(c.unidades || []).length) c.unidades = ["cm"]; render(); },
+  "un-add": (d) => { const inp = document.getElementById(`un-novo-${d.id}`); const u = inp.value.trim(); if (!u) return; inp.value = "";
+    const c = acharCampo(topo().rasc, d.g, d.id); c.unidades ||= [];
+    if (!c.unidades.some((x) => x.toLowerCase() === u.toLowerCase())) c.unidades.push(u); E.foco = `#un-novo-${d.id}`; render(); },
+  "un-del": (d) => { const c = acharCampo(topo().rasc, d.g, d.id);
+    if (c.unidades.length === 1) { alert("A medida precisa de pelo menos uma unidade."); return; }
+    c.unidades = c.unidades.filter((u) => u !== d.u); render(); },
+  "un-mv": (d) => { const c = acharCampo(topo().rasc, d.g, d.id); mover(c.unidades, c.unidades.indexOf(d.u), Number(d.d)); render(); },
   "bc-picker": (d) => { topo().picker = d.g || null; render(); },
   "bc-add": (d) => { const g = d.g || ""; const k = d.k;
     const c = C(novoId("c"), "", k, TC[k].op ? { opcoes: [] } : k === "grupo" ? { rotulo: "", campos: [] } : {});
@@ -870,7 +1000,7 @@ const ACOES = {
     if (uso && !confirm(`O campo “${c.nome}” está preenchido em ${plural(uso, "padrão/produto", "padrões/produtos")}. Ao salvar, esse valor deixa de aparecer. Excluir?`)) return;
     const l = listaCampos(r, d.g); l.splice(l.indexOf(c), 1); render(); },
   "bc-mv": (d) => { const l = listaCampos(topo().rasc, d.g); mover(l, l.findIndex((c) => c.id === d.id), Number(d.d)); render(); },
-  "op-add": (d) => { const inp = document.getElementById(`op-novo-${d.id}`); const n = inp.value.trim(); if (!n) return;
+  "op-add": (d) => { const inp = document.getElementById(`op-novo-${d.id}`); const n = inp.value.trim(); if (!n) return; inp.value = "";
     acharCampo(topo().rasc, d.g, d.id).opcoes.push({ id: novoId("o"), nome: n }); E.foco = `#op-novo-${d.id}`; render(); },
   "op-del": (d) => { const r = topo().rasc; const c = acharCampo(r, d.g, d.id); const o = c.opcoes.find((x) => x.id === d.o);
     const uso = usoOpcao(r.id, d.g, d.id, d.o);
@@ -885,6 +1015,7 @@ const ACOES = {
     const conferir = (l, onde) => l.forEach((c, i) => {
       const quem = `${onde}campo ${i + 1}${c.nome ? ` (${c.nome})` : ""}`;
       if (!c.nome.trim()) e.push(`${quem}: sem nome.`);
+      if (c.tipo === "medida" && !(c.unidades || []).some((u) => String(u).trim())) e.push(`${quem}: defina a unidade.`);
       if (TC[c.tipo].op && !opcoesDe(c).length) e.push(c.listaId ? `${quem}: a lista escolhida está vazia.` : `${quem}: crie pelo menos uma opção.`);
       if (c.tipo === "grupo") { if (!c.campos.length) e.push(`${quem}: o grupo precisa de campos.`); conferir(c.campos, `${c.nome || "grupo"} › `); }
     });
@@ -977,6 +1108,7 @@ const ACOES = {
   bancada: (d) => abrir({ t: "bancada", sku: d.sku, feitos: [] }),
   "bn-ir": (d) => { if (!d.id) return; topo().cfg = d.id; E._janela = null; render(); },   /* processo novo começa do topo */
   "bn-passo": (d) => { const f = topo().feitos; const i = f.indexOf(d.k); i < 0 ? f.push(d.k) : f.splice(i, 1); render(); },
+  uso: (d) => abrir({ t: "uso", tipoId: d.t, origem: d.p || "", estado: "", cat: "", busca: "" }),
   menu: (d) => { E.menu = E.menu === d.id ? null : d.id; render(); },
   "cfg-editar": (d) => { const c = configPorId(d.id);
     abrir({ t: "valores", modo: "config", id: c.id, tipoId: c.tipoId, rasc: { titulo: c.titulo, valores: copia(c.valores) } }); },
@@ -1011,24 +1143,30 @@ document.addEventListener("input", (e) => {
   const el = e.target, d = el.dataset, m = topo();
   if (d.ins) { refSet(valoresDoTopo(), d.ins, el.value);   /* só a lista de sugestões se refaz */
     const box = [...document.querySelectorAll("[data-sug]")].find((x) => x.dataset.sug === d.ins); if (box) box.innerHTML = sugestoes(el.value, d.ins); return; }
-  if (el.id === "q-apl") { m.busca = el.value; render(); return; }
+  if (el.id === "ncl-nome" || el.id === "ncl-valores") { m.novaClasse[el.id === "ncl-nome" ? "nome" : "valores"] = el.value; return; }
+  if (el.id === "q-apl" || el.id === "q-uso") { m.busca = el.value; render(); return; }
   if (el.id === "q-proc") { E.busca = el.value; render(); return; }
   if (el.id === "q-prod") { E.buscaProd = el.value; render(); return; }
-  if (d.lsn) { listaPorId(d.lsn).nome = el.value; return; }
-  if (d.lso) { const [l, o] = d.lso.split("|"); listaPorId(l).opcoes.find((x) => x.id === o).nome = el.value; return; }
-  if (d.cln) { E.classes.find((c) => c.id === d.cln).nome = el.value; return; }
-  if (d.clv) { const [c, v] = d.clv.split("|"); E.classes.find((x) => x.id === c).valores.find((x) => x.id === v).nome = el.value; return; }
+  if (d.lsn) { listaPorId(d.lsn).nome = el.value; guardar(); return; }
+  if (d.lso) { const [l, o] = d.lso.split("|"); listaPorId(l).opcoes.find((x) => x.id === o).nome = el.value; guardar(); return; }
+  if (d.cln) { E.classes.find((c) => c.id === d.cln).nome = el.value; guardar(); return; }
+  if (d.clv) { const [c, v] = d.clv.split("|"); E.classes.find((x) => x.id === c).valores.find((x) => x.id === v).nome = el.value; guardar(); return; }
   if (!m) return;
   if (d.t != null && m.t === "tipo") { m.rasc[d.t] = el.value; return; }
   if (d.bc) { const [g, id, prop] = d.bc.split("|"); acharCampo(m.rasc, g, id)[prop] = el.value; return; }
   if (d.op) { const [g, id, o] = d.op.split("|"); acharCampo(m.rasc, g, id).opcoes.find((x) => x.id === o).nome = el.value; return; }
   if (d.r != null) { m.rasc[d.r] = el.value; return; }
   if (d.v != null && el.tagName !== "SELECT") { refSet(valoresDoTopo(), d.v, el.value); return; }
+  if (d.vn) { const v = valoresDoTopo(); const cur = refGet(v, d.vn);
+    const o = cur && typeof cur === "object" ? { ...cur } : { n: "", u: d.un || "" };
+    o.n = el.value; if (!o.u) o.u = d.un || ""; refSet(v, d.vn, o); return; }
+  if (d.bun) { const [g, id] = d.bun.split("|"); const c = acharCampo(m.rasc, g, id); c.unidades = [el.value.trim(), ...(c.unidades || []).slice(1)]; return; }
   if (d.vp) { const [c, s] = d.vp.split("|"); const st = (valoresDoTopo()[c] || []).find((x) => x.id === s); if (st) st.t = el.value; }
 });
 document.addEventListener("change", (e) => {
   const el = e.target, d = el.dataset, m = topo();
   if (d.fc) { E.fc[d.fc] = el.value; render(); return; }
+  if (d.uf && m?.t === "uso") { m[d.uf] = el.value; render(); return; }
   if (!m) return;
   if (d.bcl) {
     const [g, id] = d.bcl.split("|"); const c = acharCampo(m.rasc, g, id); const cs = campoSalvo(g, id);
@@ -1045,8 +1183,12 @@ document.addEventListener("change", (e) => {
     if (TC[c.tipo].op && !c.listaId) c.opcoes ||= [];
     if (c.tipo === "grupo") { c.campos ||= []; c.rotulo ||= ""; }
     if (TC[c.tipo].un != null && c.unidade == null) c.unidade = TC[c.tipo].un;
+    if (c.tipo === "medida") { c.unidades ||= [c.unidade || "cm"]; c.unidadeFixa ??= true; }
     render(); return;
   }
+  if (d.vu) { const v = valoresDoTopo(); const cur = refGet(v, d.vu);
+    const o = cur && typeof cur === "object" ? { ...cur } : { n: cur == null ? "" : String(cur), u: "" };
+    o.u = el.value; refSet(v, d.vu, o); return; }
   if (d.sel) { m.sel = el.checked ? [...m.sel, d.sel] : m.sel.filter((s) => s !== d.sel); render(); return; }
   if (d.v != null) { refSet(valoresDoTopo(), d.v, el.value); if (el.tagName === "SELECT" || el.classList.contains("pc-sku-in")) render(); }
 });
@@ -1058,5 +1200,5 @@ document.addEventListener("keydown", (e) => {
   if ((e.key === "Enter" || e.key === " ") && e.target.matches("tr[data-a]")) { e.preventDefault(); e.target.click(); }
 });
 
-semear();
+carregar();
 render();

@@ -107,6 +107,24 @@
 .pf-ins{color:var(--ink-3);font-size:.92em;}
 
 /* ---------- rodada 3 · uso no dia a dia ---------- */
+/* o ícone do botão dentro do "vazio" não é o ícone grande do vazio (os dois têm a classe .ic) */
+.empty .btn .ic{width:15px;height:15px;margin:0;background:none;border-radius:0;display:inline-block;}
+
+/* "Usado por N produtos · Ver produtos" */
+.pc-uso{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.pc-uso-cab{margin:8px 0 0;}
+.pc-nowrap{white-space:nowrap;}
+.pc-uso-a{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+/* medida: valor e unidade juntos */
+.pc-un-sel{flex:0 0 auto;width:auto !important;min-width:64px;}
+.bc-un-n{padding:3px 6px;font-weight:700;font-family:var(--ff-mono);}
+
+/* criar classificação sem sair da janela */
+.pc-cl-nova{margin:4px 0 6px;padding:12px;border:1px dashed var(--teal);border-radius:var(--r-3);background:var(--surface-2);}
+.pc-cl-nova textarea{width:100%;resize:vertical;}
+.pc-cl-nova-a{display:flex;justify-content:flex-end;gap:6px;margin-top:8px;}
+.pc-cl .bc-op.nova .inp{width:90px;}
+
 /* o caminho em três passos */
 .pc-guia{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
 .pc-passo-g{display:flex;gap:12px;align-items:center;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-3);background:var(--surface);cursor:pointer;color:inherit;font:inherit;}
