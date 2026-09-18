@@ -35,6 +35,9 @@ O código só conhece os tipos de campo. Nenhum nome de processo, campo, opção
 
 - **Modo bancada:** as instruções do produto abrem em tela cheia para consulta na produção. Tem navegação entre os processos e dá para marcar os passos com o toque. A marcação é temporária: fica só na tela, some ao fechar e não é gravada.
 - **Campo de insumo:** busca por SKU ou pelo nome. É só referência de qual material usar: não movimenta estoque.
+- **Impressão em bobina térmica 80 mm:** é o padrão, para uso na produção. Uma coluna, letra grande, cada item de grupo num bloco, preto no branco. Dá para imprimir um processo específico ou todos os processos do produto em sequência.
+- **Prévia antes de imprimir:** a largura útil (68 mm, de 40 a 78) e a altura de cada trecho (200 mm, de 100 a 400) se ajustam ali.
+- **A4:** fica separado, para escritório e treinamento.
 
 ## Arquivos
 

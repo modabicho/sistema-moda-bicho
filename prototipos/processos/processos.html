@@ -3090,6 +3090,55 @@ table.t td.num,table.t td.num .s,table.t td.num b{white-space:nowrap;}
   .folha .mono{font-family:'IBM Plex Mono',monospace;}
 }
 
+/* ---------- IMPRESSÃO 80 mm (bobina térmica) ----------
+   O mesmo desenho serve à prévia na tela e ao papel. Preto no branco: a
+   térmica não imprime fundo; tudo que separa é borda e peso da letra. */
+.b80{width:var(--b80-l,68mm);margin:0 auto;color:#000;font-family:var(--ff-corpo),Arial,sans-serif;
+  font-size:13px;line-height:1.35;overflow-wrap:anywhere;word-break:break-word;}
+.b80 *{color:#000 !important;background:transparent !important;box-shadow:none !important;}
+.b80-sec{padding:2mm 0 3mm;border-bottom:2px dashed #000;margin-bottom:3mm;}
+.b80.cortar .b80-sec{break-after:page;page-break-after:always;}
+.b80.cortar .b80-sec:last-of-type{break-after:auto;page-break-after:auto;}
+.b80-cab{border-bottom:2px solid #000;padding-bottom:1.5mm;margin-bottom:2mm;break-after:avoid;page-break-after:avoid;}
+.b80-sku{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:16px;}
+.b80-prod{font-size:13px;}
+.b80-proc{font-size:19px;font-weight:800;text-transform:uppercase;line-height:1.15;margin-top:1.5mm;}
+.b80-tit{font-size:13px;font-style:italic;}
+.b80-bl{margin:2mm 0;}
+.b80-bl-t{font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #000;margin-bottom:1mm;break-after:avoid;page-break-after:avoid;}
+.b80-item{border:2px solid #000;border-radius:2mm;padding:1.5mm 2mm;margin:2mm 0;break-inside:avoid;page-break-inside:avoid;}
+.b80-item-h{font-weight:800;font-size:16px;border-bottom:1px solid #000;margin-bottom:1mm;}
+.b80-l{padding:.5mm 0;}
+.b80-l > span{font-size:12px;}
+.b80-l b{font-weight:700;}
+.b80-l.dest b{font-size:17px;font-weight:800;}
+.b80 .mono{font-family:'IBM Plex Mono',monospace;}
+.b80 .pf-ins{display:block;font-size:11px;font-weight:500;}
+.b80-passos{list-style:none;padding:0;margin:0;}
+.b80-passos li{display:flex;gap:2mm;align-items:flex-start;padding:1.2mm 0;border-bottom:1px dotted #000;font-size:14px;break-inside:avoid;page-break-inside:avoid;}
+.b80-n{flex:0 0 6.5mm;height:6.5mm;border:2px solid #000;border-radius:50%;display:inline-grid;place-items:center;font-weight:800;font-size:12px;}
+.b80-obs{border:2.5px solid #000;padding:1.5mm 2mm;margin:2.5mm 0;break-inside:avoid;page-break-inside:avoid;}
+.b80-obs-t{font-weight:800;font-size:12px;letter-spacing:.04em;}
+.b80-obs p{margin:.5mm 0 0;white-space:pre-wrap;font-size:14px;}
+.b80-vazio{font-style:italic;padding:2mm 0;}
+.b80-fim{font-size:10px;text-align:center;padding-top:1mm;}
+
+/* a prévia: o rolo cinza e o papel de 80 mm com a área útil no meio.
+   A linha tracejada vermelha marca o fim de cada trecho (altura escolhida). */
+.pc-imp{display:grid;grid-template-columns:260px 1fr;gap:18px;align-items:start;}
+.pc-imp-ctl{display:flex;flex-direction:column;gap:12px;}
+.pc-imp-ctl .fld .hint{display:block;margin-top:4px;}
+.b80-rolo{background:var(--surface-2);border-radius:var(--r-3);padding:6mm 0;max-height:70vh;overflow:auto;}
+.b80-papel{width:80mm;margin:0 auto;background:#fff;padding:3mm 0;box-shadow:0 1px 6px rgba(0,0,0,.25);
+  background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--b80-a,200mm) - 1px),#d33 calc(var(--b80-a,200mm) - 1px),#d33 var(--b80-a,200mm)) !important;}
+@media (max-width:720px){ .pc-imp{grid-template-columns:1fr;} }
+
+@media print{
+  /* na bobina: só a faixa de 80 mm; o A4 do app não vale aqui */
+  body.imprimindo.b80mode .folha{width:80mm;padding:0;margin:0;font-size:13px;}
+  body.imprimindo.b80mode .b80{margin:0 auto;}
+}
+
 </style>
 </head>
 <body>
@@ -3701,12 +3750,105 @@ function folhaProduto(sku, ids) {
     ${cs.map((c, i) => secaoProcesso(c, i + 1)).join("")}
     <div class="obs-f">Instrução de trabalho. Não é ordem de produção e não movimenta estoque nem insumos.</div>`;
 }
-function imprimir(html) {
+function imprimir(html, modo = "a4") {
   document.getElementById("folha").innerHTML = html;
+  document.getElementById("pg-80")?.remove();
   document.body.classList.add("imprimindo");
-  window.onafterprint = () => document.body.classList.remove("imprimindo");
+  document.body.classList.toggle("b80mode", modo === "80");
+  if (modo === "80") {   /* @page não aceita classe: entra como estilo temporário, igual ao cupom do PCP */
+    const st = document.createElement("style"); st.id = "pg-80";
+    st.textContent = `@page{size:80mm ${IMP80.altura}mm;margin:0}`;
+    document.head.appendChild(st);
+  }
+  window.onafterprint = () => { document.body.classList.remove("imprimindo", "b80mode"); document.getElementById("pg-80")?.remove(); };
   window.print();
 }
+/* ======================= IMPRESSÃO 80 mm (bobina térmica) =======================
+   A mesma impressora do papel de produção. Uma coluna, letra grande, nada de
+   tabela: cada item de grupo vira um bloco vertical ("FITA 1 / Número: 9 / …").
+   Tudo preto no branco — térmica não imprime cor de fundo.
+   Os padrões são os do PCP para o cupom: página 80 × 200 mm, 68 mm úteis.
+   Largura e altura ficam ajustáveis, porque cada impressora tem uma margem. */
+const IMP80_CHAVE = "pcp-prototipo-processos:80mm";
+const IMP80 = (() => { const d = { largura: 68, altura: 200, cortar: false };
+  try { return { ...d, ...JSON.parse(localStorage.getItem(IMP80_CHAVE) || "{}") }; } catch { return d; } })();
+const guardar80 = () => { try { localStorage.setItem(IMP80_CHAVE, JSON.stringify(IMP80)); } catch {} };
+const DESTAQUE80 = ["medida", "quantidade", "numero", "sku"];
+function linha80(c, v) {
+  const val = c.tipo === "sku" ? `SKU ${fmt(c, v)}` : fmt(c, v);
+  return `<div class="b80-l ${DESTAQUE80.includes(c.tipo) ? "dest" : ""}"><span>${esc(c.nome)}:</span> <b>${val}</b></div>`;
+}
+function corpo80(t, vals) {
+  let out = "", soltos = [];
+  const flush = () => { if (soltos.length) out += `<div class="b80-bl">${soltos.join("")}</div>`; soltos = []; };
+  for (const c of t.campos) {
+    const v = vals[c.id];
+    if (ehVazio(c, v)) continue;
+    if (c.tipo === "grupo") {
+      flush();
+      const itens = v.filter((it) => c.campos.some((s) => !ehVazio(s, it.v[s.id])));
+      out += `<div class="b80-bl"><div class="b80-bl-t">${esc(c.nome)} · ${itens.length}</div>
+        ${itens.map((it, i) => `<div class="b80-item"><div class="b80-item-h">${esc((c.rotulo || "Item").toUpperCase())} ${i + 1}</div>
+          ${c.campos.filter((s) => !ehVazio(s, it.v[s.id])).map((s) => linha80(s, it.v[s.id])).join("")}</div>`).join("")}</div>`;
+    } else if (c.tipo === "passos") {
+      flush();
+      out += `<div class="b80-bl"><div class="b80-bl-t">${esc(c.nome)}</div><ol class="b80-passos">
+        ${v.filter((s) => s.t.trim()).map((s, i) => `<li><span class="b80-n">${i + 1}</span><span>${esc(s.t)}</span></li>`).join("")}</ol></div>`;
+    } else if (c.tipo === "longo") {
+      flush();
+      out += `<div class="b80-obs"><div class="b80-obs-t">${esc(c.nome.toUpperCase())}</div><p>${esc(v)}</p></div>`;
+    } else soltos.push(linha80(c, v));
+  }
+  flush();
+  return out || `<div class="b80-vazio">Nada preenchido neste processo.</div>`;
+}
+function folha80(sku, ids, o = IMP80) {
+  const prod = produtoDe(sku);
+  const todos = configsDe(sku);
+  const cs = todos.filter((c) => !ids || ids.includes(c.id));
+  const agora = new Date().toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  return `<div class="b80 ${o.cortar ? "cortar" : ""}" style="--b80-l:${o.largura}mm">
+    ${cs.map((c) => { const t = tipoPorId(c.tipoId);
+      return `<section class="b80-sec"><header class="b80-cab">
+          <div class="b80-sku">SKU ${esc(sku)}</div>
+          <div class="b80-prod">${esc(prod?.descricao || "")}</div>
+          <div class="b80-proc">${todos.length > 1 ? `${todos.indexOf(c) + 1}/${todos.length} · ` : ""}${esc(t?.nome || "?")}</div>
+          ${c.titulo ? `<div class="b80-tit">${esc(c.titulo)}</div>` : ""}</header>
+        ${t ? corpo80(t, c.valores) : ""}</section>`; }).join("")}
+    <div class="b80-fim">Impresso em ${agora}<br>Instrução de trabalho · não movimenta estoque</div></div>`;
+}
+/* a janela de impressão: PRÉVIA no tamanho real antes de mandar para a impressora */
+function modalImpressao(m) {
+  const cs = configsDe(m.sku), prod = produtoDe(m.sku);
+  const ids = m.proc ? [m.proc] : null;
+  const a4 = m.modo === "a4";
+  const num = (k, rot, min, max, dica) => `<label class="fld"><span>${rot}</span><div class="pc-un-w">
+      <input class="inp" type="number" min="${min}" max="${max}" data-imp="${k}" value="${IMP80[k]}"><span class="pc-un">mm</span></div>
+      <small class="hint">${dica}</small></label>`;
+  return janela(`Imprimir · <span class="mono">${esc(m.sku)}</span> · ${esc(prod?.descricao || "")}`, `
+    <div class="pc-imp">
+      <div class="pc-imp-ctl">
+        <div class="seg" role="group" aria-label="Papel">
+          <button class="${a4 ? "" : "on"}" data-a="imp-modo" data-v="80">Bobina 80 mm</button>
+          <button class="${a4 ? "on" : ""}" data-a="imp-modo" data-v="a4">A4 · escritório</button></div>
+        <label class="fld"><span>O que imprimir</span><select class="sel" data-imp-proc="1" aria-label="O que imprimir">
+          <option value="" ${m.proc ? "" : "selected"}>Todos os processos do produto (${cs.length})</option>
+          ${cs.map((c, i) => `<option value="${c.id}" ${m.proc === c.id ? "selected" : ""}>${i + 1} · ${esc(tipoPorId(c.tipoId)?.nome || "?")}${c.titulo ? ` · ${esc(c.titulo)}` : ""}</option>`).join("")}</select></label>
+        ${a4 ? `<div class="hint">A ficha A4 é a de escritório e treinamento: sai em folha, com tabelas.</div>` : `
+          ${num("largura", "Largura útil", 40, 78, "O PCP usa 68 mm. Se sair cortado na borda, diminua.")}
+          ${num("altura", "Altura de cada trecho", 100, 400, "Onde a página termina. O texto continua no trecho seguinte.")}
+          <label class="selbar-chk"><input type="checkbox" data-imp="cortar" ${IMP80.cortar ? "checked" : ""}> Cortar entre um processo e outro</label>
+          <div class="hint">Na prévia, a linha tracejada vermelha marca o fim de cada trecho (aproximado).</div>`}
+      </div>
+      <div class="pc-imp-prev">${a4
+        ? `<div class="empty" style="padding:30px"><h3>Ficha A4</h3><p>O mesmo conteúdo, no formato de folha usado até aqui.</p></div>`
+        : `<div class="b80-rolo"><div class="b80-papel" style="--b80-l:${IMP80.largura}mm;--b80-a:${IMP80.altura}mm">${folha80(m.sku, ids)}</div></div>
+           <div class="hint" style="text-align:center;margin-top:6px">Bobina de 80 mm, em tamanho real aproximado · área útil de ${IMP80.largura} mm</div>`}</div>
+    </div>`,
+    `<button class="btn" data-a="fechar">Cancelar</button><span style="margin-left:auto"></span>
+     <button class="btn primary" data-a="imp-ok">${svg(IC.impressora)}${a4 ? "Imprimir A4" : "Imprimir na bobina 80 mm"}</button>`, "980px");
+}
+
 
 /* ======================= JANELAS ======================= */
 function janela(titulo, corpo, rodape, largura) {
@@ -3885,7 +4027,7 @@ function modalProduto(m) {
       <div class="pc-como-h"><h3>Processos / como fazer</h3>
         <span style="margin-left:auto"></span>
         <button class="btn sm primary" data-a="adicionar" data-sku="${m.sku}">${svg(IC.mais)}Vincular processo</button>
-        <button class="btn sm" data-a="imprimir-prod" data-sku="${m.sku}" ${cs.length ? "" : "disabled"}>${svg(IC.impressora)}Imprimir ficha completa</button>
+        <button class="btn sm" data-a="imprimir-prod" data-sku="${m.sku}" ${cs.length ? "" : "disabled"}>${svg(IC.impressora)}Imprimir</button>
         <button class="btn sm primary" data-a="bancada" data-sku="${m.sku}" ${cs.length ? "" : "disabled"}>${svg(IC.olho)}Como fazer · tela cheia</button></div>
       <div class="hint" style="margin-bottom:10px">Só instrução. Nada aqui altera cadastro, estoque, insumos, pedido ou OP.</div>
       ${cs.length ? cs.map((c, i) => { const t = tipoPorId(c.tipoId);
@@ -3949,8 +4091,8 @@ function modalBancada(m) {
       <button class="btn ghost" data-a="fechar">${svg(IC.setaEsq)}Voltar</button>
       <div class="pc-banc-id"><span class="mono">${esc(m.sku)}</span><b>${esc(prod?.descricao || "")}</b></div>
       <span class="pc-banc-imp">
-        <button class="btn sm" data-a="cfg-print" data-id="${atual.id}">${svg(IC.impressora)}Imprimir este</button>
-        <button class="btn sm" data-a="imprimir-prod" data-sku="${esc(m.sku)}">${svg(IC.impressora)}Ficha completa</button></span>
+        <button class="btn sm" data-a="cfg-print" data-id="${atual.id}">${svg(IC.impressora)}Imprimir este processo</button>
+        <button class="btn sm" data-a="imprimir-prod" data-sku="${esc(m.sku)}">${svg(IC.impressora)}Imprimir todos</button></span>
     </header>
     <nav class="pc-banc-tabs" aria-label="Processos">${cs.map((c, j) => `<button class="${c === atual ? "on" : ""}" data-a="bn-ir" data-id="${c.id}" aria-current="${c === atual}">
       <span class="pf-num">${j + 1}</span>${nome(c)}</button>`).join("")}</nav>
@@ -4018,7 +4160,7 @@ function modalUso(m) {
 
 function renderModal() {
   const m = topo(); if (!m) return "";
-  return ({ tipo: modalTipo, valores: modalValores, adicionar: modalAdicionar, aplicar: modalAplicar, produto: modalProduto, bancada: modalBancada, uso: modalUso })[m.t](m);
+  return ({ tipo: modalTipo, valores: modalValores, adicionar: modalAdicionar, aplicar: modalAplicar, produto: modalProduto, bancada: modalBancada, uso: modalUso, imp: modalImpressao })[m.t](m);
 }
 const topo = () => E.pilha[E.pilha.length - 1];
 const abrir = (m) => { E.pilha.push(m); render(); };
@@ -4342,8 +4484,11 @@ const ACOES = {
     E.configs = E.configs.filter((x) => x !== c); if (topo()?.t === "bancada" && !configsDe(c.sku).length) E.pilha.pop(); render(); },
   "cfg-mv": (d) => { const c = configPorId(d.id); const irmas = configsDe(c.sku); const j = irmas.indexOf(c) + Number(d.d);
     if (j < 0 || j >= irmas.length) return; const a = E.configs.indexOf(c), b = E.configs.indexOf(irmas[j]); [E.configs[a], E.configs[b]] = [E.configs[b], E.configs[a]]; render(); },
-  "cfg-print": (d) => { const c = configPorId(d.id); imprimir(folhaProduto(c.sku, [c.id])); },
-  "imprimir-prod": (d) => imprimir(folhaProduto(d.sku)),
+  "cfg-print": (d) => { const c = configPorId(d.id); abrir({ t: "imp", sku: c.sku, proc: c.id, modo: "80" }); },
+  "imprimir-prod": (d) => abrir({ t: "imp", sku: d.sku, proc: "", modo: "80" }),
+  "imp-modo": (d) => { topo().modo = d.v; render(); },
+  "imp-ok": () => { const m = topo(); const ids = m.proc ? [m.proc] : null;
+    if (m.modo === "a4") imprimir(folhaProduto(m.sku, ids)); else imprimir(folha80(m.sku, ids), "80"); },
 };
 
 document.addEventListener("click", (e) => {
@@ -4367,6 +4512,8 @@ document.addEventListener("input", (e) => {
   if (d.ins) { refSet(valoresDoTopo(), d.ins, el.value);   /* só a lista de sugestões se refaz */
     const box = [...document.querySelectorAll("[data-sug]")].find((x) => x.dataset.sug === d.ins); if (box) box.innerHTML = sugestoes(el.value, d.ins); return; }
   if (el.id === "ncl-nome" || el.id === "ncl-valores") { m.novaClasse[el.id === "ncl-nome" ? "nome" : "valores"] = el.value; if (el.id === "ncl-nome") render(); return; }
+  if (d.imp && d.imp !== "cortar" && m?.t === "imp") { const n = Number(el.value); const [min, max] = d.imp === "largura" ? [40, 78] : [100, 400];
+    if (n >= min && n <= max) { IMP80[d.imp] = n; guardar80(); render(); } return; }
   if (el.id === "q-apl" || el.id === "q-uso") { m.busca = el.value; render(); return; }
   if (el.id === "q-proc") { E.busca = el.value; render(); return; }
   if (el.id === "q-prod") { E.buscaProd = el.value; render(); return; }
@@ -4413,6 +4560,12 @@ document.addEventListener("change", (e) => {
     const o = cur && typeof cur === "object" ? { ...cur } : { n: cur == null ? "" : String(cur), u: "" };
     o.u = el.value; refSet(v, d.vu, o); return; }
   if (d.vmodo && m?.t === "aplicar") { m.padraoId = el.value; render(); return; }
+  if (d.impProc && m?.t === "imp") { m.proc = el.value; render(); return; }
+  if (d.imp && m?.t === "imp") {
+    if (d.imp === "cortar") IMP80.cortar = el.checked;
+    else { const [min, max] = d.imp === "largura" ? [40, 78] : [100, 400];
+      IMP80[d.imp] = Math.min(max, Math.max(min, Math.round(Number(el.value) || IMP80[d.imp]))); el.value = IMP80[d.imp]; }
+    guardar80(); render(); return; }
   if (d.sel) { m.sel = el.checked ? [...m.sel, d.sel] : m.sel.filter((s) => s !== d.sel); render(); return; }
   if (d.v != null) { refSet(valoresDoTopo(), d.v, el.value); if (el.tagName === "SELECT" || el.classList.contains("pc-sku-in")) render(); }
 });
