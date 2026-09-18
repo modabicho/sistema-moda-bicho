@@ -188,6 +188,17 @@ function aplicarPadrao(padraoId, sku) {
   E.configs.push(cfg);
   return cfg;
 }
+/* O VÍNCULO · uma função só, usada pelos dois caminhos (produto → processo e
+   processo → produtos). Sem padrão: referência leve ao processo, com valores
+   vazios — nada do processo é copiado, e os dados se preenchem depois, se
+   quiser. Com padrão: o produto recebe a própria cópia, independente.
+   Vincular não mexe em produto, estoque, pedido, OP ou demanda. */
+function vincular(tipoId, sku, padraoId) {
+  if (padraoId) return aplicarPadrao(padraoId, sku);
+  const cfg = { id: novoId("cf"), sku, tipoId, titulo: "", padraoId: null, criadoEm: new Date().toISOString(), valores: {} };
+  E.configs.push(cfg);
+  return cfg;
+}
 function origemCfg(cfg) {
   if (!cfg.padraoId) return `<span class="tag neutro">montado neste produto</span>`;
   const pd = padraoPorId(cfg.padraoId);
@@ -324,7 +335,8 @@ function viewProcessos() {
         return `<tr class="pc-lin" data-a="tipo-editar" data-id="${t.id}" tabindex="0"><td><b>${esc(t.nome)}</b><div class="hint">${esc(t.descricao || "")}</div></td>
         <td>${tagsClasses(t.classes) || `<span class="hint">—</span>`}</td>
         <td class="pc-campos-res">${t.campos.map((c) => `<span class="pc-cp t-${c.tipo}">${esc(c.nome)}${c.tipo === "grupo" ? ` <i>× ${plural(c.campos.length, "campo", "campos")}</i>` : ""}</span>`).join("")}</td>
-        <td>${E.padroes.filter((p) => p.tipoId === t.id).length}</td><td>${usoBotao(t.id)}</td></tr>`; }).join("")}</tbody></table></div>` : (E.tipos.length ? vazio("Nenhum tipo de processo com esses filtros.") : vazio("Nenhum processo criado ainda", "Um processo é uma etapa do trabalho — corte de fitas, montagem, embalagem. Você cria e decide os campos.", `<button class="btn primary" data-a="tipo-novo">${svg(IC.mais)}Criar o primeiro processo</button>`));
+        <td>${E.padroes.filter((p) => p.tipoId === t.id).length}</td><td><div class="pc-uso-col">${usoBotao(t.id)}
+          <button class="btn sm ghost" data-a="vincular-prods" data-t="${t.id}">${svg(IC.mais)}Vincular a produtos</button></div></td></tr>`; }).join("")}</tbody></table></div>` : (E.tipos.length ? vazio("Nenhum tipo de processo com esses filtros.") : vazio("Nenhum processo criado ainda", "Um processo é uma etapa do trabalho — corte de fitas, montagem, embalagem. Você cria e decide os campos.", `<button class="btn primary" data-a="tipo-novo">${svg(IC.mais)}Criar o primeiro processo</button>`));
   } else if (E.sub === "padroes") {
     const l = E.padroes.filter((p) => casaFiltro(p.classes, tipoPorId(p.tipoId)?.classes) && (!q || `${p.nome} ${tipoPorId(p.tipoId)?.nome}`.toLowerCase().includes(q)));
     corpo = l.length ? `<div class="tw"><table class="t pc-tab"><thead><tr><th>Padrão</th><th>Processo</th><th>Classificação</th><th>O que tem</th><th>Aplicado em</th><th></th></tr></thead><tbody>
@@ -608,7 +620,7 @@ function modalTipo(m) {
   return janela(m.novo ? "Novo tipo de processo" : `Tipo de processo · ${esc(r.nome)}`, `
     <div class="grid2"><label class="fld"><span>Nome do processo *</span><input class="inp" data-t="nome" value="${esc(r.nome)}" placeholder="Ex.: Corte de fitas, Montagem, Embalagem"></label>
       <label class="fld"><span>Descrição</span><input class="inp" data-t="descricao" value="${esc(r.descricao || "")}"></label></div>
-    ${!m.novo ? `<div class="pc-uso-cab">${usoBotao(r.id)}</div>` : ""}
+    ${!m.novo ? `<div class="pc-uso-cab">${usoBotao(r.id)} <button class="btn sm ghost" data-a="vincular-prods" data-t="${r.id}">${svg(IC.mais)}Vincular a produtos</button></div>` : ""}
     ${erros(m)}
     <!-- o centro do cadastro: as informações do trabalho. Classificação é acessório e vem no fim, fechada -->
     <section class="pc-campos-sec">
@@ -660,24 +672,28 @@ function modalValores(m) {
 
 /* ---------- escolher: qual processo / qual padrão ---------- */
 function modalAdicionar(m) {
-  return janela(m.paraPadrao ? "Novo padrão · de qual processo?" : `${m.soPadroes ? "Aplicar padrão" : "Adicionar processo"} · <span class="mono">${esc(m.sku)}</span>`, `
-    <div class="hint" style="margin-bottom:12px">${m.paraPadrao ? "Escolha o processo. Comece em branco ou a partir de um padrão que já existe." : m.soPadroes ? "Aplicar copia a configuração do padrão para este produto. Depois você personaliza à vontade — só este produto muda."
-      : "Comece em branco ou a partir de um padrão. O mesmo processo pode entrar mais de uma vez."}</div>
+  return janela(m.paraPadrao ? "Novo padrão · de qual processo?" : `Vincular processo · <span class="mono">${esc(m.sku)}</span>`, `
+    <div class="hint" style="margin-bottom:12px">${m.paraPadrao ? "Escolha o processo. Comece em branco ou a partir de um padrão que já existe." : "<b>Vincular</b> só registra que este produto usa o processo — os dados você preenche depois, se quiser. <b>Com padrão</b>, o produto já recebe uma cópia preenchida, só dele."}</div>
     ${!E.tipos.length ? vazio("Nenhum processo criado ainda", "Crie o processo primeiro; depois volte aqui.", `<button class="btn primary" data-a="tipo-novo-daqui">${svg(IC.mais)}Criar processo</button>`) : ""}
     <div class="pc-escolha">${E.tipos.map((t) => { const pds = E.padroes.filter((p) => p.tipoId === t.id);
-      if (m.soPadroes && !pds.length) return "";
-      return `<div class="pc-esc"><div class="pc-esc-h"><b>${esc(t.nome)}</b> ${tagsClasses(t.classes)}</div>
-        <div class="pc-esc-b">${m.soPadroes ? "" : `<button class="btn sm" data-a="add-cfg" data-t="${t.id}">${svg(IC.mais)}Em branco</button>`}
-        ${pds.map((p) => `<button class="btn sm ${m.soPadroes ? "" : "ghost"}" data-a="add-cfg" data-t="${t.id}" data-p="${p.id}" title="${esc(resumo(t, p.valores).replace(/<[^>]+>/g, ""))}">Padrão: ${esc(p.nome)}</button>`).join("")}</div></div>`; }).join("")}</div>`,
+      const ja = m.sku ? configsDe(m.sku).filter((c) => c.tipoId === t.id).length : 0;
+      return `<div class="pc-esc"><div class="pc-esc-h"><b>${esc(t.nome)}</b> ${tagsClasses(t.classes)}
+          ${ja ? `<span class="tag acao">já vinculado${ja > 1 ? ` ×${ja}` : ""} · vincular de novo cria outro</span>` : ""}</div>
+        <div class="pc-esc-b"><button class="btn sm ${m.paraPadrao ? "" : "primary"}" data-a="add-cfg" data-t="${t.id}">${svg(IC.mais)}${m.paraPadrao ? "Em branco" : "Vincular"}</button>
+        ${pds.map((p) => `<button class="btn sm ghost" data-a="add-cfg" data-t="${t.id}" data-p="${p.id}" title="${esc(resumo(t, p.valores).replace(/<[^>]+>/g, ""))}">${m.paraPadrao ? "A partir de" : "Com padrão"}: ${esc(p.nome)}</button>`).join("")}</div></div>`; }).join("")}</div>`,
     `<span style="margin-left:auto"></span><button class="btn" data-a="fechar">Cancelar</button>`, "760px");
 }
 const aplVisiveis = (m) => PRODUTOS.filter((x) => (!m.cat || x.categoria === m.cat)
   && (!m.busca || semAcento(`${x.sku} ${x.descricao}`).includes(semAcento(m.busca).trim())));
 function modalAplicar(m) {
-  const p = padraoPorId(m.id), t = tipoPorId(p.tipoId);
-  return janela(`Aplicar “${esc(p.nome)}” a produtos`, `
-    <div class="aviso" style="margin-bottom:12px">Cada produto marcado recebe uma <b>cópia</b> de ${esc(t.nome)} com os valores deste padrão.
-      Depois, personalizar um produto não muda os outros nem o padrão.</div>
+  const t = tipoPorId(m.tipoId), p = m.padraoId ? padraoPorId(m.padraoId) : null;
+  const pds = E.padroes.filter((x) => x.tipoId === t.id);
+  return janela(`Vincular “${esc(t.nome)}” a produtos`, `
+    <div class="pc-vmodo"><label class="fld"><span>Como vincular</span>
+      <select class="sel" data-vmodo="1" aria-label="Como vincular"><option value="" ${p ? "" : "selected"}>Só vincular — os dados se preenchem depois</option>
+        ${pds.map((x) => `<option value="${x.id}" ${p && p.id === x.id ? "selected" : ""}>Com o padrão “${esc(x.nome)}” — cada produto recebe uma cópia</option>`).join("")}</select></label></div>
+    <div class="aviso" style="margin:10px 0 12px">${p ? `Cada produto marcado recebe uma <b>cópia</b> dos valores de “${esc(p.nome)}”. Depois, mudar um produto não muda os outros nem o padrão.`
+      : `Os produtos marcados passam a usar este processo. Nada é copiado nem preenchido agora, e nada muda no cadastro, estoque, pedido ou OP.`}</div>
     <div class="filters" style="padding:0 0 10px;border:0">
       <div class="search">${svg(IC.busca)}<input class="inp" id="q-apl" style="width:220px" placeholder="Buscar SKU ou descrição" value="${esc(m.busca || "")}" aria-label="Buscar produto"></div>
       <button class="chip ${!m.cat ? "on" : ""}" data-a="apl-cat" data-v="">Todas</button>
@@ -685,12 +701,12 @@ function modalAplicar(m) {
       <span style="margin-left:auto"></span>
       <button class="btn sm ghost" data-a="apl-todos">Marcar os mostrados</button>
       <button class="btn sm ghost" data-a="apl-limpar" ${m.sel.length ? "" : "disabled"}>Limpar</button></div>
-    <table class="t"><tbody>${aplVisiveis(m).map((pr) => { const ja = configsDe(pr.sku).filter((c) => c.padraoId === p.id).length;
+    <table class="t"><tbody>${aplVisiveis(m).map((pr) => { const ja = configsDe(pr.sku).filter((c) => c.tipoId === t.id).length;
       return `<tr><td style="width:30px"><input type="checkbox" data-sel="${pr.sku}" ${m.sel.includes(pr.sku) ? "checked" : ""} aria-label="${pr.sku}"></td>
         <td class="mono"><b>${esc(pr.sku)}</b></td><td>${esc(pr.descricao)}</td>
-        <td>${ja ? `<span class="tag amber">já tem este padrão${ja > 1 ? ` ×${ja}` : ""} · aplicar cria outra cópia</span>` : ""}</td></tr>`; }).join("")}</tbody></table>`,
+        <td>${ja ? `<span class="tag acao">já vinculado${ja > 1 ? ` ×${ja}` : ""} · marcar cria outro</span>` : ""}</td></tr>`; }).join("")}</tbody></table>`,
     `<button class="btn" data-a="fechar">Cancelar</button><span style="margin-left:auto"></span>
-     <button class="btn primary" data-a="aplicar-ok" ${m.sel.length ? "" : "disabled"}>Aplicar a ${plural(m.sel.length, "produto", "produtos")}</button>`, "820px");
+     <button class="btn primary" data-a="aplicar-ok" ${m.sel.length ? "" : "disabled"}>Vincular a ${plural(m.sel.length, "produto", "produtos")}</button>`, "820px");
 }
 
 /* ---------- o produto: PROCESSOS / COMO FAZER ---------- */
@@ -703,8 +719,7 @@ function modalProduto(m) {
     <section class="pc-como">
       <div class="pc-como-h"><h3>Processos / como fazer</h3>
         <span style="margin-left:auto"></span>
-        <button class="btn sm" data-a="adicionar" data-sku="${m.sku}">${svg(IC.mais)}Adicionar processo</button>
-        <button class="btn sm" data-a="adicionar" data-sku="${m.sku}" data-so="1">Aplicar padrão</button>
+        <button class="btn sm primary" data-a="adicionar" data-sku="${m.sku}">${svg(IC.mais)}Vincular processo</button>
         <button class="btn sm" data-a="imprimir-prod" data-sku="${m.sku}" ${cs.length ? "" : "disabled"}>${svg(IC.impressora)}Imprimir ficha completa</button>
         <button class="btn sm primary" data-a="bancada" data-sku="${m.sku}" ${cs.length ? "" : "disabled"}>${svg(IC.olho)}Como fazer · tela cheia</button></div>
       <div class="hint" style="margin-bottom:10px">Só instrução. Nada aqui altera cadastro, estoque, insumos, pedido ou OP.</div>
@@ -716,13 +731,13 @@ function modalProduto(m) {
           <div class="pc-cfg-r">${resumo(t, c.valores) || `<span class="hint">nada preenchido</span>`}</div>
           <div class="pc-cfg-a">
             <button class="btn sm primary" data-a="cfg-ver" data-id="${c.id}">${svg(IC.olho)}Abrir instrução</button>
-            <button class="btn sm" data-a="cfg-editar" data-id="${c.id}">${svg(IC.editar)}Editar só neste produto</button>
+            <button class="btn sm" data-a="cfg-editar" data-id="${c.id}">${svg(IC.editar)}${t && !t.campos.some((x) => !ehVazio(x, c.valores[x.id])) ? "Preencher dados" : "Editar só neste produto"}</button>
             <span class="pc-mais"><button class="btn sm ghost" data-a="menu" data-id="${c.id}" aria-expanded="${E.menu === c.id}">Mais ▾</button>
               ${E.menu === c.id ? `<span class="pc-menu" role="menu">
                 <button role="menuitem" data-a="cfg-print" data-id="${c.id}">${svg(IC.impressora)}Imprimir este processo</button>
                 <button role="menuitem" data-a="cfg-dup" data-id="${c.id}">Duplicar neste produto</button>
                 <button role="menuitem" class="danger" data-a="cfg-del" data-id="${c.id}">${svg(IC.lixeira)}Remover deste produto</button></span>` : ""}</span></div></div>`; }).join("")
-      : `<div class="empty" style="padding:30px"><div class="ic">${svg(IC.processos)}</div><h3>Nenhum processo neste produto</h3><p>Adicione um processo em branco ou aplique um padrão.</p></div>`}
+      : `<div class="empty" style="padding:30px"><div class="ic">${svg(IC.processos)}</div><h3>Nenhum processo vinculado</h3><p>Use <b>+ Vincular processo</b>: só o processo, ou já com um padrão preenchido.</p></div>`}
     </section>`, `<span style="margin-left:auto"></span><button class="btn" data-a="fechar">Fechar</button>`, "980px");
 }
 /* ---------- MODO BANCADA · a instrução como a produção usa ----------
@@ -816,7 +831,8 @@ function modalUso(m) {
   const sel = (id, atual, opcoes) => `<select class="sel" data-uf="${id}" aria-label="${id}">${opcoes.map(([v, n]) => `<option value="${esc(v)}" ${atual === v ? "selected" : ""}>${esc(n)}</option>`).join("")}</select>`;
   return janela(`Quem usa “${esc(t.nome)}”`, `
     <div class="pc-cab"><span>Usado por <b>${plural(new Set(todas.map((c) => c.sku)).size, "produto", "produtos")}</b>
-      <span class="hint">· ${plural(todas.length, "configuração", "configurações")} · só consulta, nada aqui é alterado</span></span></div>
+      <span class="hint">· ${plural(todas.length, "vínculo", "vínculos")} · só consulta, nada aqui é alterado</span></span>
+      <button class="btn sm" style="margin-left:auto" data-a="vincular-prods" data-t="${t.id}">${svg(IC.mais)}Vincular a produtos</button></div>
     <div class="filters" style="padding:0 0 10px;border:0">
       <div class="search">${svg(IC.busca)}<input class="inp" id="q-uso" style="width:220px" placeholder="Buscar SKU ou nome" value="${esc(m.busca || "")}" aria-label="Buscar produto"></div>
       ${sel("origem", m.origem || "", [["", "Toda origem"], ["branco", "Em branco"], ...pds.map((p) => [p.id, `Padrão ${p.nome}`])])}
@@ -841,10 +857,7 @@ function renderModal() {
 }
 const topo = () => E.pilha[E.pilha.length - 1];
 const abrir = (m) => { E.pilha.push(m); render(); };
-/* "Adicionar processo › Em branco" cria a configuração antes de abrir o formulário:
-   se a janela fechar sem salvar, ela não fica pendurada no produto */
-function descartar(m) { if (m?.t === "valores" && m.modo === "config" && configPorId(m.id)?.novo) E.configs = E.configs.filter((c) => c.id !== m.id); }
-const fechar = () => { descartar(E.pilha.pop()); render(); };
+const fechar = () => { E.pilha.pop(); render(); };
 
 /* ======================= DESENHO ======================= */
 /* ATUALIZAR, NÃO SUBSTITUIR. Trocar o innerHTML inteiro a cada clique recriava a
@@ -922,9 +935,9 @@ function campoSalvo(g, id) { const s = tipoPorId(topo().rasc.id); if (!s) return
   const l = g ? s.campos.find((c) => c.id === g)?.campos : s.campos; return l?.find((c) => c.id === id) || null; }
 
 const ACOES = {
-  aba: (d) => { E.aba = d.v; E.pilha.forEach(descartar); E.pilha = []; render(); },
+  aba: (d) => { E.aba = d.v; E.pilha = []; render(); },
   sub: (d) => { E.sub = d.v; render(); },
-  fundo: () => fechar(), fechar: () => fechar(), "fechar-tudo": () => { E.pilha.forEach(descartar); E.pilha = []; render(); },
+  fundo: () => fechar(), fechar: () => fechar(), "fechar-tudo": () => { E.pilha = []; render(); },
 
   /* ---- classificações ---- */
   "cl-add": () => { const inp = document.getElementById("cl-novo"); const n = inp.value.trim(); if (!n) return; inp.value = "";
@@ -1114,7 +1127,7 @@ const ACOES = {
       toast(m.novo ? `Padrão “${r.nome.trim()}” criado.` : `Padrão salvo. Os produtos que já receberam cópia não mudam.`,
         { rotulo: "Aplicar a produtos", a: "aplicar", id: m.id });
     } else {
-      const cfg = configPorId(m.id); cfg.valores = r.valores; cfg.titulo = String(r.titulo || "").trim(); delete cfg.novo;
+      const cfg = configPorId(m.id); cfg.valores = r.valores; cfg.titulo = String(r.titulo || "").trim();
       E.pilha.pop(); toast(`Salvo só em ${cfg.sku}. Nenhum outro produto mudou.`, { rotulo: "Abrir instrução", a: "cfg-ver", id: cfg.id });
     }
     render();
@@ -1123,15 +1136,18 @@ const ACOES = {
     E.pilha.pop();
     abrir({ t: "valores", modo: "padrao", novo: true, id: novoId("pd"), tipoId: t.id, rasc: { nome: "", classes: copia(t.classes || {}), valores: vals } });
     E.foco = `[data-r="nome"]`; render(); },
-  aplicar: (d) => abrir({ t: "aplicar", id: d.id, sel: [] }),
-  "aplicar-ok": () => { const m = topo(); const p = padraoPorId(m.id);
-    m.sel.forEach((sku) => aplicarPadrao(p.id, sku)); E.pilha.pop();
-    toast(`“${p.nome}” aplicado a ${m.sel.join(", ")}. Cada um recebeu a própria cópia.`,
+  /* os dois abrem a MESMA janela de vínculo: pelo padrão (já escolhido) ou pelo processo */
+  aplicar: (d) => abrir({ t: "aplicar", tipoId: padraoPorId(d.id).tipoId, padraoId: d.id, sel: [] }),
+  "vincular-prods": (d) => abrir({ t: "aplicar", tipoId: d.t, padraoId: "", sel: [] }),
+  "aplicar-ok": () => { const m = topo(); const t = tipoPorId(m.tipoId), p = m.padraoId ? padraoPorId(m.padraoId) : null;
+    m.sel.forEach((sku) => vincular(t.id, sku, p?.id || null)); E.pilha.pop();
+    toast(p ? `“${t.nome}” vinculado a ${m.sel.join(", ")} com o padrão “${p.nome}”. Cada um recebeu a própria cópia.`
+      : `“${t.nome}” vinculado a ${m.sel.join(", ")}.`,
       { rotulo: `Abrir ${m.sel[0]}`, a: "produto", sku: m.sel[0] }); render(); },
 
   /* ---- produto ---- */
   produto: (d) => abrir({ t: "produto", sku: d.sku }),
-  adicionar: (d) => abrir({ t: "adicionar", sku: d.sku, soPadroes: !!d.so }),
+  adicionar: (d) => abrir({ t: "adicionar", sku: d.sku }),
   "add-cfg": (d) => {
     const m = topo();
     if (m.paraPadrao) {   /* "Novo padrão": escolheu o processo, agora preenche */
@@ -1140,10 +1156,11 @@ const ACOES = {
         rasc: { nome: "", classes: copia(t.classes || {}), valores: d.p ? copia(padraoPorId(d.p).valores) : {} } });
       return;
     }
+    const cfg = vincular(d.t, m.sku, d.p || null);
     E.pilha.pop();
-    if (d.p) { aplicarPadrao(d.p, m.sku); toast(`Padrão aplicado a ${m.sku} como cópia.`); render(); return; }
-    const cfg = { id: novoId("cf"), sku: m.sku, tipoId: d.t, titulo: "", padraoId: null, criadoEm: new Date().toISOString(), valores: {}, novo: true };
-    E.configs.push(cfg); ACOES["cfg-editar"]({ id: cfg.id });
+    toast(d.p ? `“${tipoPorId(d.t).nome}” vinculado a ${m.sku} com o padrão “${padraoPorId(d.p).nome}” (cópia só deste produto).`
+      : `“${tipoPorId(d.t).nome}” vinculado a ${m.sku}.`, d.p ? null : { rotulo: "Preencher agora", a: "cfg-editar", id: cfg.id });
+    render();
   },
   "cfg-ver": (d) => { const c = configPorId(d.id); abrir({ t: "bancada", sku: c.sku, cfg: c.id, feitos: [] }); },
   bancada: (d) => abrir({ t: "bancada", sku: d.sku, feitos: [] }),
@@ -1230,6 +1247,7 @@ document.addEventListener("change", (e) => {
   if (d.vu) { const v = valoresDoTopo(); const cur = refGet(v, d.vu);
     const o = cur && typeof cur === "object" ? { ...cur } : { n: cur == null ? "" : String(cur), u: "" };
     o.u = el.value; refSet(v, d.vu, o); return; }
+  if (d.vmodo && m?.t === "aplicar") { m.padraoId = el.value; render(); return; }
   if (d.sel) { m.sel = el.checked ? [...m.sel, d.sel] : m.sel.filter((s) => s !== d.sel); render(); return; }
   if (d.v != null) { refSet(valoresDoTopo(), d.v, el.value); if (el.tagName === "SELECT" || el.classList.contains("pc-sku-in")) render(); }
 });
