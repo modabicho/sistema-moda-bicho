@@ -379,6 +379,10 @@
   {
    "arquivo": "acoes/rotas.js",
    "linhas": 7
+  },
+  {
+   "arquivo": "corte/modelo.js",
+   "linhas": 230
   }
  ]
 }
