@@ -1,6 +1,6 @@
 /* ---------- acesso por pessoa: perfis, PIN e permissões (organização operacional) ---------- */
 const ABAS_TODAS = [["demanda", "Demanda"], ["pedidos", "Pedidos"], ["conferencia", "Conferência"], ["tarefas", "Tarefas"],
-  ["compras", "Compras"], ["produtos", "Produtos"], ["insumos", "Insumos"], ["fitas", "Fitas"], ["prestadoras", "Prestadoras"],
+  ["compras", "Compras"], ["produtos", "Produtos"], ["processos", "Processos"], ["insumos", "Insumos"], ["prestadoras", "Prestadoras"],
   /* "posse" abre Prestadoras mostrando SÓ Materiais em posse: anotar o que a
      prestadora levou não pode exigir acesso a pagamento e fechamento. */
   /* "semiacabados" é o QUARTO estoque: a bandana cortada e costurada que ainda

@@ -1,0 +1,58 @@
+/* ===========================================================================
+   styles/processos.css · a aba Processos (v8.108)
+   ---------------------------------------------------------------------------
+   Porte do desenho aprovado em prototipos/corte/corte.css. As regras já foram
+   escritas contra os tokens do app (--line, --surface, --r-pill, --fs-micro),
+   então vêm sem tradução. Botão, campo, aviso e cartão continuam vindo das
+   classes que já existem (btn, inp, fld, aviso, card) — estilo novo para
+   botão seria um segundo botão no sistema.
+   =========================================================================== */
+
+/* a barra de sub-abas: Projeto de corte · Fitas */
+.pc-subs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;}
+.cr-abas{margin-bottom:14px;padding:0 14px;}
+.tela-processos{padding:16px 0;}
+
+/* o bloco que explica o que é aquela área, no lugar de um tooltip escondido */
+/* DIFERENÇA CONSCIENTE do protótipo: lá era `display:flex`, o que faz de cada
+   <b> um item de flex e abre 8px de buraco entre as palavras. Como o bloco é
+   texto corrido, aqui ele é bloco mesmo. */
+.cr-ajuda{display:block;margin:0 14px 12px;padding:10px 14px;
+  border-radius:var(--r-3);background:var(--surface-2);color:var(--ink-2);font-size:var(--fs-micro);line-height:1.5;}
+.cr-ajuda b{font-weight:700;}
+.cr-ajuda svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;vertical-align:-2px;}
+
+/* os cartões de fita */
+.cr-fitas{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;padding:0 14px 16px;}
+.cr-fita{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-radius:var(--r-3);background:var(--surface);}
+.cr-fita-b{min-width:0;flex:1;}
+.cr-fita-b > b{display:block;}
+.cr-fita-m{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;font-size:var(--fs-micro);}
+.cr-fita-m > span{padding:1px 7px;border:1px solid var(--line);border-radius:var(--r-pill);color:var(--ink-3);}
+.cr-int{display:inline-flex;gap:4px;align-items:center;background:var(--surface-2);}
+.cr-int svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;}
+.cr-fita-a{display:flex;gap:8px;align-items:center;}
+
+/* sem bucket de foto ainda: a cor e a estampa desenham uma */
+.cr-foto{display:inline-block;flex:0 0 34px;width:34px;height:34px;border-radius:var(--r-2);
+  border:1px solid var(--line);background:var(--c,#999);}
+.cr-foto[data-est="estampada"]{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.85) 0 4px,transparent 4px 9px);}
+.cr-foto.g{flex-basis:64px;width:64px;height:64px;}
+
+.cr-tag{display:inline-block;padding:1px 8px;border-radius:var(--r-pill);font-size:var(--fs-micro);
+  font-weight:700;white-space:nowrap;}
+.cr-tag.n2{background:var(--acao-bg);color:var(--acao);}
+
+/* o formulário abre por cima da lista, e não em outra tela: cadastrar uma fita
+   é olhar para as outras enquanto se digita. Os tokens são os do `.resumo` do
+   topo dos Pedidos — um cartão novo com cor própria quebraria no tema escuro. */
+.fita-form{border:1px solid var(--line);border-radius:var(--r-3);padding:14px;margin-bottom:14px;
+  background:var(--surface);box-shadow:var(--shadow);}
+.fita-form h3{margin:0 0 10px;font-size:1rem;}
+.fita-grade{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));}
+.fita-acoes{display:flex;gap:8px;margin-top:12px;}
+.fita-acoes .perigo{margin-left:auto;}
+
+/* o cabeçalho do cadastro quebra em tela estreita em vez de cortar a busca */
+.tela-processos .card-h{flex-wrap:wrap;gap:8px;}
+.tela-processos .card-h .filters{flex-wrap:wrap;}

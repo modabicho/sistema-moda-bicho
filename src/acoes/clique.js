@@ -54,8 +54,11 @@ async function _clique(e) {
   }
   let t;
 
-  /* v8.107 · a aba Fitas trata os próprios cliques; aqui fica só a porta.
-     Vem depois dos menus de cima, para clicar numa fita também fechar o menu. */
+  /* v8.107 · a aba Processos trata os próprios cliques; aqui fica só a porta.
+     Vem depois dos menus de cima, para clicar dentro dela também fechar o menu.
+     v8.108 · `data-proc` troca de sub-aba; `data-fita` é o miolo do cadastro. */
+  if ((t = el("data-proc")) && typeof procClique === "function") {
+    e.stopPropagation(); if (procClique(t)) return; }
   if ((t = el("data-fita")) && typeof fitaClique === "function") {
     e.stopPropagation(); if (await fitaClique(t)) return; }
 

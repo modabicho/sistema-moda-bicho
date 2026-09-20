@@ -34,8 +34,8 @@
    "linhas": 425
   },
   {
-   "arquivo": "styles/fitas.css",
-   "linhas": 24
+   "arquivo": "styles/processos.css",
+   "linhas": 50
   }
  ],
  "js": [
@@ -398,7 +398,11 @@
   },
   {
    "arquivo": "telas/fitas.js",
-   "linhas": 217
+   "linhas": 249
+  },
+  {
+   "arquivo": "telas/processos.js",
+   "linhas": 106
   }
  ]
 }

@@ -1,32 +1,36 @@
 /* ===========================================================================
-   src/telas/fitas.js · A ABA FITAS
+   src/telas/fitas.js · A ÁREA FITAS, DENTRO DE PROCESSOS
    ---------------------------------------------------------------------------
-   v8.107. A biblioteca de fitas: lista, busca, cadastro e correção. Fala só
-   com `src/corte/fitas.js` — nenhuma linha daqui conhece PostgREST.
+   v8.108. Não é tela principal: é a segunda sub-aba de Processos, e a barra de
+   sub-abas mora em `src/telas/processos.js`. Aqui fica o miolo.
+
+   O desenho vem do protótipo aprovado (`prototipos/corte/corte.js:330`), não
+   de um desenho novo: cartões em grade, busca única, o bloco de ajuda que
+   explica o que é a biblioteca, e o cadeado marcando o que é dado nosso.
+
+   Fala só com `src/corte/fitas.js` — nenhuma linha daqui conhece PostgREST.
 
    DUAS ESCOLHAS QUE EXPLICAM O RESTO
 
    1. O formulário NÃO é controlado. Os campos são HTML comum e só são lidos
-      quando a pessoa manda salvar. Um formulário controlado redesenharia a
-      tela a cada tecla — foi o que causou o piscar do protótipo — e exigiria
-      mexer nos despachantes de input do app inteiro. Aqui o estado da tela é
-      só: o que está aberto, o texto buscado e o último erro.
+      quando a pessoa manda salvar. Controlado, redesenharia a tela a cada
+      tecla — o piscar do protótipo — e exigiria mexer nos despachantes de
+      input do app inteiro.
 
    2. A busca filtra a lista já carregada. O índice de busca do servidor existe
       (147) e entra quando a biblioteca passar do que cabe na memória da tela.
-      Enquanto forem centenas de fitas, ir ao servidor a cada letra seria pior.
 
    O QUE A TELA PRECISA DIZER, SEMPRE
-     · quando `corte_escrita` está desligada, a alteração fica GUARDADA, não
-       perdida — e a tela diz isso em vez de fingir que gravou;
-     · quando o servidor recusou (conflito, em uso, reuso), a ação continua na
-       fila e aparece como aviso. Ninguém descobre uma gravação perdida depois.
+     · com `corte_escrita` desligada, a alteração fica GUARDADA, não perdida;
+     · quando o servidor recusou, a ação continua na fila e aparece como aviso.
    =========================================================================== */
 
 let FITA_VIEW = { busca: "", aberta: null, erro: null, carregou: false };
 
-/* A aba abre e busca a lista uma vez. `render()` de novo no fim porque a
-   chegada da lista muda a tela — e a tela já está desenhada quando ela chega. */
+/* teto de cartões desenhados de uma vez: o protótipo parou em 48 e a busca
+   resolve o resto. Desenhar mil cartões trava a rolagem sem ajudar ninguém. */
+const FITA_TETO = 48;
+
 function fitaGarantirCarga() {
   if (FITA_VIEW.carregou) return;
   FITA_VIEW.carregou = true;
@@ -44,26 +48,45 @@ function fitaGarantirCarga() {
 }
 
 const fitaMedida = (mm) => (mm == null || mm === "" ? "" : `${Number(mm) / 10}`.replace(".", ",") + " cm");
+const fitaSemAcento = (x) => String(x == null ? "" : x).toLowerCase()
+  .normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-function viewFitas() {
+/* A foto pertence à fita, e ainda não existe bucket. Até lá, a cor e a estampa
+   desenham uma — é o mesmo recurso do protótipo, e diz mais que um quadrado
+   cinza igual para todas. */
+const FITA_COR_HEX = Object.freeze({ vermelho: "#c0392b", rosa: "#d6608f", azul: "#2f6fb5",
+  verde: "#2e8b57", bege: "#c8a96a", neutro: "#8a8f98", preto: "#333", amarelo: "#d8a90f",
+  branco: "#e8e8e8", lilas: "#9b7ede" });
+const fitaCorHex = (f) => FITA_COR_HEX[fitaSemAcento(f && f.cor)] || "#8a8f98";
+const fitaFoto = (f) => `<span class="cr-foto g" style="--c:${fitaCorHex(f)}" data-est="${esc(f.estampa || "lisa")}"
+  role="img" aria-label="Fita ${esc(f.cor || "")} ${esc(f.estampa || "")}"></span>`;
+
+function cardFita(f) {
+  const linha2 = [fitaMedida(f.larguraMm), f.cor, f.estampa].filter(Boolean).join(" · ");
+  return `<article class="cr-fita">${fitaFoto(f)}
+    <div class="cr-fita-b">
+      <b>${f.numero ? `nº ${esc(f.numero)} · ` : ""}${esc(f.nome || "")}</b>
+      ${linha2 ? `<div class="hint">${esc(linha2)}</div>` : ""}
+      <div class="cr-fita-m">
+        <span class="mono" title="Código oficial do fornecedor${f.fornecedor ? " · " + esc(f.fornecedor) : ""}">${esc(f.codigo || "—")}</span>
+        ${f.origem === "catalogo" ? `<span class="cr-tag n2" title="Veio do catálogo${f.fornecedor ? " da " + esc(f.fornecedor) : ""}">catálogo</span>` : ""}
+        <span class="cr-int" title="Classificação interna — dado nosso, nenhuma importação sobrescreve">${svg(IC.cadeado)}${esc(f.classe || "—")}</span>
+        <span class="cr-int" title="Localização física — dado nosso, nenhuma importação sobrescreve">${svg(IC.cadeado)}${esc(f.local || "—")}</span>
+      </div>
+      <div class="cr-fita-a">
+        <button class="btn sm" data-fita="abrir" data-id="${esc(f.id)}">${svg(IC.editar)}Editar</button>
+      </div>
+    </div></article>`;
+}
+
+function viewFitasArea() {
   fitaGarantirCarga();
   const lista = ftBuscar(FITA_VIEW.busca);
   const total = ftQuantas();
   const paradas = typeof ftParadas === "function" ? ftParadas() : [];
   const guardadas = typeof cxPendentes === "function" ? cxPendentes().length : 0;
   const escrevendo = typeof corteEscreve === "function" ? corteEscreve() : false;
-
   const aviso = (txt, tom) => `<div class="aviso ${tom || ""}">${esc(txt)}</div>`;
-
-  const linha = (f) => `<tr data-fita="abrir" data-id="${esc(f.id)}" class="${FITA_VIEW.aberta === f.id ? "on" : ""}">
-    <td>${esc(f.codigo || "—")}</td>
-    <td><b>${esc(f.nome || "")}</b>${f.ref ? ` <span class="sub">${esc(f.ref)}</span>` : ""}</td>
-    <td>${esc(f.numero || "")}</td>
-    <td>${esc(fitaMedida(f.larguraMm))}</td>
-    <td>${esc(f.cor || "")}</td>
-    <td>${esc(f.local || "")}</td>
-    <td>${esc(f.fornecedor || "")}</td>
-  </tr>`;
 
   const campo = (nome, rot, valor, extra) =>
     `<label class="fld"><span>${esc(rot)}</span>
@@ -93,7 +116,7 @@ function viewFitas() {
       </div>
       <label class="fld"><span>Observações</span>
         <textarea class="inp" name="obs" rows="2">${esc(f.obs || "")}</textarea></label>
-      ${f.fotoPath ? "" : `<p class="sub">Sem foto. A foto da fita entra com a importação de catálogo.</p>`}
+      <p class="hint">Sem foto. A foto da fita chega com a importação de catálogo.</p>
       <div class="fita-acoes">
         <button type="button" class="btn sm primary" data-fita="salvar">Salvar</button>
         <button type="button" class="btn sm" data-fita="fechar">Cancelar</button>
@@ -102,33 +125,38 @@ function viewFitas() {
     </form>`;
   };
 
-  return `<section class="tela-fitas">
-    <div class="barra">
-      <input id="q-fita" name="q-fita" class="inp" placeholder="código, nome, cor, número, lugar…"
-             value="${esc(FITA_VIEW.busca)}">
-      <button class="btn sm" data-fita="buscar">Buscar</button>
-      ${FITA_VIEW.busca ? `<button class="btn sm ghost" data-fita="limpar">Limpar</button>` : ""}
-      <button class="btn sm primary" data-fita="nova">+ Nova fita</button>
-      <span class="hint">${lista.length === total ? `${total} fitas` : `${lista.length} de ${total}`}</span>
-    </div>
+  return `<section class="card">
+    <div class="card-h"><h2>Cadastro de fitas</h2>
+      <div class="filters" style="border:0;padding:0;margin-left:auto">
+        <div class="search">${svg(IC.busca)}<input class="inp" id="q-fita" style="width:280px"
+          placeholder="Buscar por número, nome, cor, código ou lugar"
+          value="${esc(FITA_VIEW.busca)}" aria-label="Buscar fita"></div>
+        <button class="btn sm" data-fita="buscar">Buscar</button>
+        ${FITA_VIEW.busca ? `<button class="btn sm ghost" data-fita="limpar">Limpar</button>` : ""}
+        <button class="btn primary" data-fita="nova">${svg(IC.mais)}Nova fita</button>
+      </div></div>
 
-    ${!escrevendo && guardadas
-      ? aviso(`A gravação do corte está desligada: ${guardadas} alteração(ões) guardada(s) aqui no navegador. Elas vão sozinhas quando a gravação for ligada.`, "atencao")
-      : ""}
-    ${!escrevendo && !guardadas
-      ? aviso("A gravação do corte está desligada. Dá para cadastrar: o que você salvar fica guardado e vai quando ela for ligada.", "atencao")
-      : ""}
-    ${paradas.length
-      ? aviso(`${paradas.length} alteração(ões) esperando decisão: ${paradas.map((p) => p.status).join(", ")}. Nada foi perdido — abra a fita e salve de novo com o valor certo.`, "erro")
-      : ""}
+    <div class="cr-ajuda">Esta é a <b>biblioteca de referências</b>: o que está aqui só sai quando
+      você mandar excluir — fechar a janela ou recarregar a página não apaga nada.
+      A receita de corte <b>referencia</b> a fita, não copia. O <b>código do fornecedor</b> é
+      preservado como origem; <b>classificação</b>, <b>localização</b> e <b>observações</b> são
+      dados nossos e nenhuma importação os sobrescreve.</div>
+
+    ${!escrevendo ? aviso(guardadas
+      ? `A gravação do corte está desligada: ${guardadas} alteração(ões) guardada(s) aqui no navegador. Elas vão sozinhas quando a gravação for ligada.`
+      : "A gravação do corte está desligada. Dá para cadastrar: o que você salvar fica guardado e vai quando ela for ligada.", "atencao") : ""}
+    ${paradas.length ? aviso(`${paradas.length} alteração(ões) esperando decisão: ${paradas.map((p) => p.status).join(", ")}. Nada foi perdido — abra a fita e salve de novo com o valor certo.`, "erro") : ""}
     ${FITA_VIEW.erro && !FITA_VIEW.aberta ? aviso(FITA_VIEW.erro, "erro") : ""}
 
-    ${FITA_VIEW.aberta ? form() : ""}
+    ${FITA_VIEW.aberta ? `<div style="padding:0 14px">${form()}</div>` : ""}
 
-    ${lista.length ? `<table class="lista fitas">
-      <thead><tr><th>Código</th><th>Nome</th><th>Nº</th><th>Largura</th><th>Cor</th><th>Local</th><th>Fornecedor</th></tr></thead>
-      <tbody>${lista.map(linha).join("")}</tbody></table>`
-      : `<p class="hint">${total ? "Nenhuma fita com esse texto." : "Nenhuma fita cadastrada ainda."}</p>`}
+    ${lista.length ? `<div class="cr-fitas">${lista.slice(0, FITA_TETO).map(cardFita).join("")}</div>
+      ${lista.length > FITA_TETO ? `<div class="hint" style="padding:0 14px 16px">Mostrando ${FITA_TETO} de ${lista.length} fitas — use a busca para achar a que você quer.</div>` : ""}`
+      : `<div class="empty" style="padding:36px">
+          <h3>${total ? "Nenhuma fita com esse texto" : "Nenhuma fita cadastrada"}</h3>
+          <p>${total ? "Busque por “9”, “gorgurão”, “azul”, “GX-00” ou “prateleira”."
+                     : "Cadastre a primeira à mão em <b>Nova fita</b>. A importação de catálogo chega em uma versão próxima."}</p>
+        </div>`}
   </section>`;
 }
 
@@ -152,7 +180,7 @@ function fitaLerForm() {
 }
 
 /* quais campos a pessoa mexeu: é o que fica anotado em `editado`, para a
-   importação de catálogo (v8.108+) não passar por cima do que foi corrigido */
+   importação de catálogo não passar por cima do que foi corrigido */
 function fitaCamposMexidos(antes, agora) {
   const mexidos = [];
   for (const k of Object.keys(agora)) {
@@ -176,9 +204,7 @@ async function fitaClique(alvo) {
   }
   if (acao === "nova")   { FITA_VIEW.aberta = "nova"; FITA_VIEW.erro = null; render(); return true; }
   if (acao === "fechar") { FITA_VIEW.aberta = null;   FITA_VIEW.erro = null; render(); return true; }
-  if (acao === "abrir") {
-    FITA_VIEW.aberta = alvo.dataset.id; FITA_VIEW.erro = null; render(); return true;
-  }
+  if (acao === "abrir")  { FITA_VIEW.aberta = alvo.dataset.id; FITA_VIEW.erro = null; render(); return true; }
 
   if (acao === "salvar") {
     const dados = fitaLerForm();
