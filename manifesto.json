@@ -401,6 +401,10 @@
    "linhas": 482
   },
   {
+   "arquivo": "corte/pedido-corte.js",
+   "linhas": 310
+  },
+  {
    "arquivo": "telas/fitas.js",
    "linhas": 249
   },

@@ -11,7 +11,11 @@
 --   colunas.versao_id_nullable ............ true
 --   colunas.origem_not_null ............... true    (origem continua obrigatória)
 --   origem.aceita_sem ..................... true
---   origem.lista .......................... familia, combinacao, sku, manual, sem
+--   origem.nome ........................... pcp_pedido_projeto_corte_origem_ck
+--   origem.valores_aceitos ................ os cinco: familia, combinacao, sku,
+--                                           manual, sem
+--   origem.quantos_checks_de_origem ....... 1   (se der 2, sobrou o antigo)
+--   todos_os_checks ....................... a lista crua, nome → definição
 --   coerencia.existe ...................... true
 --   coerencia.definicao ................... o CHECK nos dois sentidos
 --   pk .................................... ["pedido_id"]
@@ -38,15 +42,43 @@ select jsonb_pretty(jsonb_build_object(
      and a.attnum > 0 and not a.attisdropped
      and a.attname in ('pedido_id','projeto_id','versao_id','origem','congelado_em','snapshot','revision')),
 
+  /* O CHECK de lista NÃO é procurado por 'origem in': o Postgres normaliza
+     `x in (a,b)` para `x = ANY (ARRAY[a,b])` ao guardar, e o padrão antigo
+     nunca casava — deu 0 num banco em que o CHECK estava lá e correto.
+     Agora ele é achado pelo que não muda com normalização: menciona a coluna
+     `origem` e traz o valor 'familia'. O CHECK de coerência também menciona
+     `origem`, mas não traz 'familia' — é isso que separa os dois. */
   'origem', jsonb_build_object(
+    'nome', (select conname from pg_constraint
+              where conrelid = 'public.pcp_pedido_projeto_corte'::regclass and contype = 'c'
+                and pg_get_constraintdef(oid) like '%origem%'
+                and pg_get_constraintdef(oid) like '%''familia''%'),
     'definicao', (select pg_get_constraintdef(oid) from pg_constraint
                    where conrelid = 'public.pcp_pedido_projeto_corte'::regclass and contype = 'c'
-                     and pg_get_constraintdef(oid) ilike '%origem in%'),
-    'aceita_sem', (select bool_or(pg_get_constraintdef(oid) ilike '%''sem''%') from pg_constraint
-                    where conrelid = 'public.pcp_pedido_projeto_corte'::regclass and contype = 'c'),
+                     and pg_get_constraintdef(oid) like '%origem%'
+                     and pg_get_constraintdef(oid) like '%''familia''%'),
+    'valores_aceitos', (select coalesce(jsonb_agg(v order by v), '[]'::jsonb) from (
+        select v from unnest(array['familia','combinacao','sku','manual','sem']) as v
+         where exists (select 1 from pg_constraint
+                        where conrelid = 'public.pcp_pedido_projeto_corte'::regclass and contype = 'c'
+                          and pg_get_constraintdef(oid) like '%origem%'
+                          and pg_get_constraintdef(oid) like '%''familia''%'
+                          and pg_get_constraintdef(oid) like '%''' || v || '''%')) x),
+    'aceita_sem', exists (select 1 from pg_constraint
+                    where conrelid = 'public.pcp_pedido_projeto_corte'::regclass and contype = 'c'
+                      and pg_get_constraintdef(oid) like '%origem%'
+                      and pg_get_constraintdef(oid) like '%''familia''%'
+                      and pg_get_constraintdef(oid) like '%''sem''%'),
     'quantos_checks_de_origem', (select count(*) from pg_constraint
                     where conrelid = 'public.pcp_pedido_projeto_corte'::regclass and contype = 'c'
-                      and pg_get_constraintdef(oid) ilike '%origem in%')),
+                      and pg_get_constraintdef(oid) like '%origem%'
+                      and pg_get_constraintdef(oid) like '%''familia''%')),
+
+  /* e, para nenhum padrão poder mentir de novo: TODOS os checks da tabela,
+     com nome e definição, do jeito que o catálogo os guarda */
+  'todos_os_checks', (select coalesce(jsonb_object_agg(conname, pg_get_constraintdef(oid)), '{}'::jsonb)
+      from pg_constraint
+     where conrelid = 'public.pcp_pedido_projeto_corte'::regclass and contype = 'c'),
 
   'coerencia', jsonb_build_object(
     'existe', exists (select 1 from pg_constraint
