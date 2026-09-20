@@ -178,50 +178,78 @@ const crtOrdenados = (lista) => (lista || []).slice()
    DE ONDE veio cada bloco — a ficha e o papel precisam poder dizer isso.
    Sem projeto que case: devolve vazio, sem erro. Ausência é resposta.
    --------------------------------------------------------------------------- */
-function crtResolver(projetos, sku) {
-  const cadeia = crtAplicaveis(projetos, sku);
-  const saida = { sku: crtSku(sku), cortes: [], fitilho: null, sortimento: null, origem: {}, cadeia: [] };
+/* UM elo da cadeia, aplicado sobre o que já foi resolvido. Estava embutido no
+   laço do `crtResolver`; saiu para cá porque a escolha manual de um pedido
+   (v8.110 · "Trocar") é exatamente isto — mais um elo, o último. Duas cópias da
+   mesma regra acabariam discordando. */
+function crtAplicarProjeto(saida, p) {
+  const v = p.versao || {};
+  const modos = {
+    cortes: String(v.cortesModo || "herda"),
+    fitilho: String(v.fitilhoModo || "herda"),
+    sortimento: String(v.sortimentoModo || "herda"),
+  };
+  saida.cadeia.push({ projetoId: p.id, nome: p.nome, escopo: p.escopo,
+    versaoId: v.id || null, versao: v.versao == null ? null : v.versao,
+    peso: crtPeso(p), modos });
 
-  for (const p of cadeia) {
-    const v = p.versao || {};
-    const modos = {
-      cortes: String(v.cortesModo || "herda"),
-      fitilho: String(v.fitilhoModo || "herda"),
-      sortimento: String(v.sortimentoModo || "herda"),
-    };
-    saida.cadeia.push({ projetoId: p.id, nome: p.nome, escopo: p.escopo,
-      versaoId: v.id || null, versao: v.versao == null ? null : v.versao,
-      peso: crtPeso(p), modos });
-
-    if (modos.cortes === "substitui") {
-      saida.cortes = (v.cortes || []).map(crtCopia);
-      saida.origem.cortes = { projetoId: p.id, nome: p.nome, escopo: p.escopo, versaoId: v.id || null, modo: "substitui" };
-    } else if (modos.cortes === "ajusta") {
-      saida.cortes = crtAplicarCortes(saida.cortes, v.cortes);
-      saida.origem.cortes = { projetoId: p.id, nome: p.nome, escopo: p.escopo, versaoId: v.id || null, modo: "ajusta",
-        herdadoDe: (saida.origem.cortes && saida.origem.cortes.projetoId) || null };
-    } else if (modos.cortes === "remove") {
-      saida.cortes = [];
-      saida.origem.cortes = { projetoId: p.id, nome: p.nome, escopo: p.escopo, versaoId: v.id || null, modo: "remove" };
-    }
-
-    for (const bloco of ["fitilho", "sortimento"]) {
-      if (modos[bloco] === "substitui") {
-        saida[bloco] = crtCopia(v[bloco]) || null;
-        saida.origem[bloco] = { projetoId: p.id, nome: p.nome, escopo: p.escopo, versaoId: v.id || null, modo: "substitui" };
-      } else if (modos[bloco] === "remove") {
-        saida[bloco] = null;
-        saida.origem[bloco] = { projetoId: p.id, nome: p.nome, escopo: p.escopo, versaoId: v.id || null, modo: "remove" };
-      }
-    }
+  if (modos.cortes === "substitui") {
+    saida.cortes = (v.cortes || []).map(crtCopia);
+    saida.origem.cortes = { projetoId: p.id, nome: p.nome, escopo: p.escopo, versaoId: v.id || null, modo: "substitui" };
+  } else if (modos.cortes === "ajusta") {
+    saida.cortes = crtAplicarCortes(saida.cortes, v.cortes);
+    saida.origem.cortes = { projetoId: p.id, nome: p.nome, escopo: p.escopo, versaoId: v.id || null, modo: "ajusta",
+      herdadoDe: (saida.origem.cortes && saida.origem.cortes.projetoId) || null };
+  } else if (modos.cortes === "remove") {
+    saida.cortes = [];
+    saida.origem.cortes = { projetoId: p.id, nome: p.nome, escopo: p.escopo, versaoId: v.id || null, modo: "remove" };
   }
 
+  for (const bloco of ["fitilho", "sortimento"]) {
+    if (modos[bloco] === "substitui") {
+      saida[bloco] = crtCopia(v[bloco]) || null;
+      saida.origem[bloco] = { projetoId: p.id, nome: p.nome, escopo: p.escopo, versaoId: v.id || null, modo: "substitui" };
+    } else if (modos[bloco] === "remove") {
+      saida[bloco] = null;
+      saida.origem[bloco] = { projetoId: p.id, nome: p.nome, escopo: p.escopo, versaoId: v.id || null, modo: "remove" };
+    }
+  }
+  return saida;
+}
+
+/* a ordenação final dos cortes — também compartilhada com a escolha manual */
+function crtFechar(saida) {
   saida.cortes = crtOrdenados(saida.cortes).map((c) => {
     const copia = crtCopia(c);
     copia.camadas = crtOrdenados(copia.camadas || []);
     return copia;
   });
   return saida;
+}
+
+function crtResolver(projetos, sku) {
+  const cadeia = crtAplicaveis(projetos, sku);
+  const saida = { sku: crtSku(sku), cortes: [], fitilho: null, sortimento: null, origem: {}, cadeia: [] };
+  for (const p of cadeia) crtAplicarProjeto(saida, p);
+  return crtFechar(saida);
+}
+
+/* ---------------------------------------------------------------------------
+   ESCOLHA MANUAL (v8.110) · o projeto que alguém escolheu à mão para UM pedido.
+   Ele entra como o ELO MAIS ESPECÍFICO — depois de tudo que casa com o SKU —, e
+   não apaga a cadeia: o que ele não define continua vindo de quem definia. É o
+   mesmo desenho da herança; muda só quem assina por último.
+   Nada aqui escreve em projeto nenhum: família, combinação e exceção do SKU
+   ficam exatamente como estavam.
+   --------------------------------------------------------------------------- */
+function crtResolverManual(projetos, sku, projetoId) {
+  const base = crtResolver(projetos, sku);
+  const p = (projetos || []).find((x) => x && x.id === projetoId);
+  if (!p) return base;
+  /* escolheu à mão justamente quem já assinava: não há o que empilhar */
+  const ultimo = base.cadeia[base.cadeia.length - 1];
+  if (ultimo && ultimo.projetoId === p.id) return base;
+  return crtFechar(crtAplicarProjeto(base, p));
 }
 
 /* Tem alguma coisa para a bancada fazer? Bloco vazio não conta — é a mesma

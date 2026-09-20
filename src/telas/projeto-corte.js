@@ -211,7 +211,11 @@ const pjcResumo = (res) => [
 /* ---------------------------------------------------------------------------
    O RESULTADO RESOLVIDO · origem por bloco e a cadeia inteira
    --------------------------------------------------------------------------- */
-function pjcResolvido(sku) {
+/* `semAcoes` é o modo JANELA: a mesma ficha, aberta por cima de um pedido que
+   está sendo criado. Ali o "← Voltar" e o "Abrir regra" levariam para a tela de
+   Processos, e o rascunho do pedido ficaria atrás de uma navegação que ninguém
+   pediu — na janela quem fecha é o Fechar dela. */
+function pjcResolvido(sku, semAcoes) {
   const res = pjResolver(sku);
   const prod = pjcSkus().find((p) => p.sku === sku);
   const bloco = (b, nome, corpo) => {
@@ -230,7 +234,7 @@ function pjcResolvido(sku) {
   };
 
   return `<div class="pjc-topo">
-      <button class="btn sm" data-pjc="voltar">← Voltar</button>
+      ${semAcoes ? "" : `<button class="btn sm" data-pjc="voltar">← Voltar</button>`}
       <h2 class="mono">${esc(sku)}</h2><span class="hint">${esc((prod && prod.descricao) || "")}</span>
       <button class="btn sm ghost" style="margin-left:auto" data-pjc="heranca">${PJC_VIEW.verHeranca ? "Esconder herança" : "Ver herança"}</button>
     </div>
@@ -249,7 +253,7 @@ function pjcResolvido(sku) {
           <div class="cr-sort-l">${(res.sortimento.itens || []).map((i) => `<span class="cr-pill">${esc(String(i.qtd))} ${esc(String(i.genero).toLowerCase())}</span>`).join("") || `<span class="hint">sem composição</span>`}</div>
           ${res.sortimento.variedade ? `<div class="hint">Variedade: <b>${esc(res.sortimento.variedade)}</b></div>` : ""}
           <div class="hint">Sortimento não muda a geometria do corte.</div></div>`) : ""}
-      ${PJC_VIEW.verHeranca ? pjcHeranca(res) : ""}`}
+      ${PJC_VIEW.verHeranca ? pjcHeranca(res, semAcoes) : ""}`}
     </section>`;
 }
 
@@ -280,7 +284,7 @@ function pjcCardCorte(c, i) {
   </article>`;
 }
 
-function pjcHeranca(res) {
+function pjcHeranca(res, semAcoes) {
   if (!res.cadeia || !res.cadeia.length) return `<section class="cr-bloco"><h3>Herança</h3><div class="hint">Nenhuma regra casa com este SKU.</div></section>`;
   return `<section class="cr-bloco cr-heranca"><h3>Herança deste SKU</h3>
     <ol class="cr-cad">${res.cadeia.map((c) => {
@@ -291,7 +295,7 @@ function pjcHeranca(res) {
         ${c.versao ? `<span class="hint">v${esc(String(c.versao))}</span>` : ""}
         <div>${define.map(([b, n]) => `<span class="cr-tag n${PJC_NIVEL[c.escopo]}">${esc(n.toLowerCase())}: ${esc(c.modos[b])}</span>`).join(" ") || `<span class="hint">só herda</span>`}</div>
         <div>${venceu.length ? `vale: <b>${venceu.join(", ")}</b>` : ""}${perdeu.length ? ` <span class="hint">· substituído em ${perdeu.join(", ")} por regra mais específica</span>` : ""}</div>
-        <button class="btn sm ghost" data-pjc="editar" data-v="${esc(c.projetoId)}">Abrir regra</button></li>`;
+        ${semAcoes ? "" : `<button class="btn sm ghost" data-pjc="editar" data-v="${esc(c.projetoId)}">Abrir regra</button>`}</li>`;
     }).join("")}</ol></section>`;
 }
 

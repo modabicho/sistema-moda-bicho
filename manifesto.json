@@ -19,7 +19,7 @@
   },
   {
    "arquivo": "styles/impressao.css",
-   "linhas": 284
+   "linhas": 317
   },
   {
    "arquivo": "styles/refino.css",
@@ -253,7 +253,7 @@
   },
   {
    "arquivo": "telas/historico.js",
-   "linhas": 227
+   "linhas": 236
   },
   {
    "arquivo": "impressao/folhas.js",
@@ -265,7 +265,7 @@
   },
   {
    "arquivo": "componentes/modal.js",
-   "linhas": 2550
+   "linhas": 2656
   },
   {
    "arquivo": "festivas/modelo.js",
@@ -305,7 +305,7 @@
   },
   {
    "arquivo": "pedidos/criar.js",
-   "linhas": 322
+   "linhas": 335
   },
   {
    "arquivo": "dados/importar.js",
@@ -321,15 +321,15 @@
   },
   {
    "arquivo": "acoes/clique.js",
-   "linhas": 1018
+   "linhas": 1089
   },
   {
    "arquivo": "acoes/pedidos.js",
-   "linhas": 535
+   "linhas": 546
   },
   {
    "arquivo": "acoes/cadastros.js",
-   "linhas": 531
+   "linhas": 548
   },
   {
    "arquivo": "acoes/fabrica.js",
@@ -386,7 +386,7 @@
   },
   {
    "arquivo": "corte/modelo.js",
-   "linhas": 230
+   "linhas": 258
   },
   {
    "arquivo": "corte/outbox.js",
@@ -398,11 +398,11 @@
   },
   {
    "arquivo": "corte/projetos.js",
-   "linhas": 482
+   "linhas": 490
   },
   {
    "arquivo": "corte/pedido-corte.js",
-   "linhas": 310
+   "linhas": 589
   },
   {
    "arquivo": "telas/fitas.js",
@@ -410,7 +410,7 @@
   },
   {
    "arquivo": "telas/projeto-corte.js",
-   "linhas": 772
+   "linhas": 776
   },
   {
    "arquivo": "telas/processos.js",

@@ -18,11 +18,25 @@ async function acoesCadastros(act, t, e) {
       }
       const avancar = $("#pp-avancar")?.checked;
       const lista = listaPapeis(S.modal?.ids);
+      /* -----------------------------------------------------------------
+         v8.110 · O CONGELAMENTO VEM ANTES DA IMPRESSÃO
+         -----------------------------------------------------------------
+         É ele que fixa a receita que o papel imprime: depois disso, mexer no
+         projeto não muda mais este pedido. E é ele que decide se a liberação
+         pode acontecer — `na-fila` imprime o papel e NÃO libera, porque a fila
+         é durável só neste navegador.
+         ----------------------------------------------------------------- */
+      let corte = null;
+      if (typeof pcPrepararPapeis === "function") {
+        try { corte = await pcPrepararPapeis(lista); }
+        catch (e2) { corte = pcFalhouConferir(e2); }
+      }
       S.modal = null;
       render();   /* fecha a janela ANTES de imprimir: sem isto ela ficava na tela e parecia que o clique não fez nada */
       imprimir(folhaPapeis(lista, modo), modo === "cupom" ? "cupom" : null);
       let n = 0;
-      if (avancar) {
+      const travado = !!(corte && !corte.podeLiberar);
+      if (avancar && !travado) {
         for (const x of lista) {
           const r = pedidoPorId(x.id);
           if (!r || r.status !== "papel") continue;
@@ -34,6 +48,9 @@ async function acoesCadastros(act, t, e) {
       /* confirmação sempre, mesmo quando nenhum pedido muda de etapa */
       toast(`${n0(lista.length)} ${lista.length === 1 ? "canhoto enviado" : "canhotos enviados"} para a impressão${
         n ? ` · ${n0(n)} ${n === 1 ? "pedido entrou" : "pedidos entraram"} na fila de corte` : ""}.`);
+      /* nunca em silêncio: se o corte travou a liberação, ela é dita em voz
+         alta, com o número do pedido e o que fazer */
+      if (avancar && travado) toast(pcPorQueNaoLibera(corte), "erro");
     }
     else if (act === "papel-ok-nada") {}
     else if (act === "print-corte") {

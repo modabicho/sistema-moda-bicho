@@ -61,6 +61,28 @@
   .slip-ckl .ckl-tit{display:block;margin-bottom:1px;}
   .slip-ckl .ckl-grade{display:grid;grid-template-columns:1fr 1fr;gap:0 8px;}
   .slip-ckl .ckl{min-width:0;margin-right:0;}
+  /* ---- v8.110 · PROJETO DE CORTE no canhoto ----
+     Quem lê isto está de tesoura na mão, em pé, na bancada. Então: medida
+     grande, fita em negrito, e cada corte num quadro que não se parte na
+     virada da página. O vocabulário de herança não chega aqui — o papel diz o
+     que cortar, não de onde a regra veio. */
+  /* a cor é fixada AQUI, como em `.slip-linha`: `.folha` herda `var(--ink)`,
+     que é o tom da TELA — no tema escuro ele sai quase invisível no papel, e
+     logo na medida, que é o texto que a bancada mais precisa enxergar. */
+  .slip .pj-papel{margin:4px 9px;border:1.4px solid var(--teal);border-radius:7px;padding:4px 7px 5px;color:var(--rail);}
+  .slip .pj-tit{font-size:8px;letter-spacing:.12em;font-weight:800;color:var(--teal);}
+  .slip .pj-sub{font-size:8.5px;color:var(--pr-tinta-2);margin-bottom:2px;}
+  .slip .pj-bloco{margin-top:3px;padding-top:3px;border-top:1px solid var(--teal);break-inside:avoid;page-break-inside:avoid;}
+  .slip .pj-bloco:first-of-type{border-top:0;padding-top:0;}
+  .slip .pj-bt{font-size:8px;letter-spacing:.09em;font-weight:800;color:var(--rail);}
+  .slip .pj-l{display:flex;justify-content:space-between;gap:6px;font-size:8.5px;line-height:1.7;}
+  .slip .pj-l span{color:var(--neutro);}
+  .slip .pj-l b{text-align:right;font-weight:700;}
+  .slip .pj-med{font-size:14px;font-weight:800;font-family:'IBM Plex Mono',monospace;line-height:1.3;}
+  .slip .pj-cam{margin:2px 0 0 5px;padding-left:5px;border-left:2px solid var(--teal);}
+  .slip .pj-bt2{font-size:7.5px;letter-spacing:.08em;font-weight:800;color:var(--neutro);}
+  .slip .pj-med2{font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+  .slip .pj-cond{margin-top:1px;padding:1px 4px;border:1px solid var(--teal);border-radius:4px;font-size:8px;font-weight:700;}
   .slip .slip-flex{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;}
   .slip .cxbox{flex:1 1 auto;min-width:40px;height:15px;border:1.3px solid var(--teal);border-radius:5px;background:var(--pr-papel);}
   /* espaço de escrever sem caixa: só o risco embaixo, como numa ficha de papel */
@@ -137,6 +159,17 @@ body.cupom .folha{width:72mm;}
   body.imprimindo.cupom .slip-qtd b{font-size:16px;}
   body.imprimindo.cupom .slip .cx{width:12px;height:12px;}
   body.imprimindo.cupom .slip-linha{font-size:10px;}
+  /* na bobina o canhoto todo já recua 3mm: o bloco de corte zera o recuo dele
+     para não somar duas margens, e cresce — é o pedaço que se lê de pé */
+  body.imprimindo.cupom .slip .pj-papel{margin-left:0;margin-right:0;padding:4px 6px 5px;}
+  body.imprimindo.cupom .slip .pj-l{font-size:10px;}
+  body.imprimindo.cupom .slip .pj-tit,
+  body.imprimindo.cupom .slip .pj-bt{font-size:9.5px;}
+  body.imprimindo.cupom .slip .pj-sub{font-size:10px;}
+  body.imprimindo.cupom .slip .pj-med{font-size:17px;}
+  body.imprimindo.cupom .slip .pj-med2{font-size:13px;}
+  body.imprimindo.cupom .slip .pj-bt2,
+  body.imprimindo.cupom .slip .pj-cond{font-size:9.5px;}
   /* table-layout:fixed é o que faz a tabela obedecer à largura: sem isso a coluna
      CONF. MB impõe sua largura mínima e a tabela transborda a bobina inteira. */
   body.imprimindo.cupom .slip-t{width:100%;margin:3px 0;table-layout:fixed;}

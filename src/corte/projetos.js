@@ -137,6 +137,14 @@ function pjTipos() {
 
 /* A resolução é a do modelo, sem segunda implementação aqui. */
 function pjResolver(sku) { return crtResolver(PJ_LISTA, sku); }
+/* a mesma resolução, com um projeto escolhido à mão para UM pedido (v8.110) */
+function pjResolverManual(sku, projetoId) { return crtResolverManual(PJ_LISTA, sku, projetoId); }
+/* os projetos que podem ser escolhidos à mão: vivos e com versão publicada.
+   A lista NÃO é filtrada pelo SKU de propósito — "Trocar" existe justamente
+   para usar um projeto que sozinho não casaria com ele. */
+function pjEscolhiveis() {
+  return (PJ_LISTA || []).filter((p) => p && p.ativo !== false && p.versao && p.versao.id);
+}
 function pjQuemCasa(projeto, skus) {
   return (skus || []).filter((s) => crtCasa(projeto, s));
 }

@@ -41,6 +41,18 @@ let PC_VINCULOS = new Map();
 function pcVinculoDe(pedidoId)  { return PC_VINCULOS.get(String(pedidoId)) || null; }
 function pcSnapshotDe(pedidoId) { const v = pcVinculoDe(pedidoId); return (v && v.snapshot) || null; }
 function pcCongelado(pedidoId)  { const v = pcVinculoDe(pedidoId); return !!(v && v.congeladoEm); }
+/* ---------------------------------------------------------------------------
+   CONGELADO AQUI NÃO É CONGELADO NO SERVIDOR (v8.110)
+   ---------------------------------------------------------------------------
+   `pcCongelar` grava o snapshot no cache ANTES da resposta, de propósito: o
+   papel precisa dele agora. Mas esse cache mora no `localStorage` de UMA
+   máquina. Liberar a produção com o congelamento ainda na fila é imprimir um
+   papel cujo vínculo não existe para mais ninguém — trocar de navegador perde
+   o vínculo e ninguém fica sabendo.
+   `confirmado` só é escrito quando o servidor respondeu, ou quando a linha foi
+   LIDA do servidor. É esta a diferença que a liberação consulta.
+   --------------------------------------------------------------------------- */
+function pcConfirmado(pedidoId)  { const v = pcVinculoDe(pedidoId); return !!(v && v.congeladoEm && v.confirmado); }
 function pcQuantos()            { return PC_VINCULOS.size; }
 function pcGuardar(v) {
   if (!v || !v.pedidoId) return null;
@@ -61,8 +73,10 @@ async function pcCarregar(ids) {
     + "&select=pedido_id,projeto_id,versao_id,origem,congelado_em,snapshot,revision&limit=2000");
   if (!r.ok) return { status: "nao-consegui", erro: r.erro, quantos: PC_VINCULOS.size };
   for (const l of persLista(r.corpo)) {
+    /* veio do servidor: por definição, confirmado */
     pcGuardar({ pedidoId: l.pedido_id, projetoId: l.projeto_id, versaoId: l.versao_id,
-      origem: l.origem, congeladoEm: l.congelado_em, snapshot: l.snapshot, revision: l.revision });
+      origem: l.origem, congeladoEm: l.congelado_em, snapshot: l.snapshot, revision: l.revision,
+      confirmado: !!l.congelado_em });
   }
   return { status: "ok", quantos: PC_VINCULOS.size };
 }
@@ -81,6 +95,95 @@ function pcResolver(sku) {
            nome: dono.nome, escopo: dono.escopo, versao: dono.versao };
 }
 const pcTemProjeto = (sku) => !!pcResolver(sku);
+
+/* a mesma leitura da cadeia, com um projeto escolhido à mão por último. Quem
+   assina passa a ser ele — é isso que vai para `projeto_id`/`versao_id`. */
+function pcResolverManual(sku, projetoId) {
+  if (typeof pjResolverManual !== "function") return pcResolver(sku);
+  const res = pjResolverManual(sku, projetoId);
+  if (!crtTemProjeto(res) || !res.cadeia || !res.cadeia.length) return null;
+  const dono = res.cadeia[res.cadeia.length - 1];
+  return { res, sku: res.sku, projetoId: dono.projetoId, versaoId: dono.versaoId,
+           nome: dono.nome, escopo: dono.escopo, versao: dono.versao };
+}
+
+/* ---------------------------------------------------------------------------
+   A CAMADA QUE OS DOIS CAMINHOS COMPARTILHAM (v8.110)
+   ---------------------------------------------------------------------------
+   São três portas e dois caminhos de código: o pedido avulso e a aba Pedidos
+   caem no mesmo `novoPedido`; a Demanda em lote cai no `criarPedidos`, com um
+   bloco por SKU. Os dois precisam das MESMAS três coisas — saber o que vale
+   para o SKU, guardar a escolha de quem está na tela, e transformar isso em
+   vínculo quando o pedido existir.
+
+   A DECISÃO MORA NO SKU, NUNCA NUM ESTADO DE FORA.
+   Ela é um objeto simples, guardado onde o SKU está: `S.modal.corte` no
+   caminho 1, `grupos[gi].corte` no caminho 2. E ela carrega o próprio SKU
+   dentro — é isso que impede a decisão de um SKU de valer para o seguinte
+   quando a pessoa apaga o código e digita outro, ou quando a Demanda percorre
+   dez grupos em sequência. Decisão de outro SKU é descartada, não aproveitada.
+   --------------------------------------------------------------------------- */
+const pcMesmoSku = (a, b) => String(a || "").trim().toUpperCase() === String(b || "").trim().toUpperCase();
+function pcDecidirProjeto(sku, estado) {
+  const e = estado || pcEstadoDoSku(sku);
+  return { sku: String(sku || "").trim().toUpperCase(), escolha: "projeto",
+           projetoId: e.projetoId, versaoId: e.versaoId };
+}
+function pcDecidirSem(sku) {
+  return { sku: String(sku || "").trim().toUpperCase(), escolha: "sem",
+           projetoId: null, versaoId: null };
+}
+/* TROCAR (v8.110) · escolha manual, válida só para ESTE pedido.
+   A versão gravada é a VIGENTE do projeto escolhido no momento da escolha —
+   publicar uma versão nova depois não reescreve um pedido já congelado, que é
+   a mesma promessa do resto do módulo. */
+function pcDecidirManual(sku, projetoId) {
+  const p = typeof pjAchar === "function" ? pjAchar(projetoId) : null;
+  return { sku: String(sku || "").trim().toUpperCase(), escolha: "manual",
+           projetoId: p ? p.id : null,
+           versaoId: (p && p.versao && p.versao.id) || null };
+}
+
+/* o que a tela desenha para um SKU. `decisao` é opcional — e só é considerada
+   quando for do MESMO SKU. */
+function pcEstadoDoSku(sku, decisao) {
+  const s = String(sku || "").trim().toUpperCase();
+  const r = s ? pcResolver(s) : null;
+  const minha = (decisao && pcMesmoSku(decisao.sku, s)) ? decisao : null;
+  const manual = minha && minha.escolha === "manual" && minha.projetoId
+    ? (typeof pjAchar === "function" ? pjAchar(minha.projetoId) : null) : null;
+  const sem = !!(minha && minha.escolha === "sem");
+  return {
+    sku: s,
+    tem: !!r || !!manual,
+    /* a escolha manual manda no que vai para o vínculo; "sem" zera os dois */
+    projetoId: sem ? null : manual ? manual.id : (r ? r.projetoId : null),
+    versaoId:  sem ? null : manual ? minha.versaoId : (r ? r.versaoId : null),
+    nome:   manual ? manual.nome   : (r ? r.nome : null),
+    escopo: manual ? manual.escopo : (r ? r.escopo : null),
+    versao: manual ? (manual.versao && manual.versao.versao) : (r ? r.versao : null),
+    cadeia: r && r.res ? r.res.cadeia : [],
+    escolha: minha ? minha.escolha : null,
+    /* o automático que a troca substituiu — a tela precisa poder oferecer a volta */
+    automatico: r ? { projetoId: r.projetoId, nome: r.nome, escopo: r.escopo } : null,
+    /* decidido = ou a pessoa escolheu, ou não há o que escolher */
+    decidido: !!minha || !r,
+  };
+}
+
+/* depois que o pedido existe. Devolve o mesmo formato de `pcVincular`. */
+async function pcVincularDecidido(pedidoId, sku, decisao) {
+  const s = String(sku || "").trim().toUpperCase();
+  const minha = (decisao && pcMesmoSku(decisao.sku, s)) ? decisao : null;
+  if (minha && minha.escolha === "sem") return pcSemProjeto(pedidoId);
+  /* escolha manual: origem='manual', e o projeto/versão são os que a pessoa
+     escolheu — não os que a cadeia resolveria sozinha (149 aceita 'manual') */
+  if (minha && minha.escolha === "manual" && minha.projetoId) {
+    return pcVincular(pedidoId, s, { projetoId: minha.projetoId, versaoId: minha.versaoId, origem: "manual" });
+  }
+  if (!pcTemProjeto(s)) return { status: "sem-projeto", pedidoId: String(pedidoId || ""), sku: s };
+  return pcVincular(pedidoId, s);
+}
 
 /* o SKU de um pedido é o da OP — `opAtivaDe` continua sendo o dono disso */
 function pcSkuDoPedido(r) {
@@ -104,14 +207,18 @@ const pcTipoRotulo = (cod) => {
   return t ? t.rotulo : (cod || null);
 };
 
-function pcMontarSnapshot(sku) {
-  const r = pcResolver(sku);
+/* `projetoManual` é o projeto escolhido à mão para ESTE pedido (v8.110). Ele
+   entra como o elo mais específico da cadeia — quem congela lê daqui, então é
+   a receita da escolha manual que vai para o papel. */
+function pcMontarSnapshot(sku, projetoManual) {
+  const r = projetoManual ? pcResolverManual(sku, projetoManual) : pcResolver(sku);
   if (!r) return { sem_projeto: true, sku: String(sku || "").toUpperCase() };
   const res = r.res;
   return {
     sku: r.sku,
     projeto: { id: r.projetoId, nome: r.nome, escopo: r.escopo },
     versao: { id: r.versaoId, versao: r.versao },
+    escolhaManual: projetoManual ? true : undefined,
     cortes: (res.cortes || []).map((c, i) => ({
       ordem: i + 1,
       identificacao: c.identificacao || null,
@@ -145,20 +252,27 @@ function pcMontarSnapshot(sku) {
 /* ---------------------------------------------------------------------------
    VÍNCULO · grava qual projeto valia. Sempre pela fila.
    --------------------------------------------------------------------------- */
-async function pcVincular(pedidoId, sku) {
+/* `escolhido` (v8.110) é a troca manual: projeto, versão e origem vêm dela, e
+   não da cadeia. Sem ele, nada muda — quem assina é o elo mais específico. */
+async function pcVincular(pedidoId, sku, escolhido) {
   const id = String(pedidoId || "");
   if (!id) return { status: "invalido", motivo: "pedido sem id" };
   const v = pcVinculoDe(id);
   if (v && v.congeladoEm) return { status: "congelado", pedidoId: id, congeladoEm: v.congeladoEm };
 
-  const r = pcResolver(sku);
+  const r = escolhido && escolhido.projetoId
+    ? { projetoId: escolhido.projetoId, versaoId: escolhido.versaoId, escopo: "manual",
+        nome: (typeof pjAchar === "function" && (pjAchar(escolhido.projetoId) || {}).nome) || null }
+    : pcResolver(sku);
   if (!r) return pcSemProjeto(id);
 
   const acao = cxEnfileirar("corte_vincular", id, {
     p_pedido_id: id, p_projeto_id: r.projetoId, p_versao_id: r.versaoId,
     p_origem: r.escopo, p_expected_revision: v ? v.revision : null,
   });
-  pcGuardar({ pedidoId: id, projetoId: r.projetoId, versaoId: r.versaoId, origem: r.escopo });
+  pcGuardar({ pedidoId: id, projetoId: r.projetoId, versaoId: r.versaoId, origem: r.escopo,
+              /* guardado para o congelamento saber montar a receita da escolha */
+              manualDe: r.escopo === "manual" ? r.projetoId : null });
   const d = await cxDrenar();
   return pcDepois(d, id, acao && acao.opId, { origem: r.escopo, projeto: r.nome });
 }
@@ -189,17 +303,34 @@ async function pcCongelar(pedidoId, sku) {
 
   const v = pcVinculoDe(id);
   if (v && v.congeladoEm) {
-    return { status: "ok", pedidoId: id, jaCongelado: true, congeladoEm: v.congeladoEm };
+    /* já congelado AQUI. Se o servidor confirmou, acabou. Se não confirmou, a
+       ação continua na fila com o MESMO operation_id — então a tentativa certa
+       é drenar aquela, nunca enfileirar outra: duas linhas para o mesmo
+       congelamento é exatamente o que o ledger existe para impedir. */
+    if (v.confirmado) {
+      return { status: "ok", pedidoId: id, jaCongelado: true,
+               congeladoEm: v.congeladoEm, confirmado: true };
+    }
+    const dv = await cxDrenar();
+    const fv = pcDepois(dv, id, v.opId, { congeladoEm: v.congeladoEm, snapshot: v.snapshot });
+    if (fv.status === "ok") pcGuardar({ pedidoId: id, confirmado: true });
+    return fv;
   }
 
-  const snap = (v && v.origem === "sem") ? { sem_projeto: true, sku } : pcMontarSnapshot(sku);
+  /* a receita congelada é a do VÍNCULO: se ele foi manual, é o projeto
+     escolhido que assina, não o que a cadeia resolveria hoje */
+  const snap = (v && v.origem === "sem") ? { sem_projeto: true, sku }
+    : pcMontarSnapshot(sku, (v && v.manualDe) || null);
   const acao = cxEnfileirar("corte_congelar", id, { p_pedido_id: id, p_snapshot: snap });
 
-  /* o papel precisa do snapshot AGORA; a fila cuida de levá-lo ao servidor */
-  pcGuardar({ pedidoId: id, snapshot: snap, congeladoEm: new Date().toISOString() });
+  /* o papel precisa do snapshot AGORA; a fila cuida de levá-lo ao servidor.
+     `confirmado` fica de fora: ele só nasce com a resposta. */
+  pcGuardar({ pedidoId: id, snapshot: snap, congeladoEm: new Date().toISOString(),
+              opId: acao && acao.opId });
 
   const d = await cxDrenar();
   const fim = pcDepois(d, id, acao && acao.opId, { snapshot: snap });
+  if (fim.status === "ok") pcGuardar({ pedidoId: id, confirmado: true });
   /* o servidor pode ter um snapshot mais antigo — se ele disse `ja_congelado`,
      quem manda é o dele, não o nosso */
   if (fim.status === "ok" && fim.resposta && fim.resposta.snapshot) {
@@ -223,34 +354,57 @@ function pcDepois(d, pedidoId, opId, extra) {
 /* ---------------------------------------------------------------------------
    ANTES DE LIBERAR · o que a tela precisa saber para não liberar em silêncio.
 
-   Devolve três listas, e NÃO decide nada:
-     prontos   · já congelados, ou congelados agora
-     pendentes · o SKU resolve projeto, o pedido não tem vínculo e ninguém
-                 disse que era para seguir sem. Quem pergunta é a tela
-     erros     · tinha vínculo e o congelamento não passou. Estes param
+   Devolve as listas, e NÃO decide nada:
+     prontos    · congelamento CONFIRMADO pelo servidor, agora ou antes
+     pendentes  · o SKU resolve projeto, o pedido não tem vínculo e ninguém
+                  disse que era para seguir sem. Quem pergunta é a tela
+     naFila     · o congelamento não chegou ao servidor (sem rede, flag
+                  desligada). Não é erro — e também não libera
+     erros      · o servidor recusou: conflito, sem permissão, o que for
+     semProjeto · o SKU não tem projeto nenhum: não há o que congelar
 
-   `na-fila` NÃO é erro: a ação está guardada e o snapshot está no cache, então
-   o papel sai certo e a gravação vai quando a rede (ou a flag) permitir.
+   A REGRA (v8.110):
+     confirmado pelo servidor  → libera
+     já congelado no servidor  → libera
+     na-fila / sem confirmação → NÃO libera
+     conflito / erro           → NÃO libera
+
+   `na-fila` continua existindo e continua valendo para EDITAR: a ação fica
+   guardada, o snapshot fica no cache e o papel sai certo. O que ele não faz é
+   liberar produção — a fila é durável em UMA máquina, e o vínculo que só
+   existe ali se perde ao trocar de navegador, sem ninguém ficar sabendo.
    --------------------------------------------------------------------------- */
 async function pcPrepararPapeis(pedidos) {
-  const prontos = [], pendentes = [], erros = [], semProjeto = [];
+  /* -------------------------------------------------------------------------
+     ANTES DE TUDO: os projetos precisam estar em memória.
+     `pjCarregar` só roda quando alguém abre Processos. Quem cria um pedido e
+     manda imprimir sem nunca ter passado por lá teria TODO SKU parecendo "sem
+     projeto" — e sem projeto libera. O módulo não carregado viraria liberação
+     em silêncio, que é exatamente o que esta função existe para impedir.
+     Se a leitura falhar, não se adivinha: trava e diz por quê.
+     ------------------------------------------------------------------------- */
+  const carga = await pcGarantirProjetos();
+  if (!carga.ok) return pcFalhouConferir(carga.erro || "não consegui ler os projetos de corte agora");
+
+  const prontos = [], pendentes = [], erros = [], semProjeto = [], naFila = [];
   for (const r of (pedidos || [])) {
     const id = String(r.id);
     const sku = pcSkuDoPedido(r);
     const v = pcVinculoDe(id);
 
-    if (v && v.congeladoEm) { prontos.push(id); continue; }
+    if (v && v.congeladoEm && v.confirmado) { prontos.push(id); continue; }
 
     if (!v && !pcTemProjeto(sku)) { semProjeto.push(id); continue; }
 
     if (!v) { pendentes.push({ id, sku, numero: r.numero }); continue; }
 
     const fim = await pcCongelar(id, sku);
-    if (fim.status === "ok" || fim.status === "na-fila") prontos.push(id);
+    if (fim.status === "ok") prontos.push(id);
+    else if (fim.status === "na-fila") naFila.push({ id, numero: r.numero, motivo: fim.motivo || "ainda não chegou ao servidor" });
     else erros.push({ id, numero: r.numero, status: fim.status, resposta: fim });
   }
-  return { prontos, pendentes, erros, semProjeto,
-           podeLiberar: erros.length === 0 && pendentes.length === 0 };
+  return { prontos, pendentes, erros, semProjeto, naFila,
+           podeLiberar: erros.length === 0 && pendentes.length === 0 && naFila.length === 0 };
 }
 
 /* ---------------------------------------------------------------------------
@@ -300,11 +454,136 @@ function pcBlocoPapel(pedidoId) {
 /* o resumo de uma linha, para a tela do pedido. Campo que não se aplica não
    entra: fitilho que não existe não vira "sem fitilho". */
 function pcResumo(pedidoId) {
-  const s = pcSnapshotDe(pedidoId);
+  return pcResumoDoSnapshot(pcSnapshotDe(pedidoId));
+}
+/* o mesmo resumo, a partir de um snapshot solto — a seção do formulário precisa
+   dele ANTES de o pedido existir, quando ainda não há o que ler no cache */
+function pcResumoDoSnapshot(s) {
   if (!s) return "";
   if (s.sem_projeto) return "sem Projeto de Corte";
   const p = (s.cortes || []).map((c) => `nº ${(c.fita && c.fita.numero) || "?"} ${pcCm(c.comprimentoMm).toLowerCase()}`);
   if (s.fitilho) p.push(`fitilho ${pcCm(s.fitilho.comprimentoMm).toLowerCase()}`);
   if (s.sortimento) p.push("sortido");
   return p.join(" · ");
+}
+
+/* ===========================================================================
+   A SEÇÃO NA TELA · a mesma nos dois caminhos
+   ---------------------------------------------------------------------------
+   O desenho é o do protótipo aprovado (`prototipos/corte/corte.js`,
+   `secaoProjetoCorte`): título, o projeto que vale, o resumo da receita, e os
+   botões do estado em que se está. Sem botão morto — o que não se aplica não
+   aparece.
+
+   `ctx` diz de onde ela foi desenhada, e vai nos `data-` para o clique achar o
+   dono da decisão de volta:
+     ctx = "np"    · a janela do pedido avulso (S.modal)
+     ctx = "lote"  · um grupo da janela de criar pedidos (S.modal.grupos[gi])
+   =========================================================================== */
+function pcSecao(sku, decisao, ctx, gi) {
+  const e = pcEstadoDoSku(sku, decisao);
+  if (!e.sku) return "";
+  const dados = ` data-pjc-ctx="${esc(ctx || "np")}"${gi == null ? "" : ` data-pjc-g="${esc(String(gi))}"`}`;
+  const tit = `<div style="font-size:9.5px;letter-spacing:.1em;font-weight:800;color:var(--ink-4);margin-bottom:6px">PROJETO DE CORTE
+    <span style="font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink-3)"> · a ficha que a bancada usa para cortar</span></div>`;
+  const caixa = (borda, fundo, corpo) => `<div style="margin:2px 0 10px;padding:10px 12px;border:1px solid ${borda};border-radius:9px;background:${fundo}">${tit}${corpo}</div>`;
+
+  /* 1 · seguiu sem projeto, por escolha de alguém */
+  if (e.escolha === "sem") {
+    return caixa("var(--line)", "transparent", `
+      <div style="margin-bottom:4px"><b>Sem Projeto de Corte</b>
+        <span class="tag">você escolheu seguir sem</span></div>
+      <div class="hint" style="margin-bottom:7px">O pedido segue normalmente; a bancada não recebe ficha de corte deste SKU, e o papel sai sem o bloco.</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        ${e.tem ? `<button type="button" class="btn sm" data-pjc-ped="usar"${dados}>Usar o projeto de novo</button>` : ""}
+        <button type="button" class="btn sm ghost" data-pjc-ped="criar"${dados}>${svg(IC.mais)}Criar Projeto de Corte</button></div>`);
+  }
+
+  /* 2 · o SKU tem projeto — automático ou escolhido à mão */
+  if (e.tem) {
+    const manual = e.escolha === "manual";
+    const resumo = pcResumoDoSnapshot(pcMontarSnapshot(e.sku, manual ? e.projetoId : null));
+    return caixa("var(--line)", "transparent", `
+      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+        <b>${esc(e.nome || "")}</b>
+        <span class="tag">${esc(PJC_NOME && PJC_NOME[e.escopo] ? PJC_NOME[e.escopo] : e.escopo)}</span>
+        ${e.versao ? `<span class="tag">v${esc(String(e.versao))}</span>` : ""}
+        <span class="tag${manual ? " amber" : ""}">${manual ? "escolhido à mão" : "versão vigente"}</span></div>
+      ${resumo ? `<div style="font-size:12px;color:var(--ink-2);margin-bottom:7px">${esc(resumo)}</div>` : ""}
+      ${manual && e.automatico ? `<div class="hint" style="margin-bottom:7px">Só para este pedido. A regra de ${esc(e.automatico.nome || "")} continua valendo para o SKU.</div>` : ""}
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button type="button" class="btn sm" data-pjc-ped="ver"${dados}>${svg(IC.olho)}Ver projeto</button>
+        <button type="button" class="btn sm" data-pjc-ped="trocar"${dados}>${svg(IC.atualizar)}Trocar</button>
+        ${manual ? `<button type="button" class="btn sm ghost" data-pjc-ped="auto"${dados}>Voltar ao automático${e.automatico ? ` (${esc(e.automatico.nome || "")})` : ""}</button>` : ""}
+        <button type="button" class="btn sm ghost" data-pjc-ped="sem"${dados}>Seguir sem projeto</button></div>`);
+  }
+
+  /* 3 · nenhum projeto casa com este SKU. Não é erro, mas também não é
+     silêncio: quem está criando o pedido precisa saber que a bancada vai
+     receber o papel sem ficha. */
+  return caixa("var(--amber)", "var(--amber-soft)", `
+    <div style="margin-bottom:4px"><b>Nenhum projeto casa com ${esc(e.sku)}.</b></div>
+    <div class="hint" style="margin-bottom:7px">O pedido pode seguir assim — o papel sai sem o bloco de corte.</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button type="button" class="btn sm primary" data-pjc-ped="criar"${dados}>${svg(IC.mais)}Criar Projeto de Corte</button></div>`);
+}
+
+/* ---------------------------------------------------------------------------
+   POR QUE NÃO LIBEROU · uma frase, com os números dos pedidos.
+   A recusa tem de dizer o que fazer. "Não foi possível" manda a pessoa
+   adivinhar, e ela vai acabar liberando de outro jeito.
+   --------------------------------------------------------------------------- */
+function pcPorQueNaoLibera(c) {
+  if (!c || c.podeLiberar) return "";
+  if (c.erroInterno) return `O Projeto de Corte não pôde ser conferido (${c.erroInterno}) — os pedidos ficam em Papel de Produção até isso se resolver.`;
+  const nums = (lista) => lista.map((x) => x.numero || x.id).join(", ");
+  if ((c.erros || []).length) {
+    const cong = (c.erros || []).some((x) => x.status === "congelado" || x.status === "conflito");
+    return `O corte de ${nums(c.erros)} não foi confirmado${cong ? " (outra pessoa mexeu neste pedido)" : ""} — o pedido continua em Papel de Produção.`;
+  }
+  if ((c.naFila || []).length) {
+    return `O corte de ${nums(c.naFila)} ainda não chegou ao servidor. O papel pode ser impresso, mas a liberação espera a confirmação — senão o vínculo fica só neste navegador e se perde ao trocar de máquina.`;
+  }
+  if ((c.pendentes || []).length) {
+    return `${nums(c.pendentes)} ${c.pendentes.length === 1 ? "não tem" : "não têm"} Projeto de Corte definido. Abra o pedido e escolha o projeto, ou registre que segue sem.`;
+  }
+  return "O corte deste pedido não pôde ser confirmado — ele continua em Papel de Produção.";
+}
+
+/* o que devolver quando a conferência do corte levanta exceção: NUNCA liberar
+   em silêncio. Sem isso, um erro dentro do módulo viraria "seguiu normal". */
+const pcFalhouConferir = (e) => ({ prontos: [], pendentes: [], erros: [], semProjeto: [],
+  naFila: [], podeLiberar: false, erroInterno: String((e && e.message) || e) });
+
+/* projetos e fitas em memória, uma vez. A marca é o SUCESSO, não a tentativa:
+   uma leitura que falhou tem de ser refeita na próxima, não dada por feita. */
+let PC_CARREGOU = false;
+async function pcGarantirProjetos() {
+  if (PC_CARREGOU) return { ok: true, jaEstava: true };
+  if (typeof pjCarregar !== "function") return { ok: false, erro: "módulo de projetos ausente" };
+  try {
+    const r = await pjCarregar();
+    if (!r || r.status !== "ok") return { ok: false, erro: "não consegui ler os projetos de corte agora" };
+    if (typeof ftCarregar === "function" && typeof ftQuantas === "function" && !ftQuantas()) {
+      const f = await ftCarregar();
+      if (!f || f.status !== "ok") return { ok: false, erro: "não consegui ler o cadastro de fitas agora" };
+    }
+    PC_CARREGOU = true;
+    return { ok: true };
+  } catch (e) { return { ok: false, erro: String((e && e.message) || e) }; }
+}
+/* chamado quando uma janela de criar pedido abre: a seção é desenhada de
+   imediato (sem esperar rede), e quando os projetos chegam a janela se
+   redesenha sozinha. Não trava nada e não devolve nada. */
+function pcAquecer() {
+  if (PC_CARREGOU) return;
+  pcGarantirProjetos().then((r) => { if (r.ok && typeof render === "function") render(); }).catch(() => {});
+}
+
+/* o dono da decisão, de volta pelo que o botão carrega */
+function pcAlvoDecisao(ctx, gi) {
+  const m = (typeof S !== "undefined" && S.modal) || null;
+  if (!m) return null;
+  if (ctx === "lote") return (m.grupos || [])[Number(gi)] || null;
+  return m;
 }

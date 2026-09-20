@@ -552,6 +552,13 @@ function modaisProducao(m) {
               <div style="font-size:9.5px;letter-spacing:.1em;font-weight:800;color:var(--ink-4);margin-bottom:5px">EMBALAGEM${falta ? " — ainda não definida" : ""}
                 <span style="font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink-3)"> · sai impressa no canhoto · vale para todos os pedidos deste SKU</span></div>
               ${camposEmbalagem(prod3, f, gi)}</div>`; })()}
+          ${(() => { /* PROJETO DE CORTE · um bloco por SKU, com a decisão dentro
+               do PRÓPRIO grupo. É isto que impede o projeto (ou o "seguir sem")
+               de um SKU de valer para o seguinte. */
+            if (typeof pcSecao !== "function") return "";
+            try { return `<div style="margin:2px 14px 8px">${pcSecao(g.sku, g.corte, "lote", gi)}</div>`; }
+            catch (e2) { return ""; }
+          })()}
           <div style="display:none">
           </div>
           ${g.abertos.length ? `<div class="aviso" style="margin:10px 14px 4px;padding:10px 12px">
@@ -897,9 +904,86 @@ function modaisProducao(m) {
             <div class="fld"><span>&nbsp;</span>
               <button class="btn sm" data-npnum="${esc(vd.sug)}" ${vd.igualAoSugerido ? "disabled" : ""}>Usar o sugerido (${esc(vd.sug)})</button></div>
           </div>`; })()}
+        ${(() => { /* PROJETO DE CORTE · a mesma seção do lote, com o SKU que
+             está no campo agora. Ela se redesenha junto com o resto da janela
+             quando o SKU muda (`repintarDestino`). */
+          if (typeof pcSecao !== "function") return "";
+          const skuNp = m.novo ? String(v.cod || m.codSugerido || "") : String(v.sku || "");
+          try { return pcSecao(skuNp, m.corte, "np"); } catch (e2) { return ""; }
+        })()}
       </div>
       <div class="modal-f"><button class="btn" style="margin-left:auto" data-fechar="1">Cancelar</button>
         <button class="btn primary" data-act="salvar-novo-pedido">Criar pedido</button></div></div></div>`;
+  }
+
+  /* ---------------------------------------------------------------------------
+     A FICHA DO PROJETO, POR CIMA DO PEDIDO
+     ---------------------------------------------------------------------------
+     A MESMA ficha da tela de Processos (`pjcResolvido`), em modo janela: sem o
+     "← Voltar" e sem o "Abrir regra", que levariam para outra tela e deixariam
+     o rascunho do pedido atrás de uma navegação que ninguém pediu. Quem fecha é
+     o Fechar, e o `voltarPara` devolve a janela de baixo inteira.
+     --------------------------------------------------------------------------- */
+  /* ---------------------------------------------------------------------------
+     TROCAR O PROJETO DE CORTE (v8.110) · só para ESTE pedido
+     ---------------------------------------------------------------------------
+     A lista não é filtrada pelo SKU de propósito: trocar existe justamente para
+     usar um projeto que sozinho não casaria com ele. O que casa vem em cima,
+     marcado, porque é o caso comum — e o automático de agora aparece com a
+     etiqueta, para ninguém escolher achando que está trocando quando não está.
+     Escolher aqui NÃO altera regra nenhuma: a decisão vive no rascunho do
+     pedido e vira `origem='manual'` no vínculo, depois que ele existir.
+     --------------------------------------------------------------------------- */
+  if (m.tipo === "trocarProjetoCorte") {
+    const sku = String(m.sku || "");
+    const e = typeof pcEstadoDoSku === "function" ? pcEstadoDoSku(sku, m.decisao) : {};
+    const lista = typeof pjEscolhiveis === "function" ? pjEscolhiveis() : [];
+    const casa = (p) => (typeof crtCasa === "function" ? crtCasa(p, sku) : false);
+    const ord = lista.slice().sort((a, b) => (casa(b) - casa(a))
+      || String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"));
+    return `<div class="ov" data-fechar="1"><div class="modal" style="max-width:min(620px, 96vw)" role="dialog" aria-label="Trocar projeto de corte">
+      <div class="modal-h"><h2>Trocar o Projeto de Corte</h2><span class="tag mono">${esc(sku)}</span>
+        <button class="btn sm ghost" style="margin-left:auto" data-fechar="1">Fechar</button></div>
+      <div class="modal-b">
+        <p class="hint" style="margin:0 0 14px">A escolha vale <b>só para este pedido</b>. As regras de família, combinação e exceção do SKU não são alteradas, e nenhum projeto é modificado.</p>
+        ${!ord.length ? `<div class="empty" style="padding:30px"><h3>Nenhum projeto publicado</h3>
+            <p>Só aparecem aqui projetos ativos e com versão publicada.</p></div>`
+        : `<div style="border:1px solid var(--line);border-radius:9px;overflow:hidden">
+          ${ord.map((p) => { const atual = e.projetoId === p.id;
+            const auto = e.automatico && e.automatico.projetoId === p.id;
+            return `<div style="display:flex;gap:9px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line-2)">
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                  <b style="font-size:13px">${esc(p.nome || "sem nome")}</b>
+                  <span class="tag">${esc(PJC_NOME && PJC_NOME[p.escopo] ? PJC_NOME[p.escopo] : p.escopo)}</span>
+                  ${p.versao && p.versao.versao ? `<span class="tag">v${esc(String(p.versao.versao))}</span>` : ""}
+                  ${auto ? `<span class="tag">automático deste SKU</span>` : ""}
+                  ${casa(p) && !auto ? `<span class="tag">casa com ${esc(sku)}</span>` : ""}</div>
+              </div>
+              ${atual ? `<span class="tag ok">em uso</span>`
+                : `<button class="btn sm primary" data-pjc-ped="escolher" data-pjc-v="${esc(p.id)}"
+                     data-pjc-ctx="${esc(m.ctx || "np")}"${m.gi == null ? "" : ` data-pjc-g="${esc(String(m.gi))}"`}>Usar este</button>`}
+            </div>`; }).join("")}</div>`}
+      </div>
+      <div class="modal-f"><button class="btn" style="margin-left:auto" data-fechar="1">Cancelar</button></div></div></div>`;
+  }
+
+  if (m.tipo === "projetoCorte") {
+    const sku = String(m.sku || "");
+    /* CRIAR é o editor de verdade — o mesmo `pjcFicha` da tela de Processos,
+       com o rascunho já preso a este SKU. Um botão "Criar" que abrisse a ficha
+       em leitura seria botão morto, e destes o PCP já teve o bastante. */
+    const editando = !!(m.criar && typeof pjcFicha === "function" && PJC_VIEW && PJC_VIEW.rascunho);
+    return `<div class="ov" data-fechar="1"><div class="modal" style="max-width:min(760px, 96vw)" role="dialog" aria-label="Projeto de corte">
+      <div class="modal-h"><h2>${editando ? "Novo projeto de corte" : "Projeto de corte"}</h2>
+        <span class="tag mono">${esc(sku)}</span>
+        <button class="btn sm ghost" style="margin-left:auto" data-fechar="1">Fechar</button></div>
+      <div class="modal-b">
+        ${editando ? `<p class="hint" style="margin:0 0 12px">O pedido que você estava criando continua aí atrás, com tudo o que já foi preenchido — este projeto salva sozinho e você volta para ele.</p>${pjcFicha()}`
+          : typeof pjcResolvido === "function" ? pjcResolvido(sku, true)
+          : `<div class="hint">A tela de Projeto de corte não está disponível.</div>`}
+      </div>
+      <div class="modal-f"><button class="btn primary" style="margin-left:auto" data-fechar="1">Voltar ao pedido</button></div></div></div>`;
   }
 
   if (m.tipo === "papeis") {
@@ -2429,10 +2513,23 @@ function colherDigitadoDaJanela() {
        COLA e fazer a janela redesenhar devolvia COLA marcada, e o papel saía
        com uma etapa que a pessoa tinha tirado. Aqui a pergunta passa a ser se o
        atributo EXISTE, não se ele tem conteúdo. */
+    /* v8.110 · O GRUPO FAZ PARTE DA IDENTIDADE DO CAMPO
+       Na janela de criar pedidos há um bloco por SKU. Os campos de embalagem
+       carregam o índice do grupo em `data-ppg`, mas a chave olhava só o
+       `data-pp`: com dois SKUs na janela os dois viravam `pp:embalagemTipo`, e
+       na volta os dois valores caíam no PRIMEIRO campo do documento — a
+       embalagem de um SKU ia parar no outro, e ela sai impressa no canhoto.
+       Sem grupo (a janela de um pedido, o cadastro do produto) a chave
+       continua sendo a de antes. */
     const chave = el2.dataset.m ? "m:" + el2.dataset.m
       : el2.dataset.emb ? "emb:" + el2.dataset.emb
-      : el2.dataset.pp ? "pp:" + el2.dataset.pp
+      : el2.dataset.pp ? "pp:" + el2.dataset.pp + (el2.dataset.ppg != null ? ":" + el2.dataset.ppg : "")
       : el2.dataset.mEt != null ? "et:" + el2.value
+      /* v8.110 · e os chips de etapa da MESMA janela não casavam com chave
+         nenhuma: eles são `data-etuso`, não `data-m-et`. Não eram guardados —
+         desmarcar uma etapa, abrir outra janela e voltar devolvia a etapa
+         marcada, e o papel saía mandando fazer trabalho que ninguém pediu. */
+      : el2.dataset.etuso != null ? "etuso:" + el2.dataset.etuso + ":" + el2.value
       : el2.id ? "id:" + el2.id : null;
     if (!chave) return;
     if (el2.type === "checkbox" || el2.type === "radio") {
@@ -2489,10 +2586,19 @@ function reporDigitadoNaJanela(g) {
   }
   for (const item of g.guardado) {
     const [tipo, resto] = [item.chave.slice(0, item.chave.indexOf(":")), item.chave.slice(item.chave.indexOf(":") + 1)];
+    /* o par do que a chave guardou. `pp` vem com o grupo no fim quando há
+       grupo; sem ele, `:not([data-ppg])` separa a janela de um pedido só da
+       janela de vários — é a mesma regra que `pedLerEmbalagemDoForm` já usa. */
+    const parte = (s2) => { const i = s2.indexOf(":");
+      return i < 0 ? [s2, null] : [s2.slice(0, i), s2.slice(i + 1)]; };
     const sel = tipo === "m" ? `[data-m="${CSS.escape(resto)}"]`
       : tipo === "emb" ? `[data-emb="${CSS.escape(resto)}"]`
-      : tipo === "pp" ? `[data-pp="${CSS.escape(resto)}"]`
+      : tipo === "pp" ? (() => { const i = resto.lastIndexOf(":");
+          return i < 0 ? `[data-pp="${CSS.escape(resto)}"]:not([data-ppg])`
+            : `[data-pp="${CSS.escape(resto.slice(0, i))}"][data-ppg="${CSS.escape(resto.slice(i + 1))}"]`; })()
       : tipo === "et" ? `[data-m-et][value="${CSS.escape(resto)}"]`
+      : tipo === "etuso" ? (() => { const [gi, val] = parte(resto);
+          return `[data-etuso="${CSS.escape(gi)}"][value="${CSS.escape(val == null ? "" : val)}"]`; })()
       : `#${CSS.escape(resto)}`;
     let el2 = null;
     try { el2 = ov.querySelector(sel); } catch { el2 = null; }

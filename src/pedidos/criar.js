@@ -33,6 +33,8 @@ function abrirCriarPedidos(skus, qtdDe, campanhaId) {
   /* o contador oficial pode ter andado desde o boot — releia agora, com a
      janela na frente da pessoa (v8.75) */
   if (typeof pedCicloRefrescar === "function") pedCicloRefrescar(["criarPedidos"]);
+  /* os projetos de corte, para cada bloco de SKU nascer preenchido (v8.110) */
+  if (typeof pcAquecer === "function") pcAquecer();
 }
 
 async function confirmarPedidos() {
@@ -40,6 +42,7 @@ async function confirmarPedidos() {
   const agora = new Date().toISOString();
   let num = proximoNumeroPedido();
   const novos = [];
+  const vinculosCorte = [];   /* v8.110 · um por pedido criado, com o SKU dele */
   for (const [gi, g] of m.grupos.entries()) {
     /* o que esta tela decidiu para o SKU — lido pelas MESMAS funções do avulso */
     const etapas = pedLerEtapasDoForm(gi);
@@ -96,6 +99,10 @@ async function confirmarPedidos() {
       const erro = pedDestinoConfere(r);
       if (erro) { S._solta?.(); return toast(erro, "erro"); }
       novos.push(r);
+      /* v8.110 · a decisão do Projeto de Corte é a DESTE grupo, lida DENTRO do
+         laço. Nunca uma variável de fora: é assim que o projeto (ou o "seguir
+         sem") de um SKU não escorrega para o próximo da lista. */
+      vinculosCorte.push({ pedidoId: r.id, sku: g.sku, decisao: g.corte || null });
     }
   }
   /* reprioridades dos pedidos já abertos, ajustadas no aviso amarelo */
@@ -115,6 +122,12 @@ async function confirmarPedidos() {
   /* o pedido só entra na fila quando o papel de produção sai da impressora */
   S.modal = { tipo: "papeis", qtd: novos.length, nPapel: novos.length, ids: novos.map((r) => r.id), origem: "demanda" };
   render(); await salvarTudo("nucleo", "produtos");
+  /* v8.110 · os vínculos, um a um, com o SKU e a decisão que são DAQUELE grupo */
+  if (typeof pcVincularDecidido === "function") {
+    for (const vc of vinculosCorte) {
+      try { await pcVincularDecidido(vc.pedidoId, vc.sku, vc.decisao); } catch (e) {}
+    }
+  }
   toast(`${novos.length} ${novos.length === 1 ? "pedido criado" : "pedidos criados"}${repriorizados ? ` · ${repriorizados} repriorizados` : ""} — imprima o papel para colocar na fila.`);
 }
 

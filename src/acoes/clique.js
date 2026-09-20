@@ -59,6 +59,70 @@ async function _clique(e) {
      v8.108 · `data-proc` troca de sub-aba; `data-fita` é o miolo do cadastro. */
   if ((t = el("data-proc")) && typeof procClique === "function") {
     e.stopPropagation(); if (procClique(t)) return; }
+  /* v8.110 · a seção do Projeto de Corte DENTRO da janela de um pedido. Vem
+     ANTES do `data-pjc` da tela de Processos: são coisas diferentes, e o
+     atributo separado evita que um dia um handler coma o clique do outro. */
+  if ((t = el("data-pjc-ped"))) {
+    e.stopPropagation();
+    const ctxP = t.dataset.pjcCtx || "np";
+    const aP = t.dataset.pjcPed;
+
+    /* ESCOLHER vem primeiro porque é o único clique dado de dentro de OUTRA
+       janela: a de trocar está por cima, e o dono da decisão é o pedido que
+       ficou embaixo, em `voltarPara`. Perguntar ao `S.modal` daqui devolveria
+       a janela de escolha — e a decisão iria para o lugar errado. */
+    if (aP === "escolher") {
+      const volta = S.modal && S.modal.voltarPara;
+      if (!volta) return;
+      const dono = ctxP === "lote" ? (volta.grupos || [])[Number(t.dataset.pjcG)] : volta;
+      if (!dono) return;
+      const skuDono = ctxP === "lote" ? String(dono.sku || "")
+        : String(S.modal.sku || "").trim().toUpperCase();
+      dono.corte = pcDecidirManual(skuDono, t.dataset.pjcV);
+      S.modal = volta;
+      render();
+      return;
+    }
+
+    const alvoP = pcAlvoDecisao(ctxP, t.dataset.pjcG);
+    if (!alvoP) return;
+    /* o SKU é o do dono da decisão: no lote é o do grupo; no avulso é o que
+       está DIGITADO agora, não o que estava quando a janela foi desenhada */
+    const skuP = ctxP === "lote" ? String(alvoP.sku || "")
+      : String((S.modal?.novo ? $("#np-cod")?.value : $("#np-sku")?.value) || "").trim().toUpperCase();
+
+    if (aP === "ver" || aP === "criar") {
+      /* Criar abre o EDITOR, com o rascunho já preso a este SKU: escopo "sku"
+         e a condição preenchida, para ninguém ter de redigitar o que o app já
+         sabe. É o mesmo rascunho da tela de Processos. */
+      if (aP === "criar" && typeof pjNovo === "function" && typeof PJC_VIEW !== "undefined") {
+        const rasc = pjNovo("sku");
+        rasc.nome = `Exceção ${skuP}`;
+        rasc.regras = [{ campo: "sku", operador: "igual", valor: skuP }];
+        PJC_VIEW.rascunho = rasc; PJC_VIEW.erro = null;
+      }
+      /* a janela de baixo é guardada INTEIRA pelo mecanismo que já existe: o
+         rascunho do avulso sai por `capturarNovoPedido`, o resto pela rede
+         genérica, e o `voltarPara` traz tudo de volta no Fechar. */
+      abrirPorCimaDaJanela({ tipo: "projetoCorte", sku: skuP, criar: aP === "criar" });
+      return;
+    }
+    if (aP === "trocar") {
+      /* a janela de escolha sobe por cima, pelo mesmo mecanismo — o rascunho
+         do pedido fica guardado atrás dela */
+      abrirPorCimaDaJanela({ tipo: "trocarProjetoCorte", sku: skuP,
+        decisao: alvoP.corte || null, ctx: ctxP, gi: t.dataset.pjcG });
+      return;
+    }
+    if (aP === "sem")  alvoP.corte = pcDecidirSem(skuP);
+    if (aP === "usar") alvoP.corte = null;
+    if (aP === "auto") alvoP.corte = null;   /* volta ao que a cadeia resolve */
+    /* mudou a decisão: a janela se redesenha, e o que estava nos campos volta
+       pela mesma rede de rascunho do `renderModal` */
+    if (S.modal?.tipo === "novoPedido") S.modal.v = capturarNovoPedido();
+    render();
+    return;
+  }
   if ((t = el("data-pjc")) && typeof pjcClique === "function") {
     e.stopPropagation(); if (await pjcClique(t)) return; }
   if ((t = el("data-fita")) && typeof fitaClique === "function") {
@@ -390,6 +454,13 @@ async function _clique(e) {
     e.stopPropagation();
     const r = pedidoPorId(t.dataset.papelOk);
     if (r && r.status === "papel") {
+      /* v8.110 · o MESMO congelamento do outro caminho. Este botão é a segunda
+         porta de papel→aberto, e uma porta sem a trava é uma porta sem trava. */
+      if (typeof pcPrepararPapeis === "function") {
+        let c;
+        try { c = await pcPrepararPapeis([r]); } catch (e2) { c = pcFalhouConferir(e2); }
+        if (c && !c.podeLiberar) return toast(pcPorQueNaoLibera(c), "erro");
+      }
       registrar(r.opId, `pedido ${r.numero}: papel de produção impresso`, { status: "papel" }, { status: "aberto" });
       r.status = "aberto";
       await salvarPedidos();

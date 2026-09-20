@@ -152,6 +152,15 @@ function canhoto(r) {
       <div style="min-width:0"><div class="slip-sku">${esc(sku)}</div>
         <div class="slip-desc">${esc((prod?.descricao || "").slice(0, 58))} · criado ${fdate(r.criadoEm)}</div></div></div>
     <div class="slip-linha slip-flex"><b>CORTE:</b> <span class="cxbox"></span> <b>DATA:</b> <span class="cxbox"></span></div>
+    ${(() => { /* v8.110 · O PROJETO DE CORTE, lido do SNAPSHOT congelado.
+         Nunca resolvido de novo aqui: o papel conta o que valia quando o
+         pedido foi liberado, e mexer no projeto depois não reescreve papel
+         que já saiu. Pedido sem projeto (ou sem congelamento) não imprime
+         bloco nenhum — e não imprime "sem projeto" tampouco, porque isso não
+         é instrução de trabalho. */
+      if (typeof pcBlocoPapel !== "function") return "";
+      try { return pcBlocoPapel(r.id) || ""; } catch (e2) { return ""; }
+    })()}
     ${tpl.check.length ? `<div class="slip-linha slip-ckl"><b class="ckl-tit">CHECK LIST:</b><div class="ckl-grade">${tpl.check.map((c2) => ckl(c2)).join("")}</div></div>` : ""}
     <div class="slip-linha slip-nome"><b>PRESTADORA:</b>${r.prestadora ? ` <b style="font-size:11px">${esc(r.prestadora)}</b>` : ""}</div>
     ${""/* a tabela vem logo depois do nome: é o trabalho que a prestadora executa e preenche.

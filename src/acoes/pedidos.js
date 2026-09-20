@@ -364,7 +364,9 @@ async function acoesPedidos(act, t, e) {
         : "Prioridades reanalisadas: nada mudou — todo mundo já estava na faixa certa.");
     }
     else if (act === "novo-pedido") { S.modal = { tipo: "novoPedido" }; render();
-      if (typeof pedCicloRefrescar === "function") pedCicloRefrescar(["novoPedido"]); }
+      if (typeof pedCicloRefrescar === "function") pedCicloRefrescar(["novoPedido"]);
+      /* os projetos de corte, para a seção nascer preenchida (v8.110) */
+      if (typeof pcAquecer === "function") pcAquecer(); }
     else if (act === "salvar-novo-pedido") {
       const ehNovo = !!S.modal?.novo;
       const qtd = Number($("#np-qtd")?.value) || 0;
@@ -470,6 +472,9 @@ async function acoesPedidos(act, t, e) {
       }
       registrar(op.id, `pedido ${r.numero} criado manualmente (sem análise)`, null, { qtd, prioridade });
       recalcularOP(op);
+      /* v8.110 · a decisão do Projeto de Corte, colhida ANTES de a janela ser
+         trocada pela dos papéis — daqui a duas linhas `S.modal` é outro. */
+      const corteDecidido = S.modal?.corte || null;
       /* Uma janela só: ela decide tudo e clica em Criar. A impressão vem em
          seguida porque é o próximo passo do fluxo, não porque falta algo. */
       S.modal = { tipo: "papeis", qtd: 1, nPapel: 1, ids: [r.id], origem: "demanda" };
@@ -497,6 +502,12 @@ async function acoesPedidos(act, t, e) {
          sempre — gravar de novo o que não mudou é barato; perder o produto
          recém-criado não é. */
       await salvarTudo("nucleo", "produtos");
+      /* v8.110 · o vínculo com o Projeto de Corte, agora que o pedido EXISTE.
+         Vai pela fila, como todo o resto do módulo: se não passar agora, fica
+         guardado — e o congelamento, mais tarde, é que exige confirmação. */
+      if (typeof pcVincularDecidido === "function") {
+        try { await pcVincularDecidido(r.id, sku, corteDecidido); } catch (e2) {}
+      }
       toastPasso(`Pedido ${r.numero} criado`, P_LABEL.papel, "próxima: imprimir o papel para entrar na fila");
     }
     else if (act === "novo-pedido-nada") {}
