@@ -56,3 +56,74 @@
 /* o cabeçalho do cadastro quebra em tela estreita em vez de cortar a busca */
 .tela-processos .card-h{flex-wrap:wrap;gap:8px;}
 .tela-processos .card-h .filters{flex-wrap:wrap;}
+
+/* ===========================================================================
+   v8.109 · a ficha do Projeto de corte. Porte de prototipos/corte/corte.css,
+   que já foi escrito contra os tokens do app.
+   =========================================================================== */
+
+/* o guia dos três níveis, sempre visível */
+.cr-guia{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:0 14px 12px;}
+.cr-nivel{padding:8px 10px;border-radius:var(--r-3);border-left:3px solid var(--line);background:var(--surface-2);}
+.cr-nivel b{display:block;font-size:var(--fs-micro);}
+.cr-nivel small{color:var(--ink-3);font-size:var(--fs-micro);}
+.cr-nivel.n1{border-left-color:var(--ink-3);}
+.cr-nivel.n2{border-left-color:var(--acao);}
+.cr-nivel.n3{border-left-color:var(--atencao);}
+.cr-tag.n1{background:var(--surface-2);color:var(--ink-2);}
+.cr-tag.n3{background:var(--atencao-fundo,var(--surface-2));color:var(--atencao);}
+
+.tela-pjc{padding:16px 0;}
+.tela-pjc .pc-subs{padding:0 14px;}
+.pjc-topo{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.pjc-topo h2{margin:0;font-size:1.05rem;}
+
+/* a ficha */
+.cr-sec{border-top:1px solid var(--line);margin-top:14px;padding-top:12px;}
+.cr-sec h3{margin:0 0 6px;font-size:.95rem;}
+.cr-conds{display:flex;flex-direction:column;gap:6px;margin:8px 0;}
+.cr-cond-l{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.cr-cond-n{font-size:var(--fs-micro);color:var(--ink-3);}
+.cr-afeta{margin-top:8px;font-size:var(--fs-micro);}
+.cr-skus{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.cr-pill{display:inline-block;padding:1px 8px;border:1px solid var(--line);border-radius:var(--r-pill);font-size:var(--fs-micro);}
+.pjc-blocos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:8px;}
+.pjc-bloco{padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-3);}
+.pjc-bloco b{display:block;margin-bottom:6px;font-size:var(--fs-micro);}
+
+/* editor de corte e camada */
+.cr-ed-corte{border:1px solid var(--line);border-radius:var(--r-3);padding:12px;margin-top:10px;background:var(--surface);}
+.cr-ed-h{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.cr-ed-h .bc-acoes{margin-left:auto;display:flex;gap:4px;}
+.cr-ed-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;}
+.cr-ed-cam{border-left:3px solid var(--acao);border-radius:var(--r-2);padding:10px;margin-top:10px;background:var(--surface-2);}
+.cr-cam-h{display:flex;gap:6px;align-items:center;font-size:var(--fs-micro);color:var(--ink-3);margin-bottom:8px;}
+.pf-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
+  border-radius:50%;background:var(--surface-2);border:1px solid var(--line);font-size:var(--fs-micro);}
+.as-botoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.pc-un-w{display:flex;align-items:center;gap:6px;}
+.pc-un{font-size:var(--fs-micro);color:var(--ink-3);}
+.cr-st-l{display:flex;flex-direction:column;gap:6px;margin:8px 0;}
+.cr-st-i{display:flex;gap:8px;align-items:center;}
+
+/* o resultado resolvido */
+.cr-bloco{border-top:1px solid var(--line);margin-top:12px;padding-top:10px;}
+.cr-bloco h3{display:flex;gap:8px;align-items:center;margin:0 0 8px;font-size:.95rem;}
+.cr-cortes{display:grid;gap:10px;}
+.cr-corte{border:1px solid var(--line);border-radius:var(--r-3);padding:10px;background:var(--surface);}
+.cr-corte-h{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
+.cr-med{margin-left:auto;font-weight:700;}
+.cr-lin{display:flex;gap:10px;align-items:center;}
+.cr-tc{margin-left:auto;font-size:var(--fs-micro);padding:1px 8px;border:1px solid var(--line);border-radius:var(--r-pill);}
+.cr-camada{border-left:3px solid var(--acao);padding:8px 10px;margin-top:8px;background:var(--surface-2);border-radius:var(--r-2);}
+.cr-cond{font-size:var(--fs-micro);color:var(--atencao);margin-top:6px;}
+.cr-fitilho,.cr-sort{padding:8px 0;}
+.cr-sort-l{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;}
+.cr-cad{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:10px;}
+.cr-cad li{font-size:var(--fs-micro);}
+.cr-cad b{font-size:.9rem;}
+/* o ajuste: o que se mantém fica apagado, o que nasce fica marcado */
+.pjc-removido{opacity:.55;}
+.pjc-removido .cr-ed-h b{text-decoration:line-through;}
+.pjc-novo{border-left:3px solid var(--acao);}
+.pjc-bloco small{display:block;margin-top:4px;color:var(--ink-3);font-size:var(--fs-micro);}

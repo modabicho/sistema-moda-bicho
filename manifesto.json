@@ -35,13 +35,13 @@
   },
   {
    "arquivo": "styles/processos.css",
-   "linhas": 50
+   "linhas": 129
   }
  ],
  "js": [
   {
    "arquivo": "nucleo/utilidades.js",
-   "linhas": 307
+   "linhas": 308
   },
   {
    "arquivo": "dados/persistencia.js",
@@ -65,7 +65,7 @@
   },
   {
    "arquivo": "persistencia/pedidos.js",
-   "linhas": 373
+   "linhas": 377
   },
   {
    "arquivo": "persistencia/realtime.js",
@@ -73,7 +73,7 @@
   },
   {
    "arquivo": "persistencia/tela.js",
-   "linhas": 1307
+   "linhas": 1316
   },
   {
    "arquivo": "persistencia/demanda.js",
@@ -293,7 +293,7 @@
   },
   {
    "arquivo": "relatorios/relatorios.js",
-   "linhas": 758
+   "linhas": 760
   },
   {
    "arquivo": "dados/salvar.js",
@@ -321,7 +321,7 @@
   },
   {
    "arquivo": "acoes/clique.js",
-   "linhas": 1008
+   "linhas": 1018
   },
   {
    "arquivo": "acoes/pedidos.js",
@@ -397,12 +397,20 @@
    "linhas": 200
   },
   {
+   "arquivo": "corte/projetos.js",
+   "linhas": 482
+  },
+  {
    "arquivo": "telas/fitas.js",
    "linhas": 249
   },
   {
+   "arquivo": "telas/projeto-corte.js",
+   "linhas": 772
+  },
+  {
    "arquivo": "telas/processos.js",
-   "linhas": 106
+   "linhas": 44
   }
  ]
 }

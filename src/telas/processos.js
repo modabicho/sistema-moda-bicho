@@ -15,76 +15,14 @@
    infraestrutura do Projeto de Corte, não um módulo irmão de Pedidos. Esta
    versão corrige a navegação sem tocar em uma linha da persistência.
 
-   O QUE AINDA NÃO EXISTE
-     A ficha do Projeto de Corte (criar, versionar, herdar) é a próxima versão.
-     Aqui a sub-aba já existe e mostra o estado real da tabela — vazia, hoje —
-     com a explicação da hierarquia. Sem botão que não faz nada: botão morto é
-     promessa que a tela não cumpre.
+   v8.109 · a ficha do Projeto de Corte passou a existir: a casca continua
+   sendo só a barra e o despacho.
    =========================================================================== */
 
-let PROC_VIEW = { sub: "projeto", projetos: null, carregou: false, erro: null };
+let PROC_VIEW = { sub: "projeto" };
 
-/* A contagem de projetos vem direto do servidor porque ainda não existe um
-   `src/corte/projetos.js` — ele nasce com a ficha, na próxima versão, e esta
-   leitura muda de endereço junto. É uma linha de leitura, sem gravação. */
-function procGarantirCarga() {
-  if (PROC_VIEW.carregou) return;
-  PROC_VIEW.carregou = true;
-  if (typeof persLer !== "function") return;
-  persLer("pcp_projeto_corte?deleted_at=is.null&select=id,nome,escopo&order=nome.asc&limit=200")
-    .then((r) => {
-      if (r.ok) { PROC_VIEW.projetos = persLista(r.corpo); PROC_VIEW.erro = null; }
-      else { PROC_VIEW.erro = "não-consegui"; PROC_VIEW.carregou = false; }
-      render();
-    })
-    .catch(() => { PROC_VIEW.carregou = false; });
-}
-
-function viewProjetoCorte() {
-  procGarantirCarga();
-  const lista = PROC_VIEW.projetos;
-
-  const ajuda = `<div class="cr-ajuda">O Projeto de Corte é a <b>ficha técnica</b> de como cortar as
-    fitas de um produto. Ele não pertence ao pedido nem à OP: o pedido <b>referencia</b> a versão
-    que estava valendo quando o papel foi impresso.
-    Vale do mais geral para o mais específico — <b>família</b> (todos os 3xx) &lt;
-    <b>combinação</b> (um recorte dentro dela) &lt; <b>exceção do SKU</b> — e a mais específica
-    vence <b>bloco a bloco</b>: um SKU pode ter cortes próprios e continuar herdando o fitilho da
-    família.</div>`;
-
-  if (lista === null) {
-    return `<section class="card">
-      <div class="card-h"><h2>Projeto de corte</h2></div>
-      ${ajuda}
-      <div class="empty" style="padding:36px">
-        <h3>${PROC_VIEW.erro ? "Não consegui ler os projetos agora" : "Carregando…"}</h3>
-        <p>${PROC_VIEW.erro ? "Sem conexão ou sem sessão. A lista aparece assim que o servidor responder." : ""}</p>
-      </div></section>`;
-  }
-
-  if (!lista.length) {
-    return `<section class="card">
-      <div class="card-h"><h2>Projeto de corte</h2></div>
-      ${ajuda}
-      <div class="empty" style="padding:36px">
-        <h3>Nenhum Projeto de Corte cadastrado</h3>
-        <p>A tela de cadastro da ficha chega na próxima versão. Enquanto isso, o
-           <b>Cadastro de fitas</b> ao lado já funciona — é dele que a receita de corte vai se servir.</p>
-      </div></section>`;
-  }
-
-  /* já existem projetos: lista simples de consulta, sem ação — quem edita é a
-     ficha, que ainda não existe */
-  return `<section class="card">
-    <div class="card-h"><h2>Projeto de corte</h2><span class="hint">${lista.length} projeto(s)</span></div>
-    ${ajuda}
-    <table class="lista">
-      <thead><tr><th>Projeto</th><th>Escopo</th></tr></thead>
-      <tbody>${lista.map((p) => `<tr><td><b>${esc(p.nome || "")}</b></td><td>${esc(p.escopo || "")}</td></tr>`).join("")}</tbody>
-    </table>
-    <div class="hint" style="padding:0 14px 16px">Consulta apenas. A edição da ficha chega na próxima versão.</div>
-  </section>`;
-}
+/* A sub-aba Projeto de corte é `viewProjetoCorte`, em telas/projeto-corte.js;
+   Fitas é `viewFitasArea`, em telas/fitas.js. Esta casca só escolhe. */
 
 function viewProcessos() {
   const subs = [["projeto", "Projeto de corte"], ["fitas", "Fitas"]];

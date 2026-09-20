@@ -59,6 +59,8 @@ async function _clique(e) {
      v8.108 · `data-proc` troca de sub-aba; `data-fita` é o miolo do cadastro. */
   if ((t = el("data-proc")) && typeof procClique === "function") {
     e.stopPropagation(); if (procClique(t)) return; }
+  if ((t = el("data-pjc")) && typeof pjcClique === "function") {
+    e.stopPropagation(); if (await pjcClique(t)) return; }
   if ((t = el("data-fita")) && typeof fitaClique === "function") {
     e.stopPropagation(); if (await fitaClique(t)) return; }
 
