@@ -1,0 +1,29 @@
+/* ===========================================================================
+   styles/fitas.css · a aba Fitas (v8.107)
+   ---------------------------------------------------------------------------
+   Só o que é da tela nova. Botão, campo, aviso e tabela vêm das classes que já
+   existem (`btn`, `inp`, `fld`, `aviso`, `lista`) — estilo novo para botão
+   seria um segundo botão no sistema.
+   =========================================================================== */
+
+.tela-fitas { padding: 16px; }
+.tela-fitas .barra { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.tela-fitas .barra #q-fita { flex: 1 1 260px; min-width: 180px; }
+.tela-fitas .barra .hint { margin-left: auto; white-space: nowrap; }
+
+/* o formulário abre por cima da lista, e não em outra tela: cadastrar uma fita
+   é olhar para as outras enquanto se digita */
+/* os mesmos tokens do `.resumo` do topo dos Pedidos: um cartão novo com cor
+   própria seria um segundo cartão no sistema, e quebraria no tema escuro —
+   foi o que aconteceu na primeira prévia desta tela. */
+.fita-form { border: 1px solid var(--line); border-radius: var(--r-3);
+             padding: 14px; margin-bottom: 14px;
+             background: var(--surface); box-shadow: var(--shadow); }
+.fita-form h3 { margin: 0 0 10px; font-size: 1rem; }
+.fita-grade { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.fita-acoes { display: flex; gap: 8px; margin-top: 12px; }
+.fita-acoes .perigo { margin-left: auto; }
+
+.lista.fitas tr[data-fita] { cursor: pointer; }
+.lista.fitas tr.on { outline: 2px solid var(--acao); outline-offset: -2px; }
+.lista.fitas td .sub { opacity: .65; font-size: .85em; }

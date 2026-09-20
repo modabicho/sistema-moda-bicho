@@ -558,6 +558,15 @@ async function telaAbrir() {
   const cadInfo = { cadastrosBase: cadBase, cadAplicou, meses: mesInfo, aux: auxInfo, equipe: eqInfo, insumos: insInfo,
     cadastros: typeof cadNomes === "function" ? cadNomes() : null };
 
+  /* v8.107 · o dreno do corte roda ANTES da saída logo abaixo, e é de
+     propósito: ele tem flag própria (`corte_escrita`) e não pode ficar refém
+     do cutover de Pedidos. Com a flag desligada, `cxDrenar` devolve
+     "desligado" sem tocar na rede. */
+  if (typeof cxDrenar === "function") {
+    try { cadInfo.corte = await cxDrenar(); }
+    catch (e) { cadInfo.corte = { status: "erro", msg: String((e && e.message) || e) }; }
+  }
+
   if (!telaLeDaTabela() && !telaEscreveNaTabela()) {
     return Object.assign({ status: "desligado", pendentes, sessao: true,
       flags: f.flags || null }, cadInfo);

@@ -32,6 +32,10 @@
   {
    "arquivo": "styles/telas.css",
    "linhas": 425
+  },
+  {
+   "arquivo": "styles/fitas.css",
+   "linhas": 24
   }
  ],
  "js": [
@@ -383,6 +387,18 @@
   {
    "arquivo": "corte/modelo.js",
    "linhas": 230
+  },
+  {
+   "arquivo": "corte/outbox.js",
+   "linhas": 137
+  },
+  {
+   "arquivo": "corte/fitas.js",
+   "linhas": 200
+  },
+  {
+   "arquivo": "telas/fitas.js",
+   "linhas": 217
   }
  ]
 }

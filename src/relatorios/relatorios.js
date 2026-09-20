@@ -301,6 +301,7 @@ const TITULOS = {
   compras: ["Compras", "Materiais em falta, separados por fornecedor"],
   produtos: ["Produtos", "Cadastro, fotos e vínculo com a loja"],
   insumos: ["Insumos", "O que a fábrica compra para produzir — estoque e entradas por nota"],
+  fitas: ["Fitas", "A biblioteca de fitas — código do fornecedor, número, cor e onde está"],
   festivas: ["Datas festivas", "Campanhas sazonais — planejamento e projeção, separados da Demanda"],
   semiacabados: ["Semiacabados", "A bandana pronta que ainda não é SKU — remessas, retorno e estoque"],
   relatorios: ["Relatórios", "O que está acontecendo, por que — e o que fazer agora"],
@@ -425,6 +426,7 @@ function render() {
     ["sec", "Cadastros"],
     ["produtos", "Produtos", null],
     ["insumos", "Insumos", insumosAbaixo().length || null, insumosAbaixo().length ? "alerta" : null],
+    ["fitas", "Fitas", null],
     ["prestadoras", "Prestadoras", aReporNasPrestadoras().length || null, aReporNasPrestadoras().length ? "alerta" : null],
     ["equipe", "Equipe", null],
     /* "Histórico" e "Dados" saíram do menu principal: as duas são de consulta
@@ -487,11 +489,11 @@ function render() {
   /* base sem produto e sem pedido, mas com remessa registrada: a tela de "comece
      importando" escondia as remessas, e elas eram o único trabalho que existia. */
   const soRemessas = S.aba === "pedidos" && remessas().length;
-  if (vazio && !soRemessas && !["dados", "equipe", "prestadoras", "compras", "conferencia", "insumos", "festivas", "semiacabados"].includes(S.aba)) corpo = viewVazio();
+  if (vazio && !soRemessas && !["dados", "equipe", "prestadoras", "compras", "conferencia", "insumos", "fitas", "festivas", "semiacabados"].includes(S.aba)) corpo = viewVazio();
   else corpo = ({ demanda: viewDemanda, pedidos: viewPedidos,
     conferencia: viewProcessos, tarefas: viewTarefas, compras: viewCompras, produtos: viewProdutos, prestadoras: viewPrestadoras,
     equipe: viewEquipe, historico: viewHistorico, dados: viewDados,
-    insumos: viewInsumos, festivas: viewFestivas, relatorios: viewRelatorios,
+    insumos: viewInsumos, festivas: viewFestivas, relatorios: viewRelatorios, fitas: viewFitas,
     semiacabados: viewSemi })[S.aba]();
 
   /* servidor configurado e sem login: pede e-mail/senha do Supabase antes de qualquer coisa */

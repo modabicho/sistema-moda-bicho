@@ -349,6 +349,10 @@ async function pxDrenar() {
   const feitas = [], paradas = [], sincronizadas = [];
   try {
     for (const acao of obPendentes()) {
+      /* v8.107 · a fila é uma só; os drenos é que são dois. O corte tem RPC,
+         flag e dreno próprios (src/corte/outbox.js) — passar por aqui faria
+         `pxEnviar` devolver "tipo desconhecido" a cada rodada. */
+      if (typeof cxEhCorte === "function" && cxEhCorte(acao.tipo)) continue;
       const r = await pxEnviar(acao);
       if (r.status === "ok") {
         feitas.push(acao.opId);

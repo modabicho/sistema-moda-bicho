@@ -219,6 +219,7 @@ const IC = {
   impressora:'<path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="7" rx="2"/><path d="M7 14h10v6H7z"/>',
   regua2:'<path d="M4 8h16"/><path d="M12 5v6"/><path d="M6 11l-2 5a4 4 0 0 0 8 0l-2-5"/><path d="M18 11l-2 5a4 4 0 0 0 8 0l-2-5" transform="translate(-2)"/>',
   setaEsq:'<path d="M14.5 5 8 12l6.5 7"/>',
+  fitas:'<path d="M4 4h16v4H4z"/><path d="M6 8v12l6-3 6 3V8"/>',
   insumos:'<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5"/><path d="M12 12v9"/>',
   festivas:'<path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"/>',
   semiacabados:'<path d="M4 6h10v12H4z"/><path d="M14 9h3l3 3v6h-6z"/><path d="M4 12h10"/>',

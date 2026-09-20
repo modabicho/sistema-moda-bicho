@@ -54,6 +54,11 @@ async function _clique(e) {
   }
   let t;
 
+  /* v8.107 · a aba Fitas trata os próprios cliques; aqui fica só a porta.
+     Vem depois dos menus de cima, para clicar numa fita também fechar o menu. */
+  if ((t = el("data-fita")) && typeof fitaClique === "function") {
+    e.stopPropagation(); if (await fitaClique(t)) return; }
+
   if ((t = el("data-aba"))) {
     if (!podeAba(t.dataset.aba)) { toast("Sem acesso a essa parte — fale com a administradora.", "erro"); return; }
     /* a seleção de produtos também se desfaz ao trocar de aba, como a de pedidos:
