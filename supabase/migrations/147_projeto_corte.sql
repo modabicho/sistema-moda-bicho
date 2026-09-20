@@ -94,10 +94,11 @@ begin
   if to_regclass('public.pcp_operacao') is null then
     raise exception '147 abortada: pcp_operacao nao existe neste banco';
   end if;
-  if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-                  where n.nspname = 'public'
-                    and p.proname in ('pcp_operacao_registrar','pcp_recusa_reuso')
-                  group by true having count(distinct p.proname) = 2) then
+  if (select count(distinct p.proname) <> 2
+        from pg_proc p
+        join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public'
+         and p.proname in ('pcp_operacao_registrar','pcp_recusa_reuso')) then
     raise exception '147 abortada: falta pcp_operacao_registrar ou pcp_recusa_reuso';
   end if;
 end $$;
@@ -454,13 +455,19 @@ as $$
 declare
   v_versao text;
   v_status text;
+  v_linha  record;
 begin
+  -- NEW não existe em DELETE e OLD não existe em INSERT: em PL/pgSQL, tocar no
+  -- campo do que não foi atribuído é erro de execução, não null. Por isso a
+  -- linha é escolhida por TG_OP antes de qualquer campo ser lido.
+  if tg_op = 'DELETE' then v_linha := old; else v_linha := new; end if;
+
   if tg_table_name = 'pcp_projeto_corte_camada' then
     select c.versao_id into v_versao
       from public.pcp_projeto_corte_corte c
-     where c.id = coalesce(new.corte_id, old.corte_id);
+     where c.id = v_linha.corte_id;
   else
-    v_versao := coalesce(new.versao_id, old.versao_id);
+    v_versao := v_linha.versao_id;
   end if;
 
   select status into v_status
@@ -469,7 +476,7 @@ begin
   if v_status = 'publicada' then
     raise exception 'versao-publicada-imutavel: receita de % nao pode mudar', v_versao;
   end if;
-  return coalesce(new, old);
+  return v_linha;
 end $$;
 
 do $$
