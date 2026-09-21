@@ -35,11 +35,27 @@ const FT_CAMPOS = Object.freeze({
 });
 const FT_COLUNAS = Object.freeze(Object.entries(FT_CAMPOS).map(([, c]) => c).concat(["revision"]));
 
+/* `""` vira `null` porque campo de texto vazio na tela quer dizer "não sei",
+   e `pcp_fita_salvar` grava tudo com `coalesce(novo, antigo)`: mandar null é
+   dizer "não mexe neste campo".
+
+   `foto_path` é a exceção, e por um motivo concreto: ali o vazio NÃO é "não
+   sei" — é "esta fita não tem foto", uma decisão de alguém que clicou em
+   Remover. Com a conversão, o `coalesce` preservava o caminho antigo, a
+   remoção apagava o objeto e a fita ficava apontando para o nada — o `orfaos`
+   que o smoke da 150 conta. Medido em produção na v8.111.
+
+   NOTA para quem passar por aqui: pela mesma conversão, os outros campos de
+   texto também não podem ser ESVAZIADOS por este caminho — apagar o conteúdo
+   de `local` ou `obs` e salvar mantém o valor anterior. Isso é anterior a esta
+   correção e vale para a tela inteira de Fitas; não foi mexido aqui para não
+   trocar o comportamento de campos que ninguém reclamou. */
 function ftParaServidor(f) {
   const out = {};
   for (const [app, col] of Object.entries(FT_CAMPOS)) {
     const v = f[app];
-    if (v !== undefined) out[col] = v === "" ? null : v;
+    if (v === undefined) continue;
+    out[col] = (v === "" && app !== "fotoPath") ? null : v;
   }
   return out;
 }
@@ -136,11 +152,14 @@ async function ftSalvar(fita, campoMexido) {
   });
   if (!acao) return { status: "invalido", motivo: "ação desconhecida" };
 
-  /* a tela já mostra o valor novo; a fila é que decide quando ele chega lá */
+  /* a tela já mostra o valor novo; a fila é que decide quando ele chega lá.
+     `antes` guarda o que existia para o caso de o servidor recusar — aí o
+     otimismo é desfeito em vez de ficar contando outra história. */
+  const antes = atual ? Object.assign({}, atual) : null;
   ftGuardarLocal(Object.assign({}, atual || {}, f));
 
   const r = await cxDrenar();
-  return ftDepoisDoDreno(r, f.id, acao.opId);
+  return ftDepoisDoDreno(r, f.id, acao.opId, antes);
 }
 
 async function ftApagar(id) {
@@ -161,15 +180,44 @@ function ftGuardarLocal(f) {
   FT_LISTA.sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"));
 }
 
-/* Traduz o resultado do dreno para a linguagem da tela, e mantém a `revision`
-   local em dia quando o servidor confirmou. */
-function ftDepoisDoDreno(r, id, opId) {
+/* ---------------------------------------------------------------------------
+   DEPOIS DO DRENO
+   ---------------------------------------------------------------------------
+   O comentário antigo aqui dizia que esta função "mantém a `revision` local em
+   dia quando o servidor confirmou". Ela não mantinha: lia a revisão do próprio
+   CACHE — que `ftSalvar` acabara de escrever com o valor OTIMISTA, ainda com a
+   revisão velha. Ela nunca avançava. A gravação seguinte mandava
+   `expected_revision` desatualizada e levava `conflito`, e era por isso que
+   trocar a foto duas vezes seguidas, ou remover logo depois de trocar,
+   falhava sempre. Medido em produção na v8.111.
+
+   Agora a revisão vem da RESPOSTA do servidor — `pcp_fita_salvar` devolve
+   `{status, id, revision}` (147, §5) — e o dreno a carrega em `respostas`.
+
+   `antes` é o registro como estava antes da gravação otimista. Quando o
+   servidor RECUSA, o valor otimista sai do cache: sem isso a tela seguia
+   mostrando a foto nova enquanto a antiga era a que valia no servidor.
+   Em `na-fila` o otimismo continua — ali a ação está guardada e vai chegar.
+   --------------------------------------------------------------------------- */
+function ftDepoisDoDreno(r, id, opId, antes) {
+  const desfazer = () => {
+    if (antes === undefined) return;                 /* quem não passou `antes` não desfaz */
+    const i = FT_LISTA.findIndex((x) => x.id === id);
+    if (antes === null) { if (i >= 0) FT_LISTA.splice(i, 1); return; }   /* era fita nova */
+    if (i >= 0) FT_LISTA[i] = antes; else FT_LISTA.push(antes);
+  };
+
   if (r.status === "desligado") return { status: "na-fila", motivo: "gravação do corte desligada", id };
+
   const parada = (r.paradas || []).find((p) => p.opId === opId);
-  if (parada) return Object.assign({ id }, parada.resposta, { acao: opId });
+  if (parada) { desfazer(); return Object.assign({ id }, parada.resposta, { acao: opId }); }
+
   if ((r.feitas || []).includes(opId)) {
+    const resp = (r.respostas || {})[opId] || {};
+    const rev = resp.revision;
+    if (rev != null) ftGuardarLocal({ id, revision: rev });
     const f = ftAchar(id);
-    return { status: "ok", id, revision: f ? f.revision : null };
+    return { status: "ok", id, revision: rev != null ? rev : (f ? f.revision : null) };
   }
   return { status: "na-fila", id, restam: r.restam };
 }
@@ -194,7 +242,9 @@ async function ftReenviarResolvido(opId, fitaNova) {
     p_expected_revision: atual ? atual.revision : null,
   });
   if (!nova) return { status: "nao-achei", motivo: "esta ação não está mais na fila" };
+  /* mesmo otimismo do `ftSalvar`, e mesma volta atrás se o servidor recusar */
+  const antes = atual ? Object.assign({}, atual) : null;
   ftGuardarLocal(Object.assign({}, atual || {}, fitaNova));
   const r = await cxDrenar();
-  return ftDepoisDoDreno(r, fitaNova.id, nova.opId);
+  return ftDepoisDoDreno(r, fitaNova.id, nova.opId, antes);
 }

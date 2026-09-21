@@ -118,12 +118,19 @@ async function cxDrenar() {
   if (CX_DRENANDO) return { status: "ok", jaRodando: true };
   CX_DRENANDO = true;
 
-  const feitas = [], paradas = [];
+  /* v8.111 · `respostas` guarda o que o servidor DEVOLVEU em cada ação que
+     passou. Antes só o opId entrava em `feitas` e o corpo era jogado fora — e
+     com ele a `revision` nova. Quem gravava ficava com a revisão velha no
+     cache, a gravação seguinte mandava `expected_revision` desatualizada, e o
+     servidor recusava com `conflito`. Trocar a foto duas vezes seguidas, ou
+     remover logo depois de trocar, falhava por isso. Medido em produção. */
+  const feitas = [], paradas = [], respostas = {};
   try {
     for (const acao of cxPendentes()) {
       const r = await cxEnviar(acao);
       if (r.status === "ok" || r.status === "sem_mudanca" || r.status === "sem-mudanca") {
         feitas.push(acao.opId);
+        respostas[acao.opId] = r;
         continue;
       }
       /* sem rede é o único caso que interrompe: insistir nas outras só
@@ -133,5 +140,5 @@ async function cxDrenar() {
     }
   } finally { CX_DRENANDO = false; }
 
-  return { status: "ok", feitas, paradas, restam: cxPendentes().length };
+  return { status: "ok", feitas, paradas, respostas, restam: cxPendentes().length };
 }
