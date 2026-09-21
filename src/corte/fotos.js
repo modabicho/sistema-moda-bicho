@@ -262,8 +262,16 @@ async function foRemoverDaFita(fitaId) {
 
   /* mesma ordem, no sentido inverso: primeiro o cadastro deixa de apontar,
      depois o objeto sai. Apagar antes deixaria a ficha apontando para o nada
-     se a gravação falhasse. */
-  const gravou = await ftSalvar(Object.assign({}, fita, { fotoPath: null }), ["fotoPath"]);
+     se a gravação falhasse.
+
+     LIMPAR É `""`, NÃO `null` — e isso não é detalhe de estilo.
+     `pcp_fita_salvar` grava `coalesce(p_dados->>'foto_path', foto_path)`, de
+     propósito: um campo ausente no payload não pode apagar o que já existe.
+     Só que isso faz `null` PRESERVAR o caminho antigo — a remoção apagava o
+     objeto e deixava a fita apontando para o nada, que é justamente o
+     `orfaos` que o smoke da 150 conta. Medido em produção na v8.111.
+     A string vazia é o valor que atravessa o `coalesce` e limpa. */
+  const gravou = await ftSalvar(Object.assign({}, fita, { fotoPath: "" }), ["fotoPath"]);
   if (gravou.status !== "ok" && gravou.status !== "na-fila") {
     return { status: gravou.status, motivo: gravou.motivo || "Não consegui tirar a foto do cadastro." };
   }

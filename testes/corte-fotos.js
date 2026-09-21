@@ -15,6 +15,7 @@
    =========================================================================== */
 (function () {
   const CASOS = {};
+  const CHAVE = (typeof OUTBOX_CHAVE !== "undefined" ? OUTBOX_CHAVE : "pcp5:outbox");
 
   /* um "arquivo" de bancada: o cliente só lê type/size e entrega ao fetch */
   const arquivo = (tipo, bytes, nome) => ({
@@ -180,9 +181,11 @@
     try {
       const r = await foRemoverDaFita("ft_1");
       return { ok: r.status === "ok"
-                   && B.salvouComo.length === 1 && B.salvouComo[0].fotoPath === null
+                   /* limpar é "", não null: com null o `coalesce` da RPC
+                      preserva o caminho antigo (v8.111) */
+                   && B.salvouComo.length === 1 && B.salvouComo[0].fotoPath === ""
                    && apagou(B).length === 1
-                   && B.fitas[0].fotoPath === null,
+                   && B.fitas[0].fotoPath === "",
                obtido: { status: r.status, gravou: B.salvouComo[0], apagou: apagou(B).length } };
     } finally { desmontar(B); }
   };
@@ -242,6 +245,138 @@
       return { ok: init && h.includes("/storage/v1/object/fitas/fita/ft_1/a.jpg"),
                obtido: h };
     } finally { desmontar(B); }
+  };
+
+  /* =========================================================================
+     7 · OS DOIS DEFEITOS QUE A BANCADA NÃO PEGOU E A PRODUÇÃO PEGOU
+     -------------------------------------------------------------------------
+     Estes quatro usam o `ftSalvar` DE VERDADE e a fila de verdade — os casos
+     de cima trocam o `ftSalvar` por um de bancada, e foi exatamente por isso
+     que os dois defeitos passaram batido: um morava no `ftSalvar` real
+     (revisão lida do cache) e o outro no `coalesce` da RPC (null não limpa).
+     Aqui o "servidor" é de bancada, mas responde como o de verdade: devolve
+     `revision` e faz o `coalesce`.
+     ========================================================================= */
+  function montarReal(opcoes) {
+    const o = opcoes || {};
+    const salvo = {};
+    const trocar = (nome, fn) => { salvo[nome] = window[nome]; window[nome] = fn; };
+    /* o "banco": uma fita, com revisão que anda a cada gravação aceita */
+    const B = { salvo, linha: [],
+      banco: { id: "ft_1", nome: "Cetim", foto_path: null, revision: 1 },
+      recusarNaProxima: o.recusarNaProxima || 0, gravacoes: 0 };
+
+    trocar("persToken", () => "tok");
+    trocar("persSoLeitura", () => false);
+    trocar("corteEscreve", () => true);
+
+    /* o servidor: mesma regra da 147 — coalesce e checagem de revisão */
+    trocar("persRpc", async (nome, args) => {
+      if (nome === "pcp_fita_salvar") {
+        B.gravacoes++;
+        B.linha.push({ passo: "gravar", rev: args.p_expected_revision, foto: args.p_dados.foto_path });
+        if (B.recusarNaProxima === B.gravacoes) {
+          return { ok: true, corpo: { status: "conflito", id: B.banco.id, revision: B.banco.revision } };
+        }
+        if (args.p_expected_revision != null && args.p_expected_revision !== B.banco.revision) {
+          return { ok: true, corpo: { status: "conflito", id: B.banco.id, revision: B.banco.revision } };
+        }
+        /* COALESCE: null preserva; string vazia limpa */
+        const f = args.p_dados.foto_path;
+        if (f !== null && f !== undefined) B.banco.foto_path = f;
+        B.banco.revision += 1;
+        return { ok: true, corpo: { status: "ok", id: B.banco.id, revision: B.banco.revision } };
+      }
+      return { ok: true, corpo: { status: "ok" } };
+    });
+
+    /* o Storage */
+    trocar("fetch", async (url, init) => {
+      const u = String(url), m = (init && init.method) || "GET";
+      if (u.includes("/object/info/")) return { ok: true, status: 200, json: async () => ({}) };
+      if (u.includes("/object/sign/")) return { ok: true, status: 200, json: async () => ({ signedURL: "/x" }) };
+      if (m === "POST")   { B.linha.push({ passo: "subir",  alvo: (u.split("/fitas/")[1]||"").split("?")[0] }); }
+      if (m === "DELETE") { B.linha.push({ passo: "apagar", alvo: (u.split("/fitas/")[1]||"").split("?")[0] }); }
+      return { ok: true, status: 200, json: async () => ({}) };
+    });
+
+    localStorage.removeItem(CHAVE);
+    FT_LISTA = [ftParaApp(Object.assign({}, B.banco))];
+    return B;
+  }
+  function desmontarReal(B) {
+    for (const [n, fn] of Object.entries(B.salvo)) { if (fn === undefined) delete window[n]; else window[n] = fn; }
+    localStorage.removeItem(CHAVE);
+    if (typeof foEsquecerUrl === "function") foEsquecerUrl();
+  }
+  const img = (tipo) => ({ type: tipo, size: 5000, name: "f." + tipo.split("/")[1], __bancada: true });
+
+  CASOS["A · trocar JPG → PNG → WEBP sem recarregar, e a revisão anda"] = async () => {
+    const B = montarReal();
+    try {
+      const revs = [];
+      const sts = [];
+      for (const t of ["image/jpeg", "image/png", "image/webp"]) {
+        const r = await foTrocarDaFita("ft_1", img(t));
+        sts.push(r.status);
+        revs.push({ cache: ftAchar("ft_1").revision, servidor: B.banco.revision });
+      }
+      return { ok: sts.every((s) => s === "ok")
+                   && revs.every((x) => x.cache === x.servidor)   /* nunca ficou para trás */
+                   && B.banco.revision === 4                       /* 1 + três gravações */
+                   && /\.webp$/.test(B.banco.foto_path),
+               obtido: { status: sts, revisoes: revs, fotoFinal: B.banco.foto_path } };
+    } finally { desmontarReal(B); }
+  };
+
+  CASOS["B · trocar e remover em seguida, sem recarregar"] = async () => {
+    const B = montarReal();
+    try {
+      const troca = await foTrocarDaFita("ft_1", img("image/jpeg"));
+      const rem = await foRemoverDaFita("ft_1");
+      return { ok: troca.status === "ok" && rem.status === "ok"
+                   /* o coalesce da RPC preserva null: limpar é "" */
+                   && B.banco.foto_path === ""
+                   && !ftAchar("ft_1").fotoPath,
+               obtido: { troca: troca.status, remocao: rem.status,
+                         fotoNoBanco: B.banco.foto_path, noCache: ftAchar("ft_1").fotoPath } };
+    } finally { desmontarReal(B); }
+  };
+
+  CASOS["C · conflito depois do upload: cache mantém revisão e foto anteriores"] = async () => {
+    const B = montarReal({ recusarNaProxima: 1 });
+    try {
+      B.banco.foto_path = "fita/ft_1/velha.jpg";
+      FT_LISTA = [ftParaApp(Object.assign({}, B.banco))];
+      const antesRev = ftAchar("ft_1").revision;
+      const antesFoto = ftAchar("ft_1").fotoPath;
+
+      const r = await foTrocarDaFita("ft_1", img("image/jpeg"));
+      const depois = ftAchar("ft_1");
+      const apagou = B.linha.filter((x) => x.passo === "apagar").length;
+      return { ok: r.status === "conflito"
+                   && depois.revision === antesRev        /* revisão NÃO avançou */
+                   && depois.fotoPath === antesFoto       /* foto voltou à anterior */
+                   && apagou === 0                        /* objeto antigo intacto */
+                   && B.banco.foto_path === "fita/ft_1/velha.jpg",
+               obtido: { status: r.status, rev: { antes: antesRev, depois: depois.revision },
+                         foto: { antes: antesFoto, depois: depois.fotoPath }, apagou } };
+    } finally { desmontarReal(B); }
+  };
+
+  CASOS["D · remoção: limpa o cadastro ANTES de apagar o objeto"] = async () => {
+    const B = montarReal();
+    try {
+      await foTrocarDaFita("ft_1", img("image/jpeg"));
+      B.linha.length = 0;
+      const r = await foRemoverDaFita("ft_1");
+      const iGravar = B.linha.findIndex((x) => x.passo === "gravar");
+      const iApagar = B.linha.findIndex((x) => x.passo === "apagar");
+      return { ok: r.status === "ok" && iGravar >= 0 && iApagar > iGravar
+                   && B.linha[iGravar].foto === ""        /* limpa com "", não null */
+                   && B.banco.foto_path === "",
+               obtido: { ordem: B.linha.map((x) => x.passo), linha: B.linha } };
+    } finally { desmontarReal(B); }
   };
 
   window.bateriaCorteFotos = async function (opcoes) {

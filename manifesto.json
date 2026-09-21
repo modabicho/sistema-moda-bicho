@@ -390,15 +390,15 @@
   },
   {
    "arquivo": "corte/outbox.js",
-   "linhas": 137
+   "linhas": 144
   },
   {
    "arquivo": "corte/fitas.js",
-   "linhas": 200
+   "linhas": 250
   },
   {
    "arquivo": "corte/fotos.js",
-   "linhas": 280
+   "linhas": 288
   },
   {
    "arquivo": "corte/importar-fita.js",
