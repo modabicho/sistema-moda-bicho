@@ -127,3 +127,39 @@
 .pjc-removido .cr-ed-h b{text-decoration:line-through;}
 .pjc-novo{border-left:3px solid var(--acao);}
 .pjc-bloco small{display:block;margin-top:4px;color:var(--ink-3);font-size:var(--fs-micro);}
+
+/* ---------------------------------------------------------------------------
+   v8.110 · A FOTO DA FITA E A IMPORTAÇÃO POR IMAGEM
+   --------------------------------------------------------------------------- */
+/* o quadro tem altura fixa: sem ela a ficha inteira pula quando a imagem
+   assinada chega, e a pessoa perde o campo que estava preenchendo */
+.fita-foto{display:flex;gap:14px;align-items:flex-start;margin:4px 0 12px;
+  padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-3);background:var(--surface-2);}
+.fita-foto-q{flex:0 0 132px;width:132px;height:132px;border:1px solid var(--line);
+  border-radius:var(--r-2);overflow:hidden;background:var(--surface);
+  display:grid;place-items:center;}
+.fita-foto-q img{width:100%;height:100%;object-fit:cover;display:block;}
+.fita-foto-q a{display:block;width:100%;height:100%;}
+.fita-foto-vazia{display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;
+  color:var(--ink-4);font-size:var(--fs-micro);text-align:center;padding:8px;}
+.fita-foto-vazia.erro{color:var(--atencao);}
+.fita-foto-vazia svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;}
+.fita-foto-a{flex:1;min-width:0;}
+
+/* o palco do recorte: a caixa é posicionada em % sobre a prévia, então ela
+   acompanha qualquer largura de janela sem conta nenhuma no JavaScript */
+.imf-palco{position:relative;display:inline-block;max-width:100%;
+  border:1px solid var(--line);border-radius:var(--r-2);overflow:hidden;background:var(--surface-2);}
+.imf-palco img{display:block;max-width:100%;max-height:46vh;width:auto;height:auto;}
+.imf-caixa{position:absolute;border:2px solid var(--acao);
+  box-shadow:0 0 0 9999px rgba(0,0,0,.42);pointer-events:none;}
+.imf-num{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;}
+.imf-num .fld span{font-size:var(--fs-micro);}
+/* a linha de um campo corrigido à mão: ela precisa saltar aos olhos na
+   conferência, porque é a única que NÃO vem marcada */
+.imf-manual{background:var(--amber-soft);}
+@media (max-width:640px){
+  .fita-foto{flex-direction:column;}
+  .fita-foto-q{width:100%;flex-basis:auto;height:160px;}
+  .imf-num{grid-template-columns:repeat(2,1fr);}
+}

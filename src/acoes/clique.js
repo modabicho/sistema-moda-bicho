@@ -59,6 +59,16 @@ async function _clique(e) {
      v8.108 · `data-proc` troca de sub-aba; `data-fita` é o miolo do cadastro. */
   if ((t = el("data-proc")) && typeof procClique === "function") {
     e.stopPropagation(); if (procClique(t)) return; }
+  /* v8.110 · "Decidir Projeto de Corte" na janela dos papéis: abre o pedido
+     POR CIMA, para a janela dos papéis continuar ali quando ele fechar. */
+  if ((t = el("data-pjc-decidir"))) {
+    e.stopPropagation();
+    const alvo = pedidoPorId(t.dataset.pjcDecidir);
+    if (!alvo) return;
+    abrirPorCimaDaJanela({ tipo: "pedido", pedido: alvo, foto: fotoPedido(alvo) });
+    return;
+  }
+
   /* v8.110 · a seção do Projeto de Corte DENTRO da janela de um pedido. Vem
      ANTES do `data-pjc` da tela de Processos: são coisas diferentes, e o
      atributo separado evita que um dia um handler coma o clique do outro. */
@@ -67,6 +77,43 @@ async function _clique(e) {
     const ctxP = t.dataset.pjcCtx || "np";
     const aP = t.dataset.pjcPed;
 
+    /* ---- v8.110 · a seção dentro da janela de um PEDIDO QUE JÁ EXISTE ----
+       Aqui não há rascunho onde a decisão possa esperar: ela vira vínculo
+       imediatamente. É esta parte que tira o beco sem saída dos pedidos
+       criados antes do módulo. */
+    const idPed = t.dataset.pjcPedId;
+    if (idPed) {
+      const rPed = pedidoPorId(idPed);
+      const skuPed = rPed ? pcSkuDoPedido(rPed) : "";
+      if (aP === "ver" || aP === "ver-cong" || aP === "criar-ped") {
+        if (aP === "criar-ped" && typeof pjNovo === "function") {
+          const rasc = pjNovo("sku");
+          rasc.nome = `Exceção ${skuPed}`;
+          rasc.regras = [{ campo: "sku", operador: "igual", valor: skuPed }];
+          PJC_VIEW.rascunho = rasc; PJC_VIEW.erro = null;
+        }
+        abrirPorCimaDaJanela({ tipo: "projetoCorte", sku: skuPed, criar: aP === "criar-ped",
+          congelado: aP === "ver-cong" ? idPed : null });
+        return;
+      }
+      if (aP === "trocar-ped") {
+        abrirPorCimaDaJanela({ tipo: "trocarProjetoCorte", sku: skuPed, decisao: null,
+          ctx: "ped", pedidoId: idPed });
+        return;
+      }
+      const escolha = aP === "sem-ped" ? "sem" : "resolvido";
+      const feito = await pcDecidirNoPedido(idPed, escolha);
+      if (feito.status === "ok" || feito.status === "na-fila") {
+        toast(escolha === "sem"
+          ? `Pedido ${rPed ? rPed.numero : ""} segue sem Projeto de Corte — registrado.`
+          : `Projeto de Corte vinculado ao pedido ${rPed ? rPed.numero : ""}.`);
+      } else {
+        toast(feito.motivo || `Não consegui gravar a decisão (${feito.status}).`, "erro");
+      }
+      render();
+      return;
+    }
+
     /* ESCOLHER vem primeiro porque é o único clique dado de dentro de OUTRA
        janela: a de trocar está por cima, e o dono da decisão é o pedido que
        ficou embaixo, em `voltarPara`. Perguntar ao `S.modal` daqui devolveria
@@ -74,6 +121,19 @@ async function _clique(e) {
     if (aP === "escolher") {
       const volta = S.modal && S.modal.voltarPara;
       if (!volta) return;
+      /* veio da janela de um pedido que já existe: grava o vínculo na hora e
+         só então volta — não há rascunho onde a escolha pudesse esperar */
+      if (ctxP === "ped") {
+        const alvoId = S.modal.pedidoId;
+        S.modal = volta;
+        const feito = await pcDecidirNoPedido(alvoId, "manual", t.dataset.pjcV);
+        toast(feito.status === "ok" || feito.status === "na-fila"
+          ? "Projeto de Corte trocado neste pedido."
+          : (feito.motivo || `Não consegui gravar a troca (${feito.status}).`),
+          feito.status === "ok" || feito.status === "na-fila" ? undefined : "erro");
+        render();
+        return;
+      }
       const dono = ctxP === "lote" ? (volta.grupos || [])[Number(t.dataset.pjcG)] : volta;
       if (!dono) return;
       const skuDono = ctxP === "lote" ? String(dono.sku || "")
@@ -127,6 +187,9 @@ async function _clique(e) {
     e.stopPropagation(); if (await pjcClique(t)) return; }
   if ((t = el("data-fita")) && typeof fitaClique === "function") {
     e.stopPropagation(); if (await fitaClique(t)) return; }
+  /* v8.110 · a janela de importar fita por imagem */
+  if ((t = el("data-imf")) && typeof imfClique === "function") {
+    e.stopPropagation(); if (await imfClique(t)) return; }
 
   if ((t = el("data-aba"))) {
     if (!podeAba(t.dataset.aba)) { toast("Sem acesso a essa parte — fale com a administradora.", "erro"); return; }

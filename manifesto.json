@@ -35,7 +35,7 @@
   },
   {
    "arquivo": "styles/processos.css",
-   "linhas": 129
+   "linhas": 165
   }
  ],
  "js": [
@@ -265,7 +265,7 @@
   },
   {
    "arquivo": "componentes/modal.js",
-   "linhas": 2656
+   "linhas": 2681
   },
   {
    "arquivo": "festivas/modelo.js",
@@ -321,7 +321,7 @@
   },
   {
    "arquivo": "acoes/clique.js",
-   "linhas": 1089
+   "linhas": 1152
   },
   {
    "arquivo": "acoes/pedidos.js",
@@ -362,7 +362,7 @@
   },
   {
    "arquivo": "ui/formularios-change.js",
-   "linhas": 518
+   "linhas": 575
   },
   {
    "arquivo": "ui/imagens.js",
@@ -397,16 +397,28 @@
    "linhas": 200
   },
   {
+   "arquivo": "corte/fotos.js",
+   "linhas": 280
+  },
+  {
+   "arquivo": "corte/importar-fita.js",
+   "linhas": 266
+  },
+  {
    "arquivo": "corte/projetos.js",
    "linhas": 490
   },
   {
    "arquivo": "corte/pedido-corte.js",
-   "linhas": 589
+   "linhas": 711
   },
   {
    "arquivo": "telas/fitas.js",
-   "linhas": 249
+   "linhas": 331
+  },
+  {
+   "arquivo": "telas/importar-fita.js",
+   "linhas": 238
   },
   {
    "arquivo": "telas/projeto-corte.js",

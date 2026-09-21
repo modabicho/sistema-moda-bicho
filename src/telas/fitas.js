@@ -27,6 +27,62 @@
 
 let FITA_VIEW = { busca: "", aberta: null, erro: null, carregou: false };
 
+/* ---------------------------------------------------------------------------
+   A FOTO (v8.110)
+   ---------------------------------------------------------------------------
+   O bucket é privado, então não existe endereço permanente: a URL é assinada,
+   vale pouco tempo, e é pedida quando a ficha abre. Enquanto ela não chega, o
+   lugar da imagem fica reservado — em vez de piscar uma caixa quebrada.
+
+   `FITA_URLS` guarda só o que já foi assinado NESTA sessão, por caminho. Ele
+   não é cache de dado: é cache de endereço temporário.
+   --------------------------------------------------------------------------- */
+const FITA_URLS = new Map();          /* foto_path → url assinada (ou "erro") */
+let FITA_SUBINDO = null;              /* id da fita cuja foto está subindo */
+
+function fitaPedirUrl(caminho) {
+  if (!caminho || FITA_URLS.has(caminho) || typeof foAssinar !== "function") return;
+  FITA_URLS.set(caminho, null);                       /* pedindo: não repete */
+  foAssinar(caminho).then((r) => {
+    FITA_URLS.set(caminho, r.status === "ok" ? r.url : { erro: r.motivo || "não consegui abrir a imagem" });
+    render();
+  }).catch(() => { FITA_URLS.set(caminho, { erro: "não consegui abrir a imagem" }); render(); });
+}
+
+function fitaBlocoFoto(f) {
+  const caminho = f.fotoPath || null;
+  const subindo = FITA_SUBINDO === f.id;
+  if (caminho) fitaPedirUrl(caminho);
+  const guardada = caminho ? FITA_URLS.get(caminho) : undefined;
+
+  const miolo = !caminho
+    ? `<div class="fita-foto-vazia">${svg(IC.imagem || IC.mais)}<span>sem foto</span></div>`
+    : guardada === undefined || guardada === null
+      ? `<div class="fita-foto-vazia"><span>carregando…</span></div>`
+      : guardada && guardada.erro
+        ? `<div class="fita-foto-vazia erro"><span>${esc(guardada.erro)}</span></div>`
+        : `<a href="${esc(guardada)}" target="_blank" rel="noopener" title="Abrir a imagem em tamanho real">
+             <img src="${esc(guardada)}" alt="Foto da fita ${esc(f.nome || "")}"></a>`;
+
+  return `<div class="fita-foto">
+    <div class="fita-foto-q">${miolo}</div>
+    <div class="fita-foto-a">
+      <div style="font-size:9.5px;letter-spacing:.1em;font-weight:800;color:var(--ink-4)">FOTO DA FITA</div>
+      <p class="hint" style="margin:3px 0 7px">Ela fica guardada no servidor e aparece aqui e na importação. Não vai para o papel de produção — lá vale a receita, não a imagem.</p>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <label class="btn sm ${caminho ? "" : "primary"}" style="cursor:pointer">
+          ${svg(IC.mais)}${caminho ? "Trocar foto" : "Adicionar foto"}
+          <input type="file" accept="image/jpeg,image/png,image/webp" style="display:none"
+            data-fita-foto="${esc(f.id)}" ${subindo ? "disabled" : ""}></label>
+        ${caminho && guardada && !guardada.erro ? `<a class="btn sm ghost" href="${esc(guardada)}" target="_blank" rel="noopener">${svg(IC.olho)}Ver</a>` : ""}
+        ${caminho ? `<button type="button" class="btn sm ghost" data-fita="foto-remover" data-id="${esc(f.id)}" ${subindo ? "disabled" : ""}>Remover</button>` : ""}
+      </div>
+      ${subindo ? `<div class="hint" style="margin-top:6px">Enviando…</div>` : ""}
+      ${caminho ? `<div class="hint mono" style="margin-top:6px;font-size:10.5px;word-break:break-all">${esc(caminho)}</div>` : ""}
+    </div>
+  </div>`;
+}
+
 /* teto de cartões desenhados de uma vez: o protótipo parou em 48 e a busca
    resolve o resto. Desenhar mil cartões trava a rolagem sem ajudar ninguém. */
 const FITA_TETO = 48;
@@ -116,7 +172,8 @@ function viewFitasArea() {
       </div>
       <label class="fld"><span>Observações</span>
         <textarea class="inp" name="obs" rows="2">${esc(f.obs || "")}</textarea></label>
-      <p class="hint">Sem foto. A foto da fita chega com a importação de catálogo.</p>
+      ${nova ? `<p class="hint">Salve a fita primeiro — a foto se anexa a ela depois.</p>`
+             : fitaBlocoFoto(f)}
       <div class="fita-acoes">
         <button type="button" class="btn sm primary" data-fita="salvar">Salvar</button>
         <button type="button" class="btn sm" data-fita="fechar">Cancelar</button>
@@ -133,6 +190,7 @@ function viewFitasArea() {
           value="${esc(FITA_VIEW.busca)}" aria-label="Buscar fita"></div>
         <button class="btn sm" data-fita="buscar">Buscar</button>
         ${FITA_VIEW.busca ? `<button class="btn sm ghost" data-fita="limpar">Limpar</button>` : ""}
+        <button class="btn sm" data-fita="importar">${svg(IC.importar || IC.mais)}Importar por imagem</button>
         <button class="btn primary" data-fita="nova">${svg(IC.mais)}Nova fita</button>
       </div></div>
 
@@ -203,6 +261,30 @@ async function fitaClique(alvo) {
     return true;
   }
   if (acao === "nova")   { FITA_VIEW.aberta = "nova"; FITA_VIEW.erro = null; render(); return true; }
+  if (acao === "importar") {
+    S.modal = { tipo: "importarFita", passo: "escolher" };
+    render();
+    return true;
+  }
+
+  /* ---- v8.110 · a foto ----
+     Remover segue a mesma ordem da troca, no sentido inverso: o cadastro
+     deixa de apontar PRIMEIRO, e só então o objeto sai. Apagar antes deixaria
+     a ficha apontando para o nada se a gravação falhasse. */
+  if (acao === "foto-remover") {
+    const f = ftAchar(alvo.dataset.id);
+    if (!f || !f.fotoPath) return true;
+    if (!confirm(`Remover a foto de "${f.nome}"? A fita continua no cadastro; só a imagem sai.`)) return true;
+    FITA_SUBINDO = f.id; render();
+    const r = await foRemoverDaFita(f.id);
+    FITA_SUBINDO = null;
+    if (r.status === "ok") toast("Foto removida.");
+    else if (r.status === "na-fila") toast("Foto removida aqui. A gravação vai quando a fila drenar.", "aviso");
+    else toast(r.motivo || `Não consegui remover a foto (${r.status}).`, "erro");
+    if (r.objetoSobrou) toast("A imagem antiga ficou no servidor — a fita já não aponta para ela.", "aviso");
+    render();
+    return true;
+  }
   if (acao === "fechar") { FITA_VIEW.aberta = null;   FITA_VIEW.erro = null; render(); return true; }
   if (acao === "abrir")  { FITA_VIEW.aberta = alvo.dataset.id; FITA_VIEW.erro = null; render(); return true; }
 
