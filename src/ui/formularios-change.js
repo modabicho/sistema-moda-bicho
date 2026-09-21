@@ -1,5 +1,62 @@
 document.addEventListener("change", async (e) => {
   const el2 = e.target;
+
+  /* ---------- v8.110 · a foto de uma fita ----------
+     Escolher arquivo é um `change`, não um clique — por isso mora aqui e não
+     no despachante de cliques. A ORDEM da troca (sobe → grava → só então
+     apaga a antiga) é de `foTrocarDaFita`; aqui só se conta o que aconteceu. */
+  if (el2.matches("[data-fita-foto]")) {
+    const idFita = el2.dataset.fitaFoto;
+    const arq = el2.files && el2.files[0];
+    el2.value = "";        /* escolher o MESMO arquivo de novo precisa disparar */
+    if (!arq || typeof foTrocarDaFita !== "function") return;
+    FITA_SUBINDO = idFita;
+    render();
+    let rf;
+    try { rf = await foTrocarDaFita(idFita, arq); }
+    catch (err) { rf = { status: "erro", motivo: String((err && err.message) || err) }; }
+    FITA_SUBINDO = null;
+    if (rf.status === "ok") toast("Foto enviada.");
+    else if (rf.status === "na-fila") toast("Foto enviada. O cadastro vai ao servidor quando a fila drenar.", "aviso");
+    else toast(rf.motivo || `Não consegui enviar a foto (${rf.status}).`, "erro");
+    if (rf.antigaSobrou) toast("A foto anterior ficou no servidor — a fita já aponta para a nova.", "aviso");
+    if (rf.caminhoSolto) toast("A imagem subiu, mas o cadastro não confirmou: a foto anterior continua valendo.", "erro");
+    render();
+    return;
+  }
+
+  /* o arquivo da importação de catálogo */
+  if (el2.matches("[data-imf-arquivo]")) {
+    const arq = el2.files && el2.files[0];
+    el2.value = "";
+    if (arq && typeof imfEscolherArquivo === "function") await imfEscolherArquivo(arq);
+    return;
+  }
+  /* os quatro números do recorte, digitados à mão */
+  if (el2.matches("[data-imf-caixa]") && S.modal?.tipo === "importarFita") {
+    const k = el2.dataset.imfCaixa;
+    const m = S.modal;
+    m.caixa = Object.assign({}, m.caixa);
+    const v = Math.max(0, Math.round(Number(el2.value) || 0));
+    /* a caixa não pode sair da imagem: digitar 9999 em W não aumenta a foto */
+    if (k === "x") m.caixa.x = Math.min(v, m.larg - 1);
+    if (k === "y") m.caixa.y = Math.min(v, m.alt - 1);
+    if (k === "w") m.caixa.w = Math.max(1, Math.min(v, m.larg - m.caixa.x));
+    if (k === "h") m.caixa.h = Math.max(1, Math.min(v, m.alt - m.caixa.y));
+    if (k === "x") m.caixa.w = Math.min(m.caixa.w, m.larg - m.caixa.x);
+    if (k === "y") m.caixa.h = Math.min(m.caixa.h, m.alt - m.caixa.y);
+    m.autoAchou = false; m.autoMotivo = "ajustado à mão";
+    render();
+    return;
+  }
+  /* a caixinha de cada campo da conferência */
+  if (el2.matches("[data-imf-aplicar]") && S.modal?.tipo === "importarFita") {
+    const i = Number(el2.dataset.imfAplicar);
+    const c = S.modal.conferencia && S.modal.conferencia.campos[i];
+    if (c) c.aplicar = !!el2.checked;
+    return;
+  }
+
   if (el2.matches("[data-resp]")) {
     const r = pedidoPorId(el2.dataset.resp);
     if (r) { r.responsavel = el2.value || null; await salvarTudo(); toast("Responsável atualizado."); }

@@ -718,6 +718,11 @@ function modaisProducao(m) {
         ${f("Obs. p/ prestadora", `<input class="inp" data-m="obs" value="${esc(r.obs || "")}">`)}
         ${f("Obs. controle interno (MB)", `<input class="inp" data-m="obsInterna" value="${esc(r.obsInterna || "")}">`)}
         ${blocoEmbalagem(r, f)}
+        ${(() => { /* v8.110 · PROJETO DE CORTE deste pedido. Aqui ele JÁ existe,
+             então a decisão vira vínculo na hora. Congelado é só leitura. */
+          if (typeof pcSecaoDoPedido !== "function") return "";
+          try { return pcSecaoDoPedido(r); } catch (e2) { return ""; }
+        })()}
         ${blocoEtapasPedido(r, f)}
         <label style="display:flex;gap:9px;align-items:flex-start;font-size:12.5px;line-height:1.6;cursor:pointer;margin-bottom:8px">
           <input type="checkbox" class="chk" data-m="prioridadeTravada" ${r.prioridadeTravada ? "checked" : ""} style="margin-top:2px">
@@ -934,6 +939,11 @@ function modaisProducao(m) {
      Escolher aqui NÃO altera regra nenhuma: a decisão vive no rascunho do
      pedido e vira `origem='manual'` no vínculo, depois que ele existir.
      --------------------------------------------------------------------------- */
+  /* v8.110 · a importação de fita por imagem mora em `src/telas/importar-fita.js` */
+  if (m.tipo === "importarFita" && typeof viewImportarFita === "function") {
+    return viewImportarFita(m);
+  }
+
   if (m.tipo === "trocarProjetoCorte") {
     const sku = String(m.sku || "");
     const e = typeof pcEstadoDoSku === "function" ? pcEstadoDoSku(sku, m.decisao) : {};
@@ -994,6 +1004,21 @@ function modaisProducao(m) {
       <div class="modal-b">
         ${m.origem === "demanda" ? `<div class="aviso" style="margin:0 0 14px"><b>${n0(n)} ${n === 1 ? "pedido criado" : "pedidos criados"}.</b> Eles só entram na fila de corte quando o papel de produção sai da impressora — gere agora ou encontre-os depois em Pedidos › 1. Papel de Produção.</div>` : ""}
         ${m.origem === "reimpressao" ? `<div class="aviso" style="margin:0 0 14px">Reimpressão: o pedido <b>continua na etapa em que está</b>. Serve para papel perdido, rasgado, ou para padronizar tudo no cupom.</div>` : ""}
+        ${(() => { /* v8.110 · quem ainda precisa decidir o Projeto de Corte
+             aparece AQUI, com o caminho para resolver. Uma mensagem mandando
+             a pessoa procurar onde se resolve não é um caminho. */
+          if (typeof pcPendentesDe !== "function") return "";
+          let faltam = [];
+          try { faltam = pcPendentesDe((m.ids || []).map(pedidoPorId).filter(Boolean)); } catch (e2) { return ""; }
+          if (!faltam.length) return "";
+          return `<div class="aviso amber" style="margin:0 0 14px;padding:11px 13px">
+            <b>${faltam.length === 1 ? "1 pedido ainda não tem" : faltam.length + " pedidos ainda não têm"} Projeto de Corte decidido.</b>
+            <div class="hint" style="margin:4px 0 8px">Existe regra de corte que vale para ${faltam.length === 1 ? "este SKU" : "estes SKUs"}. Enquanto não decidir, ${faltam.length === 1 ? "ele não entra" : "eles não entram"} na fila de corte — o papel pode ser impresso do mesmo jeito.</div>
+            ${faltam.map((x) => `<div style="display:flex;gap:9px;align-items:center;padding:5px 0;border-top:1px solid var(--line-2)">
+              <span class="sku" style="font-size:12px">${esc(x.numero || "")}</span>
+              <span class="mono" style="font-size:11.5px;color:var(--ink-2);flex:1;min-width:0">${esc(x.sku)}</span>
+              <button class="btn sm primary" data-pjc-decidir="${esc(x.id)}">Decidir Projeto de Corte</button>
+            </div>`).join("")}</div>`; })()}
         ${(() => { /* Editar sem sair daqui: quem acabou de criar costuma lembrar de
              uma observação ou de trocar a prestadora, e ter de ir até Pedidos para
              isso — e depois voltar — quebra o fluxo. */

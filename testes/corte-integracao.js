@@ -665,6 +665,97 @@
   };
 
   /* =========================================================================
+     10c · O PEDIDO QUE JÁ EXISTE · o beco sem saída, fechado
+     -------------------------------------------------------------------------
+     Antes da v8.110 o pedido criado ANTES do módulo travava no papel→aberto e
+     o aviso mandava "abra o pedido e escolha" — num lugar onde não havia o que
+     escolher. Estes casos existem para que esse buraco não volte.
+     ========================================================================= */
+  CASOS["pedido antigo sem vínculo NÃO vira sem-projeto sozinho"] = async () => {
+    const B = await montar({ corte_escrita: true });
+    try {
+      /* 380 casa com a combinação; o pedido é anterior ao módulo */
+      const faltam = pcPendentesDe([PEDIDO()]);
+      const r = await pcPrepararPapeis([PEDIDO()]);
+      return { ok: faltam.length === 1 && faltam[0].sku === "380"
+                   && r.semProjeto.length === 0       /* não foi promovido a "sem" */
+                   && r.pendentes.length === 1 && r.podeLiberar === false,
+               obtido: { faltam, semProjeto: r.semProjeto, pendentes: r.pendentes } };
+    } finally { await desmontar(B); }
+  };
+
+  CASOS["a janela do pedido oferece as quatro saídas"] = async () => {
+    const B = await montar({ corte_escrita: true });
+    try {
+      const h = pcSecaoDoPedido(PEDIDO());
+      return { ok: h.includes("usar-resolvido") && h.includes("trocar-ped")
+                   && h.includes("criar-ped") && h.includes("sem-ped")
+                   && h.includes("falta decidir"),
+               obtido: { temUsar: h.includes("usar-resolvido"), temTrocar: h.includes("trocar-ped"),
+                         temCriar: h.includes("criar-ped"), temSem: h.includes("sem-ped") } };
+    } finally { await desmontar(B); }
+  };
+
+  CASOS["decidir na janela do pedido grava o vínculo na hora"] = async () => {
+    const B = await montar({ corte_escrita: true });
+    try {
+      B.resposta = () => daRpc("ok", { pedido_id: "r_1", revision: 1 });
+      const antes = pcVinculoDe("r_1");
+      const r = await pcDecidirNoPedido("r_1", "resolvido");
+      const v = pcVinculoDe("r_1");
+      /* e agora a liberação passa */
+      const prep = await pcPrepararPapeis([PEDIDO()]);
+      return { ok: antes === null && r.status === "ok"
+                   && v.projetoId === "prj_cmb" && v.origem === "combinacao"
+                   && prep.podeLiberar === true,
+               obtido: { status: r.status, vinculo: v, podeLiberar: prep.podeLiberar } };
+    } finally { await desmontar(B); }
+  };
+
+  CASOS["seguir sem projeto na janela do pedido grava origem=sem"] = async () => {
+    const B = await montar({ corte_escrita: true });
+    try {
+      B.resposta = () => daRpc("ok", { pedido_id: "r_1", revision: 1 });
+      const r = await pcDecidirNoPedido("r_1", "sem");
+      const enviada = B.chamadas.find((c) => c.nome === "pcp_pedido_corte_vincular");
+      return { ok: r.status === "ok" && pcVinculoDe("r_1").origem === "sem"
+                   && enviada.args.p_origem === "sem"
+                   && enviada.args.p_projeto_id === null,
+               obtido: { status: r.status, enviado: enviada.args } };
+    } finally { await desmontar(B); }
+  };
+
+  CASOS["pedido congelado é SÓ LEITURA: sem trocar, sem seguir sem"] = async () => {
+    const B = await montar({ corte_escrita: true });
+    try {
+      B.resposta = () => daRpc("ok", { pedido_id: "r_1", revision: 1 });
+      await pcVincular("r_1", "380");
+      await pcCongelar("r_1", "380");
+      const h = pcSecaoDoPedido(PEDIDO());
+      /* e a decisão é recusada mesmo se alguém chamar direto */
+      const tentou = await pcDecidirNoPedido("r_1", "sem");
+      return { ok: h.includes("congelado")
+                   && !h.includes("trocar-ped") && !h.includes("sem-ped")
+                   && !h.includes("usar-resolvido")
+                   && tentou.status === "congelado"
+                   && pcVinculoDe("r_1").origem === "combinacao",
+               obtido: { temTrocar: h.includes("trocar-ped"), temSem: h.includes("sem-ped"),
+                         tentativa: tentou.status, origem: pcVinculoDe("r_1").origem } };
+    } finally { await desmontar(B); }
+  };
+
+  CASOS["decidido o pendente, a janela de papéis não o lista mais"] = async () => {
+    const B = await montar({ corte_escrita: true });
+    try {
+      B.resposta = () => daRpc("ok", { pedido_id: "r_1", revision: 1 });
+      const antes = pcPendentesDe([PEDIDO()]).length;
+      await pcDecidirNoPedido("r_1", "resolvido");
+      const depois = pcPendentesDe([PEDIDO()]).length;
+      return { ok: antes === 1 && depois === 0, obtido: { antes, depois } };
+    } finally { await desmontar(B); }
+  };
+
+  /* =========================================================================
      11 · A REGRA DE LIBERAÇÃO
      -------------------------------------------------------------------------
        confirmado pelo servidor → libera

@@ -2970,6 +2970,42 @@ table.t td.num,table.t td.num .s,table.t td.num b{white-space:nowrap;}
 .pjc-removido .cr-ed-h b{text-decoration:line-through;}
 .pjc-novo{border-left:3px solid var(--acao);}
 .pjc-bloco small{display:block;margin-top:4px;color:var(--ink-3);font-size:var(--fs-micro);}
+
+/* ---------------------------------------------------------------------------
+   v8.110 · A FOTO DA FITA E A IMPORTAÇÃO POR IMAGEM
+   --------------------------------------------------------------------------- */
+/* o quadro tem altura fixa: sem ela a ficha inteira pula quando a imagem
+   assinada chega, e a pessoa perde o campo que estava preenchendo */
+.fita-foto{display:flex;gap:14px;align-items:flex-start;margin:4px 0 12px;
+  padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-3);background:var(--surface-2);}
+.fita-foto-q{flex:0 0 132px;width:132px;height:132px;border:1px solid var(--line);
+  border-radius:var(--r-2);overflow:hidden;background:var(--surface);
+  display:grid;place-items:center;}
+.fita-foto-q img{width:100%;height:100%;object-fit:cover;display:block;}
+.fita-foto-q a{display:block;width:100%;height:100%;}
+.fita-foto-vazia{display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;
+  color:var(--ink-4);font-size:var(--fs-micro);text-align:center;padding:8px;}
+.fita-foto-vazia.erro{color:var(--atencao);}
+.fita-foto-vazia svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;}
+.fita-foto-a{flex:1;min-width:0;}
+
+/* o palco do recorte: a caixa é posicionada em % sobre a prévia, então ela
+   acompanha qualquer largura de janela sem conta nenhuma no JavaScript */
+.imf-palco{position:relative;display:inline-block;max-width:100%;
+  border:1px solid var(--line);border-radius:var(--r-2);overflow:hidden;background:var(--surface-2);}
+.imf-palco img{display:block;max-width:100%;max-height:46vh;width:auto;height:auto;}
+.imf-caixa{position:absolute;border:2px solid var(--acao);
+  box-shadow:0 0 0 9999px rgba(0,0,0,.42);pointer-events:none;}
+.imf-num{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;}
+.imf-num .fld span{font-size:var(--fs-micro);}
+/* a linha de um campo corrigido à mão: ela precisa saltar aos olhos na
+   conferência, porque é a única que NÃO vem marcada */
+.imf-manual{background:var(--amber-soft);}
+@media (max-width:640px){
+  .fita-foto{flex-direction:column;}
+  .fita-foto-q{width:100%;flex-basis:auto;height:160px;}
+  .imf-num{grid-template-columns:repeat(2,1fr);}
+}
 </style>
 
 <div id="app"><div class="loading">Carregando…</div></div>
@@ -20826,6 +20862,11 @@ function modaisProducao(m) {
         ${f("Obs. p/ prestadora", `<input class="inp" data-m="obs" value="${esc(r.obs || "")}">`)}
         ${f("Obs. controle interno (MB)", `<input class="inp" data-m="obsInterna" value="${esc(r.obsInterna || "")}">`)}
         ${blocoEmbalagem(r, f)}
+        ${(() => { /* v8.110 · PROJETO DE CORTE deste pedido. Aqui ele JÁ existe,
+             então a decisão vira vínculo na hora. Congelado é só leitura. */
+          if (typeof pcSecaoDoPedido !== "function") return "";
+          try { return pcSecaoDoPedido(r); } catch (e2) { return ""; }
+        })()}
         ${blocoEtapasPedido(r, f)}
         <label style="display:flex;gap:9px;align-items:flex-start;font-size:12.5px;line-height:1.6;cursor:pointer;margin-bottom:8px">
           <input type="checkbox" class="chk" data-m="prioridadeTravada" ${r.prioridadeTravada ? "checked" : ""} style="margin-top:2px">
@@ -21042,6 +21083,11 @@ function modaisProducao(m) {
      Escolher aqui NÃO altera regra nenhuma: a decisão vive no rascunho do
      pedido e vira `origem='manual'` no vínculo, depois que ele existir.
      --------------------------------------------------------------------------- */
+  /* v8.110 · a importação de fita por imagem mora em `src/telas/importar-fita.js` */
+  if (m.tipo === "importarFita" && typeof viewImportarFita === "function") {
+    return viewImportarFita(m);
+  }
+
   if (m.tipo === "trocarProjetoCorte") {
     const sku = String(m.sku || "");
     const e = typeof pcEstadoDoSku === "function" ? pcEstadoDoSku(sku, m.decisao) : {};
@@ -21102,6 +21148,21 @@ function modaisProducao(m) {
       <div class="modal-b">
         ${m.origem === "demanda" ? `<div class="aviso" style="margin:0 0 14px"><b>${n0(n)} ${n === 1 ? "pedido criado" : "pedidos criados"}.</b> Eles só entram na fila de corte quando o papel de produção sai da impressora — gere agora ou encontre-os depois em Pedidos › 1. Papel de Produção.</div>` : ""}
         ${m.origem === "reimpressao" ? `<div class="aviso" style="margin:0 0 14px">Reimpressão: o pedido <b>continua na etapa em que está</b>. Serve para papel perdido, rasgado, ou para padronizar tudo no cupom.</div>` : ""}
+        ${(() => { /* v8.110 · quem ainda precisa decidir o Projeto de Corte
+             aparece AQUI, com o caminho para resolver. Uma mensagem mandando
+             a pessoa procurar onde se resolve não é um caminho. */
+          if (typeof pcPendentesDe !== "function") return "";
+          let faltam = [];
+          try { faltam = pcPendentesDe((m.ids || []).map(pedidoPorId).filter(Boolean)); } catch (e2) { return ""; }
+          if (!faltam.length) return "";
+          return `<div class="aviso amber" style="margin:0 0 14px;padding:11px 13px">
+            <b>${faltam.length === 1 ? "1 pedido ainda não tem" : faltam.length + " pedidos ainda não têm"} Projeto de Corte decidido.</b>
+            <div class="hint" style="margin:4px 0 8px">Existe regra de corte que vale para ${faltam.length === 1 ? "este SKU" : "estes SKUs"}. Enquanto não decidir, ${faltam.length === 1 ? "ele não entra" : "eles não entram"} na fila de corte — o papel pode ser impresso do mesmo jeito.</div>
+            ${faltam.map((x) => `<div style="display:flex;gap:9px;align-items:center;padding:5px 0;border-top:1px solid var(--line-2)">
+              <span class="sku" style="font-size:12px">${esc(x.numero || "")}</span>
+              <span class="mono" style="font-size:11.5px;color:var(--ink-2);flex:1;min-width:0">${esc(x.sku)}</span>
+              <button class="btn sm primary" data-pjc-decidir="${esc(x.id)}">Decidir Projeto de Corte</button>
+            </div>`).join("")}</div>`; })()}
         ${(() => { /* Editar sem sair daqui: quem acabou de criar costuma lembrar de
              uma observação ou de trocar a prestadora, e ter de ir até Pedidos para
              isso — e depois voltar — quebra o fluxo. */
@@ -27343,6 +27404,16 @@ async function _clique(e) {
      v8.108 · `data-proc` troca de sub-aba; `data-fita` é o miolo do cadastro. */
   if ((t = el("data-proc")) && typeof procClique === "function") {
     e.stopPropagation(); if (procClique(t)) return; }
+  /* v8.110 · "Decidir Projeto de Corte" na janela dos papéis: abre o pedido
+     POR CIMA, para a janela dos papéis continuar ali quando ele fechar. */
+  if ((t = el("data-pjc-decidir"))) {
+    e.stopPropagation();
+    const alvo = pedidoPorId(t.dataset.pjcDecidir);
+    if (!alvo) return;
+    abrirPorCimaDaJanela({ tipo: "pedido", pedido: alvo, foto: fotoPedido(alvo) });
+    return;
+  }
+
   /* v8.110 · a seção do Projeto de Corte DENTRO da janela de um pedido. Vem
      ANTES do `data-pjc` da tela de Processos: são coisas diferentes, e o
      atributo separado evita que um dia um handler coma o clique do outro. */
@@ -27351,6 +27422,43 @@ async function _clique(e) {
     const ctxP = t.dataset.pjcCtx || "np";
     const aP = t.dataset.pjcPed;
 
+    /* ---- v8.110 · a seção dentro da janela de um PEDIDO QUE JÁ EXISTE ----
+       Aqui não há rascunho onde a decisão possa esperar: ela vira vínculo
+       imediatamente. É esta parte que tira o beco sem saída dos pedidos
+       criados antes do módulo. */
+    const idPed = t.dataset.pjcPedId;
+    if (idPed) {
+      const rPed = pedidoPorId(idPed);
+      const skuPed = rPed ? pcSkuDoPedido(rPed) : "";
+      if (aP === "ver" || aP === "ver-cong" || aP === "criar-ped") {
+        if (aP === "criar-ped" && typeof pjNovo === "function") {
+          const rasc = pjNovo("sku");
+          rasc.nome = `Exceção ${skuPed}`;
+          rasc.regras = [{ campo: "sku", operador: "igual", valor: skuPed }];
+          PJC_VIEW.rascunho = rasc; PJC_VIEW.erro = null;
+        }
+        abrirPorCimaDaJanela({ tipo: "projetoCorte", sku: skuPed, criar: aP === "criar-ped",
+          congelado: aP === "ver-cong" ? idPed : null });
+        return;
+      }
+      if (aP === "trocar-ped") {
+        abrirPorCimaDaJanela({ tipo: "trocarProjetoCorte", sku: skuPed, decisao: null,
+          ctx: "ped", pedidoId: idPed });
+        return;
+      }
+      const escolha = aP === "sem-ped" ? "sem" : "resolvido";
+      const feito = await pcDecidirNoPedido(idPed, escolha);
+      if (feito.status === "ok" || feito.status === "na-fila") {
+        toast(escolha === "sem"
+          ? `Pedido ${rPed ? rPed.numero : ""} segue sem Projeto de Corte — registrado.`
+          : `Projeto de Corte vinculado ao pedido ${rPed ? rPed.numero : ""}.`);
+      } else {
+        toast(feito.motivo || `Não consegui gravar a decisão (${feito.status}).`, "erro");
+      }
+      render();
+      return;
+    }
+
     /* ESCOLHER vem primeiro porque é o único clique dado de dentro de OUTRA
        janela: a de trocar está por cima, e o dono da decisão é o pedido que
        ficou embaixo, em `voltarPara`. Perguntar ao `S.modal` daqui devolveria
@@ -27358,6 +27466,19 @@ async function _clique(e) {
     if (aP === "escolher") {
       const volta = S.modal && S.modal.voltarPara;
       if (!volta) return;
+      /* veio da janela de um pedido que já existe: grava o vínculo na hora e
+         só então volta — não há rascunho onde a escolha pudesse esperar */
+      if (ctxP === "ped") {
+        const alvoId = S.modal.pedidoId;
+        S.modal = volta;
+        const feito = await pcDecidirNoPedido(alvoId, "manual", t.dataset.pjcV);
+        toast(feito.status === "ok" || feito.status === "na-fila"
+          ? "Projeto de Corte trocado neste pedido."
+          : (feito.motivo || `Não consegui gravar a troca (${feito.status}).`),
+          feito.status === "ok" || feito.status === "na-fila" ? undefined : "erro");
+        render();
+        return;
+      }
       const dono = ctxP === "lote" ? (volta.grupos || [])[Number(t.dataset.pjcG)] : volta;
       if (!dono) return;
       const skuDono = ctxP === "lote" ? String(dono.sku || "")
@@ -27411,6 +27532,9 @@ async function _clique(e) {
     e.stopPropagation(); if (await pjcClique(t)) return; }
   if ((t = el("data-fita")) && typeof fitaClique === "function") {
     e.stopPropagation(); if (await fitaClique(t)) return; }
+  /* v8.110 · a janela de importar fita por imagem */
+  if ((t = el("data-imf")) && typeof imfClique === "function") {
+    e.stopPropagation(); if (await imfClique(t)) return; }
 
   if ((t = el("data-aba"))) {
     if (!podeAba(t.dataset.aba)) { toast("Sem acesso a essa parte — fale com a administradora.", "erro"); return; }
@@ -31247,6 +31371,63 @@ render = function () {
 
 document.addEventListener("change", async (e) => {
   const el2 = e.target;
+
+  /* ---------- v8.110 · a foto de uma fita ----------
+     Escolher arquivo é um `change`, não um clique — por isso mora aqui e não
+     no despachante de cliques. A ORDEM da troca (sobe → grava → só então
+     apaga a antiga) é de `foTrocarDaFita`; aqui só se conta o que aconteceu. */
+  if (el2.matches("[data-fita-foto]")) {
+    const idFita = el2.dataset.fitaFoto;
+    const arq = el2.files && el2.files[0];
+    el2.value = "";        /* escolher o MESMO arquivo de novo precisa disparar */
+    if (!arq || typeof foTrocarDaFita !== "function") return;
+    FITA_SUBINDO = idFita;
+    render();
+    let rf;
+    try { rf = await foTrocarDaFita(idFita, arq); }
+    catch (err) { rf = { status: "erro", motivo: String((err && err.message) || err) }; }
+    FITA_SUBINDO = null;
+    if (rf.status === "ok") toast("Foto enviada.");
+    else if (rf.status === "na-fila") toast("Foto enviada. O cadastro vai ao servidor quando a fila drenar.", "aviso");
+    else toast(rf.motivo || `Não consegui enviar a foto (${rf.status}).`, "erro");
+    if (rf.antigaSobrou) toast("A foto anterior ficou no servidor — a fita já aponta para a nova.", "aviso");
+    if (rf.caminhoSolto) toast("A imagem subiu, mas o cadastro não confirmou: a foto anterior continua valendo.", "erro");
+    render();
+    return;
+  }
+
+  /* o arquivo da importação de catálogo */
+  if (el2.matches("[data-imf-arquivo]")) {
+    const arq = el2.files && el2.files[0];
+    el2.value = "";
+    if (arq && typeof imfEscolherArquivo === "function") await imfEscolherArquivo(arq);
+    return;
+  }
+  /* os quatro números do recorte, digitados à mão */
+  if (el2.matches("[data-imf-caixa]") && S.modal?.tipo === "importarFita") {
+    const k = el2.dataset.imfCaixa;
+    const m = S.modal;
+    m.caixa = Object.assign({}, m.caixa);
+    const v = Math.max(0, Math.round(Number(el2.value) || 0));
+    /* a caixa não pode sair da imagem: digitar 9999 em W não aumenta a foto */
+    if (k === "x") m.caixa.x = Math.min(v, m.larg - 1);
+    if (k === "y") m.caixa.y = Math.min(v, m.alt - 1);
+    if (k === "w") m.caixa.w = Math.max(1, Math.min(v, m.larg - m.caixa.x));
+    if (k === "h") m.caixa.h = Math.max(1, Math.min(v, m.alt - m.caixa.y));
+    if (k === "x") m.caixa.w = Math.min(m.caixa.w, m.larg - m.caixa.x);
+    if (k === "y") m.caixa.h = Math.min(m.caixa.h, m.alt - m.caixa.y);
+    m.autoAchou = false; m.autoMotivo = "ajustado à mão";
+    render();
+    return;
+  }
+  /* a caixinha de cada campo da conferência */
+  if (el2.matches("[data-imf-aplicar]") && S.modal?.tipo === "importarFita") {
+    const i = Number(el2.dataset.imfAplicar);
+    const c = S.modal.conferencia && S.modal.conferencia.campos[i];
+    if (c) c.aplicar = !!el2.checked;
+    return;
+  }
+
   if (el2.matches("[data-resp]")) {
     const r = pedidoPorId(el2.dataset.resp);
     if (r) { r.responsavel = el2.value || null; await salvarTudo(); toast("Responsável atualizado."); }
@@ -32881,6 +33062,552 @@ async function ftReenviarResolvido(opId, fitaNova) {
   return ftDepoisDoDreno(r, fitaNova.id, nova.opId);
 }
 /* ===========================================================================
+   src/corte/fotos.js · A FOTO DA FITA, NO STORAGE
+   ---------------------------------------------------------------------------
+   Cliente próprio, e de propósito. O `persFetch` do app fala `/rest/v1/` com
+   JSON; o Storage é `/storage/v1/` com corpo binário. Ensinar o `persFetch` a
+   fazer as duas coisas o tornaria pior nas duas — então este arquivo fica
+   isolado e reusa só o que já existe: o endereço, a chave e o token da sessão.
+
+   O QUE ELE FAZ
+     foSubir(arquivo, caminho)   envia o binário
+     foAssinar(caminho)          URL assinada de curta duração (bucket privado)
+     foApagar(caminho)           remove o objeto
+     foTrocarDaFita(id, arq)     a ORDEM da troca, que é o que importa
+     foRemoverDaFita(id)         idem, no sentido inverso
+
+   A ORDEM DA TROCA — e por que ela é assim
+     1. sobe a nova
+     2. grava `foto_path` e ESPERA a confirmação
+     3. só então apaga a antiga
+   Uma falha no passo 1 não muda nada. Uma falha no passo 2 deixa um objeto
+   órfão no bucket, que é barato e o smoke conta em `soltos`. O que nunca pode
+   acontecer é a fita ficar sem foto porque a antiga foi apagada cedo demais.
+   Apagar primeiro seria uma linha mais curta e um jeito garantido de perder
+   foto em queda de rede.
+
+   O QUE ELE NÃO FAZ
+     · não escreve em `pcp_fita` por conta própria: quem grava é `ftSalvar`,
+       pela fila de sempre, com `foto_path` como qualquer outro campo;
+     · não entra no snapshot do pedido. A foto pertence à FITA, não à receita
+       congelada — o papel histórico guarda o que é material e textual.
+   =========================================================================== */
+
+const FO_BUCKET = "fitas";
+const FO_LIMITE = 10 * 1024 * 1024;                     /* o mesmo da 150 */
+const FO_TIPOS  = Object.freeze({
+  "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "application/pdf": "pdf",
+});
+
+function foBase() {
+  return (typeof PERS_URL !== "undefined" && PERS_URL) || "";
+}
+/* mesmas regras do `persFetch`: sem token não tenta, e cópia de teste não
+   envia nada para lugar nenhum */
+function foBarreira() {
+  const tok = typeof persToken === "function" ? persToken() : null;
+  if (!tok) return { status: "sem-login", motivo: "Entre de novo: a sessão expirou." };
+  if (typeof persSoLeitura === "function" && persSoLeitura()) {
+    return { status: "copia-teste", motivo: "Cópia de teste: nada é enviado ao servidor." };
+  }
+  return null;
+}
+
+/* ---------------------------------------------------------------------------
+   O QUE PODE SUBIR · conferido AQUI, antes da rede.
+   O bucket também recusa (a 150 lista os tipos e o limite), mas deixar o
+   servidor dizer "não" depois de 9 MB de upload é gastar o tempo de alguém
+   para descobrir o que dava para saber na hora de escolher o arquivo.
+   --------------------------------------------------------------------------- */
+function foConferirArquivo(a) {
+  if (!a) return { status: "invalido", motivo: "Nenhum arquivo escolhido." };
+  const tipo = String(a.type || "").toLowerCase();
+  if (!FO_TIPOS[tipo]) {
+    return { status: "tipo-nao-aceito",
+      motivo: `Este formato não serve (${tipo || "desconhecido"}). Use JPG, PNG, WEBP ou PDF.` };
+  }
+  const n = Number(a.size) || 0;
+  if (n > FO_LIMITE) {
+    return { status: "grande-demais",
+      motivo: `A imagem tem ${(n / 1048576).toFixed(1)} MB e o limite é 10 MB. Reduza antes de enviar.` };
+  }
+  if (!n) return { status: "invalido", motivo: "O arquivo está vazio." };
+  return null;
+}
+
+const foExt = (tipo) => FO_TIPOS[String(tipo || "").toLowerCase()] || "bin";
+function foId() {
+  try { if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID().replace(/-/g, ""); }
+  catch (e) {}
+  return String(Date.now()) + Math.random().toString(16).slice(2, 10);
+}
+/* fita/<fita_id>/<uuid>.<ext> · catalogo/<aaaa-mm>/<uuid>.pdf */
+function foCaminhoDaFita(fitaId, tipo) {
+  return `fita/${String(fitaId || "sem-id")}/${foId()}.${foExt(tipo)}`;
+}
+function foCaminhoDeCatalogo(tipo) {
+  const d = new Date();
+  const mes = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  return `catalogo/${mes}/${foId()}.${foExt(tipo)}`;
+}
+
+/* ---------------------------------------------------------------------------
+   SUBIR · POST do binário cru. Sem `x-upsert`: cada foto tem caminho novo, e
+   sobrescrever por acidente seria apagar a foto de outra fita.
+   --------------------------------------------------------------------------- */
+async function foSubir(arquivo, caminho) {
+  const ruim = foConferirArquivo(arquivo);
+  if (ruim) return ruim;
+  const barrado = foBarreira();
+  if (barrado) return barrado;
+
+  const alvo = caminho || foCaminhoDaFita("solta", arquivo.type);
+  let r;
+  try {
+    r = await fetch(`${foBase()}/storage/v1/object/${FO_BUCKET}/${alvo}`, {
+      method: "POST",
+      headers: {
+        apikey: typeof PERS_KEY !== "undefined" ? PERS_KEY : "",
+        Authorization: "Bearer " + persToken(),
+        "Content-Type": arquivo.type,
+        "Cache-Control": "3600",
+      },
+      body: arquivo,
+    });
+  } catch (e) {
+    /* rede caiu no meio: NÃO é recusa do servidor, e a diferença importa —
+       aqui a ação pode ser repetida tal como está */
+    return { status: "offline", motivo: "Sem conexão agora. O envio não começou ou não terminou; tente de novo.",
+             erro: String((e && e.message) || e) };
+  }
+
+  if (r.status === 401 || r.status === 403) {
+    /* uma tentativa de renovar, como o `persFetch` faz */
+    if (typeof supaRenovar === "function" && await supaRenovar()) return foSubir(arquivo, alvo);
+    return { status: "sem-permissao", motivo: "O servidor recusou o envio. Confira se você ainda está conectada." };
+  }
+  if (r.status === 413) return { status: "grande-demais", motivo: "O servidor recusou: arquivo maior que o limite do bucket." };
+  if (!r.ok) {
+    let msg = "";
+    try { msg = (await r.json())?.message || ""; } catch (e) {}
+    return { status: "erro", motivo: msg || `O envio falhou (${r.status}).`, cod: r.status };
+  }
+
+  /* upload incompleto: o servidor respondeu ok, mas o objeto não está lá.
+     Conferir custa uma chamada e evita gravar um `foto_path` que aponta para
+     o nada — que é justamente o `orfaos` do smoke. */
+  const existe = await foExiste(alvo);
+  if (!existe) {
+    return { status: "incompleto", caminho: alvo,
+             motivo: "O envio terminou mas a imagem não chegou inteira. Tente de novo." };
+  }
+  return { status: "ok", caminho: alvo, tipo: arquivo.type, bytes: Number(arquivo.size) || 0 };
+}
+
+/* existe mesmo? uma chamada barata e de leitura */
+async function foExiste(caminho) {
+  try {
+    const r = await fetch(`${foBase()}/storage/v1/object/info/${FO_BUCKET}/${caminho}`, {
+      headers: { apikey: typeof PERS_KEY !== "undefined" ? PERS_KEY : "",
+                 Authorization: "Bearer " + persToken() },
+    });
+    return r.ok;
+  } catch (e) { return false; }
+}
+
+/* ---------------------------------------------------------------------------
+   ASSINAR · o bucket é privado, então a tela nunca tem uma URL permanente.
+   A URL vale pouco tempo de propósito: uma que vazasse não serviria amanhã.
+   --------------------------------------------------------------------------- */
+const FO_ASSINADAS = new Map();                 /* caminho → { url, ate } */
+async function foAssinar(caminho, segundos) {
+  if (!caminho) return { status: "invalido", motivo: "sem caminho" };
+  const agora = Date.now();
+  const guardada = FO_ASSINADAS.get(caminho);
+  /* 20s de folga: URL que expira enquanto a imagem carrega é imagem quebrada */
+  if (guardada && guardada.ate - 20000 > agora) return { status: "ok", url: guardada.url, doCache: true };
+
+  const barrado = foBarreira();
+  if (barrado && barrado.status === "sem-login") return barrado;
+
+  const dura = Number(segundos) || 600;
+  let r;
+  try {
+    r = await fetch(`${foBase()}/storage/v1/object/sign/${FO_BUCKET}/${caminho}`, {
+      method: "POST",
+      headers: { apikey: typeof PERS_KEY !== "undefined" ? PERS_KEY : "",
+                 Authorization: "Bearer " + persToken(), "Content-Type": "application/json" },
+      body: JSON.stringify({ expiresIn: dura }),
+    });
+  } catch (e) {
+    return { status: "offline", motivo: "Não consegui carregar a imagem agora." };
+  }
+  if (!r.ok) {
+    return { status: r.status === 404 ? "sumiu" : "erro",
+             motivo: r.status === 404 ? "A imagem não está mais no servidor." : "Não consegui abrir a imagem." };
+  }
+  let corpo = null;
+  try { corpo = await r.json(); } catch (e) {}
+  const rel = corpo && (corpo.signedURL || corpo.signedUrl);
+  if (!rel) return { status: "erro", motivo: "O servidor não devolveu o endereço da imagem." };
+
+  const url = `${foBase()}/storage/v1${rel.startsWith("/") ? "" : "/"}${rel}`;
+  FO_ASSINADAS.set(caminho, { url, ate: agora + dura * 1000 });
+  return { status: "ok", url };
+}
+function foEsquecerUrl(caminho) {
+  if (caminho) FO_ASSINADAS.delete(caminho); else FO_ASSINADAS.clear();
+}
+
+/* ---------------------------------------------------------------------------
+   APAGAR · só é chamado DEPOIS que `foto_path` já mudou. Falhar aqui é
+   inofensivo: sobra um objeto solto, e o smoke sabe contá-lo.
+   --------------------------------------------------------------------------- */
+async function foApagar(caminho) {
+  if (!caminho) return { status: "ok", nada: true };
+  const barrado = foBarreira();
+  if (barrado) return barrado;
+  foEsquecerUrl(caminho);
+  try {
+    const r = await fetch(`${foBase()}/storage/v1/object/${FO_BUCKET}/${caminho}`, {
+      method: "DELETE",
+      headers: { apikey: typeof PERS_KEY !== "undefined" ? PERS_KEY : "",
+                 Authorization: "Bearer " + persToken() },
+    });
+    if (r.ok || r.status === 404) return { status: "ok" };
+    return { status: "erro", motivo: `Não consegui apagar a imagem antiga (${r.status}).`, cod: r.status };
+  } catch (e) {
+    return { status: "offline", motivo: "Não consegui apagar a imagem antiga agora." };
+  }
+}
+
+/* ===========================================================================
+   A TROCA DE FOTO DE UMA FITA · a ordem inteira, num lugar só
+   =========================================================================== */
+async function foTrocarDaFita(fitaId, arquivo) {
+  const fita = typeof ftAchar === "function" ? ftAchar(fitaId) : null;
+  if (!fita) return { status: "invalido", motivo: "Fita não encontrada." };
+
+  const ruim = foConferirArquivo(arquivo);
+  if (ruim) return ruim;
+
+  const antiga = fita.fotoPath || null;
+
+  /* 1 · sobe a nova */
+  const subiu = await foSubir(arquivo, foCaminhoDaFita(fita.id, arquivo.type));
+  if (subiu.status !== "ok") return subiu;
+
+  /* 2 · grava o caminho e ESPERA. `fotoPath` entra como campo mexido à mão:
+     a importação futura não pode trocar a foto que alguém escolheu. */
+  const gravou = await ftSalvar(Object.assign({}, fita, { fotoPath: subiu.caminho }), ["fotoPath"]);
+  if (gravou.status !== "ok" && gravou.status !== "na-fila") {
+    /* não gravou: a fita continua com a foto ANTIGA, que ainda está lá. A nova
+       fica solta no bucket — sobra barata, e o smoke a conta em `soltos`. */
+    return { status: gravou.status, motivo: gravou.motivo
+      || "A imagem subiu, mas o cadastro não confirmou. A foto anterior continua valendo.",
+      caminhoSolto: subiu.caminho };
+  }
+
+  /* 3 · só agora a antiga sai. Se falhar, ninguém fica sem foto. */
+  let sobrou = null;
+  if (antiga && antiga !== subiu.caminho) {
+    const fora = await foApagar(antiga);
+    if (fora.status !== "ok") sobrou = antiga;
+  }
+  return { status: gravou.status, caminho: subiu.caminho, antigaSobrou: sobrou };
+}
+
+async function foRemoverDaFita(fitaId) {
+  const fita = typeof ftAchar === "function" ? ftAchar(fitaId) : null;
+  if (!fita) return { status: "invalido", motivo: "Fita não encontrada." };
+  const antiga = fita.fotoPath || null;
+  if (!antiga) return { status: "ok", nada: true };
+
+  /* mesma ordem, no sentido inverso: primeiro o cadastro deixa de apontar,
+     depois o objeto sai. Apagar antes deixaria a ficha apontando para o nada
+     se a gravação falhasse. */
+  const gravou = await ftSalvar(Object.assign({}, fita, { fotoPath: null }), ["fotoPath"]);
+  if (gravou.status !== "ok" && gravou.status !== "na-fila") {
+    return { status: gravou.status, motivo: gravou.motivo || "Não consegui tirar a foto do cadastro." };
+  }
+  const fora = await foApagar(antiga);
+  return { status: gravou.status, objetoSobrou: fora.status === "ok" ? null : antiga };
+}
+
+/* o catálogo de origem, guardado como veio (PDF inclusive). Ele não é a foto
+   de nenhuma fita: fica no bucket como prova do que foi importado. */
+async function foGuardarCatalogo(arquivo) {
+  const ruim = foConferirArquivo(arquivo);
+  if (ruim) return ruim;
+  return foSubir(arquivo, foCaminhoDeCatalogo(arquivo.type));
+}
+/* ===========================================================================
+   src/corte/importar-fita.js · IMPORTAR FITA A PARTIR DE UMA IMAGEM
+   ---------------------------------------------------------------------------
+   O percurso:
+     escolher arquivo → prévia → recorte automático → ajuste manual →
+     campos propostos → conferência editável → salvar
+
+   TRÊS PROMESSAS QUE ESTE ARQUIVO FAZ
+     1. NADA é gravado antes da conferência. As sugestões são propostas, e
+        proposta não é decisão;
+     2. campo marcado em `editado` — corrigido à mão por alguém — nunca é
+        sobrescrito automaticamente. Ele aparece com o valor proposto ao lado,
+        com o aviso, e DESMARCADO. Quem quiser aplicar, marca;
+     3. o que não se sabe, não se inventa. Sem OCR: a sugestão sai do nome do
+        arquivo e do que já existe no cadastro. Um palpite errado escondido
+        numa ficha é pior que um campo vazio.
+
+   O RECORTE AUTOMÁTICO
+     Canvas, sem dependência nenhuma: lê a cor das bordas e acha a caixa do
+     conteúdo. Vai bem em fita sobre fundo liso e vai mal em fundo bagunçado —
+     por isso o recorte manual está SEMPRE à mão, e não escondido atrás de um
+     "não consegui". Quando o automático não acha nada confiável, ele devolve a
+     imagem inteira e diz que não achou, em vez de recortar torto.
+
+   PDF NÃO ENTRA AQUI
+     PDF sobe para o bucket e é pré-visualizado pelo navegador (ver README).
+     Renderizar página de PDF exigiria embutir um motor inteiro no arquivo, e
+     isso ficou para depois. Para importar visualmente uma página, use um
+     JPG/PNG/WEBP dela.
+   =========================================================================== */
+
+const IMF_TIPOS_IMAGEM = Object.freeze(["image/jpeg", "image/png", "image/webp"]);
+const imfEhImagem = (a) => !!a && IMF_TIPOS_IMAGEM.includes(String(a.type || "").toLowerCase());
+
+/* ---------------------------------------------------------------------------
+   LER O ARQUIVO · vira um bitmap na memória, nada mais
+   --------------------------------------------------------------------------- */
+function imfLer(arquivo) {
+  return new Promise((ok, falhou) => {
+    if (!imfEhImagem(arquivo)) return falhou(new Error("não é imagem"));
+    const fr = new FileReader();
+    fr.onerror = () => falhou(new Error("não consegui ler o arquivo"));
+    fr.onload = () => {
+      const img = new Image();
+      img.onerror = () => falhou(new Error("o arquivo não é uma imagem válida"));
+      img.onload = () => ok({ img, dataUrl: String(fr.result) });
+      img.src = String(fr.result);
+    };
+    fr.readAsDataURL(arquivo);
+  });
+}
+
+/* ---------------------------------------------------------------------------
+   RECORTE AUTOMÁTICO
+   A cor de fundo é a MEDIANA das quatro bordas, não a do pixel do canto: um
+   canto com sujeira ou sombra decidiria sozinho o recorte da imagem inteira.
+   --------------------------------------------------------------------------- */
+function imfAutoRecorte(img, tolerancia) {
+  const larg = img.naturalWidth || img.width, alt = img.naturalHeight || img.height;
+  if (!larg || !alt) return { achou: false, caixa: { x: 0, y: 0, w: larg, h: alt }, motivo: "imagem vazia" };
+
+  /* imagem grande é reduzida para a análise: a caixa é proporcional, e varrer
+     12 milhões de pixels para achar uma borda seria desperdício */
+  const escala = Math.min(1, 600 / Math.max(larg, alt));
+  const w = Math.max(1, Math.round(larg * escala)), h = Math.max(1, Math.round(alt * escala));
+  const cv = document.createElement("canvas");
+  cv.width = w; cv.height = h;
+  const cx = cv.getContext("2d", { willReadFrequently: true });
+  cx.drawImage(img, 0, 0, w, h);
+  let d;
+  try { d = cx.getImageData(0, 0, w, h).data; }
+  catch (e) { return { achou: false, caixa: { x: 0, y: 0, w: larg, h: alt }, motivo: "não consegui ler os pixels" }; }
+
+  const px = (x, y) => { const i = (y * w + x) * 4; return [d[i], d[i + 1], d[i + 2]]; };
+  const bordas = [];
+  for (let x = 0; x < w; x++) { bordas.push(px(x, 0)); bordas.push(px(x, h - 1)); }
+  for (let y = 0; y < h; y++) { bordas.push(px(0, y)); bordas.push(px(w - 1, y)); }
+  const mediana = (v) => { const s = v.slice().sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
+  const fundo = [0, 1, 2].map((c) => mediana(bordas.map((p) => p[c])));
+
+  const tol = Number(tolerancia) || 28;
+  const difere = (x, y) => { const p = px(x, y);
+    return Math.abs(p[0] - fundo[0]) + Math.abs(p[1] - fundo[1]) + Math.abs(p[2] - fundo[2]) > tol * 3; };
+
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (!difere(x, y)) continue;
+    if (x < x0) x0 = x; if (x > x1) x1 = x;
+    if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  if (x1 < 0) return { achou: false, caixa: { x: 0, y: 0, w: larg, h: alt }, motivo: "a imagem é toda de uma cor só" };
+
+  /* uma folga de 2%: recorte colado no fio da fita corta a borda dela */
+  const folga = Math.round(Math.max(w, h) * 0.02);
+  x0 = Math.max(0, x0 - folga); y0 = Math.max(0, y0 - folga);
+  x1 = Math.min(w - 1, x1 + folga); y1 = Math.min(h - 1, y1 + folga);
+
+  const caixa = { x: Math.round(x0 / escala), y: Math.round(y0 / escala),
+                  w: Math.round((x1 - x0 + 1) / escala), h: Math.round((y1 - y0 + 1) / escala) };
+  /* ocupa quase tudo? então não havia o que recortar — dizer "achei" aqui
+     daria a impressão de um recorte que não aconteceu */
+  const proporcao = (caixa.w * caixa.h) / (larg * alt);
+  if (proporcao > 0.96) return { achou: false, caixa: { x: 0, y: 0, w: larg, h: alt }, motivo: "não há margem para recortar" };
+  if (proporcao < 0.02) return { achou: false, caixa: { x: 0, y: 0, w: larg, h: alt }, motivo: "o que sobrou é pequeno demais para ser a fita" };
+  return { achou: true, caixa, fundo, proporcao };
+}
+
+/* recorta de verdade e devolve um arquivo pronto para subir */
+function imfRecortar(img, caixa, tipo, nome) {
+  return new Promise((ok, falhou) => {
+    const c = caixa || { x: 0, y: 0, w: img.naturalWidth, h: img.naturalHeight };
+    const cv = document.createElement("canvas");
+    cv.width = Math.max(1, Math.round(c.w)); cv.height = Math.max(1, Math.round(c.h));
+    cv.getContext("2d").drawImage(img, c.x, c.y, c.w, c.h, 0, 0, cv.width, cv.height);
+    const saida = tipo === "image/png" ? "image/png" : "image/jpeg";
+    cv.toBlob((b) => {
+      if (!b) return falhou(new Error("não consegui gerar a imagem recortada"));
+      const ext = saida === "image/png" ? "png" : "jpg";
+      ok(new File([b], (nome || "fita").replace(/\.[^.]+$/, "") + "." + ext, { type: saida }));
+    }, saida, 0.9);
+  });
+}
+
+/* ---------------------------------------------------------------------------
+   SUGESTÕES · do NOME DO ARQUIVO e do que já existe. Nada de adivinhação.
+   Catálogo costuma chegar como "G-1203 gorgurão vermelho 38mm.jpg".
+   --------------------------------------------------------------------------- */
+const IMF_CORES = Object.freeze(["branco","preto","vermelho","azul","verde","amarelo","rosa","roxo","lilas","lilás",
+  "laranja","marrom","bege","cinza","dourado","prata","pink","vinho","nude","turquesa","salmao","salmão","creme"]);
+const IMF_ESTAMPAS = Object.freeze(["lisa","listrada","xadrez","poa","poá","floral","estampada","bolinha","bolinhas","coracao","coração"]);
+
+function imfDoNome(nome) {
+  const limpo = String(nome || "").replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim();
+  const baixo = limpo.toLowerCase();
+  const s = { _origemDaSugestao: "nome do arquivo" };
+
+  /* código: letra(s)-números, o formato do catálogo (G-1203, C-0501) */
+  const cod = limpo.match(/\b([A-Za-z]{1,3}[-.]?\d{3,6})\b/);
+  if (cod) s.codigo = cod[1].toUpperCase();
+
+  /* largura em mm — "38mm", "38 mm" */
+  const mm = baixo.match(/\b(\d{1,3})\s*mm\b/);
+  if (mm) s.larguraMm = Number(mm[1]);
+
+  /* número da fita — "nº 9", "n 9", "num 9" */
+  const num = baixo.match(/\bn[ºo°.]?\s*(\d{1,3})\b/);
+  if (num) s.numero = num[1];
+
+  const cor = IMF_CORES.find((c) => new RegExp("\\b" + c + "\\b", "i").test(baixo));
+  if (cor) s.cor = cor;
+  const est = IMF_ESTAMPAS.find((c) => new RegExp("\\b" + c + "\\b", "i").test(baixo));
+  if (est) s.estampa = est;
+
+  /* o nome é o que sobra depois de tirar o que já virou campo */
+  let resto = limpo;
+  for (const v of [s.codigo, mm && mm[0], num && num[0]]) if (v) resto = resto.replace(new RegExp(v, "i"), " ");
+  resto = resto.replace(/\s+/g, " ").trim();
+  if (resto.length >= 3) s.nome = resto;
+
+  return s;
+}
+
+/* a fita que já existe para este arquivo, se existir. Casar é o que evita
+   criar uma segunda "G-1203" ao lado da que já foi corrigida à mão. */
+function imfCasar(sugestao) {
+  const todas = typeof ftLista === "function" ? ftLista() : [];
+  const norm = (x) => String(x || "").trim().toUpperCase();
+  if (sugestao.codigo) {
+    const porCod = todas.find((f) => norm(f.codigo) === norm(sugestao.codigo));
+    if (porCod) return { fita: porCod, por: "código" };
+    const porRef = todas.find((f) => norm(f.ref) === norm(sugestao.codigo));
+    if (porRef) return { fita: porRef, por: "referência" };
+  }
+  if (sugestao.nome) {
+    const porNome = todas.find((f) => norm(f.nome) === norm(sugestao.nome));
+    if (porNome) return { fita: porNome, por: "nome" };
+  }
+  return null;
+}
+
+/* ---------------------------------------------------------------------------
+   A LINHA DE CONFERÊNCIA · o que a tela desenha e o que o salvar lê.
+   Uma entrada por campo, com o valor de agora, o proposto, e se aplica.
+   `aplicar` nasce FALSO em tudo que foi corrigido à mão. É a promessa nº 2.
+   --------------------------------------------------------------------------- */
+/* mesmo texto, para efeito de comparação: caixa e espaço sobrando não são
+   diferença. Número também entra aqui — "38" e 38 são o mesmo valor. */
+function imfMesmoTexto(a, b) {
+  const n = (x) => String(x == null ? "" : x).trim().replace(/\s+/g, " ").toLowerCase();
+  return n(a) === n(b);
+}
+
+const IMF_CAMPOS = Object.freeze([
+  ["codigo", "Código"], ["ref", "Referência"], ["numero", "Número"],
+  ["larguraMm", "Largura (mm)"], ["nome", "Nome"], ["cor", "Cor"],
+  ["estampa", "Estampa"], ["classe", "Classe"], ["local", "Local"],
+]);
+
+function imfMontarConferencia(sugestao, casada) {
+  const fita = casada ? casada.fita : null;
+  const marcas = (fita && fita.editado) || {};
+  const campos = [];
+  for (const [campo, rotulo] of IMF_CAMPOS) {
+    const proposto = sugestao[campo];
+    if (proposto === undefined || proposto === null || proposto === "") continue;
+    const atual = fita ? fita[campo] : null;
+    const vazio = atual === undefined || atual === null || atual === "";
+    const manual = !!marcas[campo];
+    /* "igual" ignora caixa e espaço sobrando. O nome de arquivo vem em minúsculas
+       e o cadastro tem a capitalização certa — comparar cru faria a importação
+       propor trocar "Gorgurão vermelho" por "gorgurão vermelho" como se fosse
+       informação nova. Isso não é dado: é ruído que alguém acabaria aplicando
+       sem olhar, e o cadastro iria piorando a cada catálogo importado. */
+    const igual = !vazio && imfMesmoTexto(atual, proposto);
+    campos.push({
+      campo, rotulo, atual: vazio ? null : atual, proposto,
+      manual, igual,
+      /* já é igual: não há o que aplicar.
+         corrigido à mão: aparece, avisa, e fica DESMARCADO.
+         vazio ou diferente e sem marca: proposto, marcado. */
+      aplicar: igual ? false : manual ? false : true,
+      aviso: manual ? "corrigido manualmente" : null,
+    });
+  }
+  return {
+    fita, casadaPor: casada ? casada.por : null,
+    nova: !fita,
+    campos,
+    origemDaSugestao: sugestao._origemDaSugestao || "nome do arquivo",
+  };
+}
+
+/* ---------------------------------------------------------------------------
+   SALVAR · só o que está MARCADO entra. O resto fica exatamente como estava.
+   --------------------------------------------------------------------------- */
+async function imfSalvar(conferencia, fotoCaminho) {
+  if (!conferencia) return { status: "invalido", motivo: "nada para salvar" };
+  const base = conferencia.fita ? Object.assign({}, conferencia.fita) : {};
+  const mexidos = [];
+
+  for (const c of conferencia.campos || []) {
+    if (!c.aplicar) continue;
+    base[c.campo] = c.proposto;
+    /* veio da importação, não da mão de ninguém: NÃO entra em `campoMexido`.
+       Marcar aqui faria a próxima importação achar que uma pessoa decidiu
+       isto — e o valor ficaria congelado para sempre por engano. */
+  }
+  if (fotoCaminho) {
+    base.fotoPath = fotoCaminho;
+    /* a foto é escolha de gente: esta entra como mexida à mão */
+    mexidos.push("fotoPath");
+  }
+  if (!conferencia.fita) base.origem = "catalogo";
+
+  const nada = !mexidos.length && !(conferencia.campos || []).some((c) => c.aplicar);
+  if (nada && conferencia.fita) return { status: "sem-mudanca", fitaId: conferencia.fita.id };
+
+  const r = await ftSalvar(base, mexidos);
+  return Object.assign({ fitaId: base.id || null }, r);
+}
+
+/* quantas mudanças de verdade a conferência propõe — o botão de salvar usa
+   isto para não prometer trabalho que não existe */
+function imfQuantasAplicam(conferencia) {
+  return ((conferencia && conferencia.campos) || []).filter((c) => c.aplicar).length;
+}
+/* ===========================================================================
    src/corte/projetos.js · O PROJETO DE CORTE, do lado do app
    ---------------------------------------------------------------------------
    v8.109. Lê as cinco tabelas da 147, monta a forma que `crtResolver`
@@ -33952,6 +34679,128 @@ function pcAquecer() {
   pcGarantirProjetos().then((r) => { if (r.ok && typeof render === "function") render(); }).catch(() => {});
 }
 
+/* ===========================================================================
+   A SEÇÃO NA JANELA DE UM PEDIDO QUE JÁ EXISTE (v8.110)
+   ---------------------------------------------------------------------------
+   Sem isto havia um beco sem saída: no dia em que a primeira regra de família
+   nascesse, todo pedido criado ANTES do módulo ficaria pendente no papel→aberto
+   — e o aviso mandava "abra o pedido e escolha", num lugar onde não havia o
+   que escolher.
+
+   Aqui o pedido JÁ EXISTE, então a decisão não espera: ela vira vínculo na
+   hora. E pedido antigo não é promovido a "sem projeto" por conta própria —
+   se existe regra que casa com o SKU, ele fica pendente até alguém decidir.
+
+   Congelado é SÓ LEITURA. Trocar ou seguir sem depois de o papel ter saído
+   seria contar outra história sobre trabalho que já foi para a bancada.
+   =========================================================================== */
+function pcSecaoDoPedido(pedido) {
+  if (!pedido || !pedido.id) return "";
+  const id = String(pedido.id);
+  const sku = pcSkuDoPedido(pedido);
+  if (!sku) return "";
+  const v = pcVinculoDe(id);
+  const tit = `<div style="font-size:9.5px;letter-spacing:.1em;font-weight:800;color:var(--ink-4);margin-bottom:6px">PROJETO DE CORTE
+    <span style="font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink-3)"> · a ficha que a bancada usa para cortar</span></div>`;
+  const caixa = (borda, fundo, corpo) => `<div style="margin:0 0 14px;padding:10px 12px;border:1px solid ${borda};border-radius:9px;background:${fundo}">${tit}${corpo}</div>`;
+  const dados = ` data-pjc-ped-id="${esc(id)}"`;
+
+  /* 1 · congelado: só leitura, e o que se lê é o SNAPSHOT, não a regra de hoje */
+  if (v && v.congeladoEm) {
+    const s = v.snapshot || {};
+    if (s.sem_projeto) {
+      return caixa("var(--line)", "transparent", `
+        <div><b>Sem Projeto de Corte</b> <span class="tag">congelado</span></div>
+        <div class="hint" style="margin-top:4px">Este pedido foi liberado sem projeto em ${esc(fdate(v.congeladoEm))}. O papel saiu assim.</div>`);
+    }
+    return caixa("var(--line)", "transparent", `
+      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+        <b>${esc((s.projeto && s.projeto.nome) || "")}</b>
+        ${s.versao && s.versao.versao ? `<span class="tag">v${esc(String(s.versao.versao))}</span>` : ""}
+        <span class="tag ok">congelado</span></div>
+      <div style="font-size:12px;color:var(--ink-2)">${esc(pcResumoDoSnapshot(s))}</div>
+      <div class="hint" style="margin-top:5px">Congelado em ${esc(fdate(v.congeladoEm))}. Mexer no projeto depois disto não muda mais este pedido — nem para mudar de projeto, nem para seguir sem.</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:7px">
+        <button type="button" class="btn sm" data-pjc-ped="ver-cong"${dados}>${svg(IC.olho)}Ver a ficha congelada</button></div>`);
+  }
+
+  /* 2 · já tem vínculo, ainda não congelado: dá para rever */
+  if (v) {
+    const manual = v.origem === "manual";
+    const nome = (typeof pjAchar === "function" && (pjAchar(v.projetoId) || {}).nome) || null;
+    if (v.origem === "sem") {
+      return caixa("var(--line)", "transparent", `
+        <div><b>Sem Projeto de Corte</b> <span class="tag">você escolheu seguir sem</span></div>
+        <div class="hint" style="margin-top:4px;margin-bottom:7px">Ainda dá para mudar: o pedido não foi congelado.</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <button type="button" class="btn sm" data-pjc-ped="usar-resolvido"${dados}>Usar o projeto resolvido</button>
+          <button type="button" class="btn sm" data-pjc-ped="trocar-ped"${dados}>${svg(IC.atualizar)}Trocar</button></div>`);
+    }
+    return caixa("var(--line)", "transparent", `
+      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+        <b>${esc(nome || v.projetoId || "")}</b>
+        <span class="tag${manual ? " amber" : ""}">${manual ? "escolhido à mão" : esc(PJC_NOME && PJC_NOME[v.origem] ? PJC_NOME[v.origem] : v.origem)}</span>
+        <span class="tag">vinculado</span></div>
+      <div class="hint" style="margin-bottom:7px">Ainda não congelado — ele congela quando o papel sair.</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button type="button" class="btn sm" data-pjc-ped="ver"${dados}>${svg(IC.olho)}Ver projeto</button>
+        <button type="button" class="btn sm" data-pjc-ped="trocar-ped"${dados}>${svg(IC.atualizar)}Trocar</button>
+        <button type="button" class="btn sm ghost" data-pjc-ped="sem-ped"${dados}>Seguir sem projeto</button></div>`);
+  }
+
+  /* 3 · sem vínculo nenhum. Se existe regra que casa, ISTO É PENDÊNCIA — e é
+     aqui que ela se resolve, não numa mensagem que manda procurar. */
+  const e = pcEstadoDoSku(sku);
+  if (!e.tem) {
+    return caixa("var(--line)", "transparent", `
+      <div><b>Nenhum projeto casa com ${esc(sku)}.</b></div>
+      <div class="hint" style="margin-top:4px;margin-bottom:7px">O papel sai sem o bloco de corte. Se este SKU deveria ter projeto, crie um.</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button type="button" class="btn sm" data-pjc-ped="criar-ped"${dados}>${svg(IC.mais)}Criar Projeto de Corte</button></div>`);
+  }
+  return caixa("var(--amber)", "var(--amber-soft)", `
+    <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+      <b>${esc(e.nome || "")}</b>
+      <span class="tag">${esc(PJC_NOME && PJC_NOME[e.escopo] ? PJC_NOME[e.escopo] : e.escopo)}</span>
+      ${e.versao ? `<span class="tag">v${esc(String(e.versao))}</span>` : ""}
+      <span class="tag amber">falta decidir</span></div>
+    <div style="font-size:12px;color:var(--ink-2);margin-bottom:5px">${esc(pcResumoDoSnapshot(pcMontarSnapshot(sku)))}</div>
+    <div class="hint" style="margin-bottom:7px">Este pedido ainda não tem Projeto de Corte gravado, e existe regra que vale para ${esc(sku)}. Enquanto não decidir, ele não entra na fila de corte.</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button type="button" class="btn sm primary" data-pjc-ped="usar-resolvido"${dados}>Usar projeto resolvido</button>
+      <button type="button" class="btn sm" data-pjc-ped="trocar-ped"${dados}>${svg(IC.atualizar)}Trocar</button>
+      <button type="button" class="btn sm" data-pjc-ped="criar-ped"${dados}>${svg(IC.mais)}Criar projeto</button>
+      <button type="button" class="btn sm ghost" data-pjc-ped="sem-ped"${dados}>Seguir sem projeto</button></div>`);
+}
+
+/* a decisão tomada na janela do pedido. Aqui o pedido EXISTE, então ela vira
+   vínculo imediatamente — não há rascunho onde esperar. */
+async function pcDecidirNoPedido(pedidoId, escolha, projetoId) {
+  const r = typeof pedidoPorId === "function" ? pedidoPorId(pedidoId) : null;
+  if (!r) return { status: "invalido", motivo: "Pedido não encontrado." };
+  if (pcCongelado(pedidoId)) {
+    return { status: "congelado", motivo: "Este pedido já foi congelado — o projeto dele não muda mais." };
+  }
+  const sku = pcSkuDoPedido(r);
+  if (escolha === "sem")      return pcSemProjeto(pedidoId);
+  if (escolha === "manual")   return pcVincularDecidido(pedidoId, sku, pcDecidirManual(sku, projetoId));
+  return pcVincularDecidido(pedidoId, sku, null);        /* o resolvido */
+}
+
+/* os pedidos de uma lista que ainda precisam de decisão — a janela dos papéis
+   usa isto para oferecer o caminho em vez de só dizer que não deu */
+function pcPendentesDe(pedidos) {
+  const fora = [];
+  for (const r of (pedidos || [])) {
+    const id = String(r.id);
+    if (pcVinculoDe(id)) continue;
+    const sku = pcSkuDoPedido(r);
+    if (!pcTemProjeto(sku)) continue;
+    fora.push({ id, numero: r.numero, sku });
+  }
+  return fora;
+}
+
 /* o dono da decisão, de volta pelo que o botão carrega */
 function pcAlvoDecisao(ctx, gi) {
   const m = (typeof S !== "undefined" && S.modal) || null;
@@ -33987,6 +34836,62 @@ function pcAlvoDecisao(ctx, gi) {
    =========================================================================== */
 
 let FITA_VIEW = { busca: "", aberta: null, erro: null, carregou: false };
+
+/* ---------------------------------------------------------------------------
+   A FOTO (v8.110)
+   ---------------------------------------------------------------------------
+   O bucket é privado, então não existe endereço permanente: a URL é assinada,
+   vale pouco tempo, e é pedida quando a ficha abre. Enquanto ela não chega, o
+   lugar da imagem fica reservado — em vez de piscar uma caixa quebrada.
+
+   `FITA_URLS` guarda só o que já foi assinado NESTA sessão, por caminho. Ele
+   não é cache de dado: é cache de endereço temporário.
+   --------------------------------------------------------------------------- */
+const FITA_URLS = new Map();          /* foto_path → url assinada (ou "erro") */
+let FITA_SUBINDO = null;              /* id da fita cuja foto está subindo */
+
+function fitaPedirUrl(caminho) {
+  if (!caminho || FITA_URLS.has(caminho) || typeof foAssinar !== "function") return;
+  FITA_URLS.set(caminho, null);                       /* pedindo: não repete */
+  foAssinar(caminho).then((r) => {
+    FITA_URLS.set(caminho, r.status === "ok" ? r.url : { erro: r.motivo || "não consegui abrir a imagem" });
+    render();
+  }).catch(() => { FITA_URLS.set(caminho, { erro: "não consegui abrir a imagem" }); render(); });
+}
+
+function fitaBlocoFoto(f) {
+  const caminho = f.fotoPath || null;
+  const subindo = FITA_SUBINDO === f.id;
+  if (caminho) fitaPedirUrl(caminho);
+  const guardada = caminho ? FITA_URLS.get(caminho) : undefined;
+
+  const miolo = !caminho
+    ? `<div class="fita-foto-vazia">${svg(IC.imagem || IC.mais)}<span>sem foto</span></div>`
+    : guardada === undefined || guardada === null
+      ? `<div class="fita-foto-vazia"><span>carregando…</span></div>`
+      : guardada && guardada.erro
+        ? `<div class="fita-foto-vazia erro"><span>${esc(guardada.erro)}</span></div>`
+        : `<a href="${esc(guardada)}" target="_blank" rel="noopener" title="Abrir a imagem em tamanho real">
+             <img src="${esc(guardada)}" alt="Foto da fita ${esc(f.nome || "")}"></a>`;
+
+  return `<div class="fita-foto">
+    <div class="fita-foto-q">${miolo}</div>
+    <div class="fita-foto-a">
+      <div style="font-size:9.5px;letter-spacing:.1em;font-weight:800;color:var(--ink-4)">FOTO DA FITA</div>
+      <p class="hint" style="margin:3px 0 7px">Ela fica guardada no servidor e aparece aqui e na importação. Não vai para o papel de produção — lá vale a receita, não a imagem.</p>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <label class="btn sm ${caminho ? "" : "primary"}" style="cursor:pointer">
+          ${svg(IC.mais)}${caminho ? "Trocar foto" : "Adicionar foto"}
+          <input type="file" accept="image/jpeg,image/png,image/webp" style="display:none"
+            data-fita-foto="${esc(f.id)}" ${subindo ? "disabled" : ""}></label>
+        ${caminho && guardada && !guardada.erro ? `<a class="btn sm ghost" href="${esc(guardada)}" target="_blank" rel="noopener">${svg(IC.olho)}Ver</a>` : ""}
+        ${caminho ? `<button type="button" class="btn sm ghost" data-fita="foto-remover" data-id="${esc(f.id)}" ${subindo ? "disabled" : ""}>Remover</button>` : ""}
+      </div>
+      ${subindo ? `<div class="hint" style="margin-top:6px">Enviando…</div>` : ""}
+      ${caminho ? `<div class="hint mono" style="margin-top:6px;font-size:10.5px;word-break:break-all">${esc(caminho)}</div>` : ""}
+    </div>
+  </div>`;
+}
 
 /* teto de cartões desenhados de uma vez: o protótipo parou em 48 e a busca
    resolve o resto. Desenhar mil cartões trava a rolagem sem ajudar ninguém. */
@@ -34077,7 +34982,8 @@ function viewFitasArea() {
       </div>
       <label class="fld"><span>Observações</span>
         <textarea class="inp" name="obs" rows="2">${esc(f.obs || "")}</textarea></label>
-      <p class="hint">Sem foto. A foto da fita chega com a importação de catálogo.</p>
+      ${nova ? `<p class="hint">Salve a fita primeiro — a foto se anexa a ela depois.</p>`
+             : fitaBlocoFoto(f)}
       <div class="fita-acoes">
         <button type="button" class="btn sm primary" data-fita="salvar">Salvar</button>
         <button type="button" class="btn sm" data-fita="fechar">Cancelar</button>
@@ -34094,6 +35000,7 @@ function viewFitasArea() {
           value="${esc(FITA_VIEW.busca)}" aria-label="Buscar fita"></div>
         <button class="btn sm" data-fita="buscar">Buscar</button>
         ${FITA_VIEW.busca ? `<button class="btn sm ghost" data-fita="limpar">Limpar</button>` : ""}
+        <button class="btn sm" data-fita="importar">${svg(IC.importar || IC.mais)}Importar por imagem</button>
         <button class="btn primary" data-fita="nova">${svg(IC.mais)}Nova fita</button>
       </div></div>
 
@@ -34164,6 +35071,30 @@ async function fitaClique(alvo) {
     return true;
   }
   if (acao === "nova")   { FITA_VIEW.aberta = "nova"; FITA_VIEW.erro = null; render(); return true; }
+  if (acao === "importar") {
+    S.modal = { tipo: "importarFita", passo: "escolher" };
+    render();
+    return true;
+  }
+
+  /* ---- v8.110 · a foto ----
+     Remover segue a mesma ordem da troca, no sentido inverso: o cadastro
+     deixa de apontar PRIMEIRO, e só então o objeto sai. Apagar antes deixaria
+     a ficha apontando para o nada se a gravação falhasse. */
+  if (acao === "foto-remover") {
+    const f = ftAchar(alvo.dataset.id);
+    if (!f || !f.fotoPath) return true;
+    if (!confirm(`Remover a foto de "${f.nome}"? A fita continua no cadastro; só a imagem sai.`)) return true;
+    FITA_SUBINDO = f.id; render();
+    const r = await foRemoverDaFita(f.id);
+    FITA_SUBINDO = null;
+    if (r.status === "ok") toast("Foto removida.");
+    else if (r.status === "na-fila") toast("Foto removida aqui. A gravação vai quando a fila drenar.", "aviso");
+    else toast(r.motivo || `Não consegui remover a foto (${r.status}).`, "erro");
+    if (r.objetoSobrou) toast("A imagem antiga ficou no servidor — a fita já não aponta para ela.", "aviso");
+    render();
+    return true;
+  }
   if (acao === "fechar") { FITA_VIEW.aberta = null;   FITA_VIEW.erro = null; render(); return true; }
   if (acao === "abrir")  { FITA_VIEW.aberta = alvo.dataset.id; FITA_VIEW.erro = null; render(); return true; }
 
@@ -34205,6 +35136,244 @@ async function fitaClique(alvo) {
     else toast(`Não consegui excluir (${r.status}).`, "erro");
     render();
     return true;
+  }
+  return false;
+}
+/* ===========================================================================
+   src/telas/importar-fita.js · A JANELA DA IMPORTAÇÃO
+   ---------------------------------------------------------------------------
+   O percurso inteiro numa janela só, em passos visíveis:
+
+     escolher → recortar → conferir → salvar
+
+   O passo "recortar" nunca some: mesmo quando o automático acerta, a caixa
+   continua ali para ser arrastada. Um recorte automático que não pode ser
+   corrigido é pior que nenhum.
+
+   NADA daqui grava sozinho. `imfSalvar` só entra no último clique, e só leva
+   o que estiver MARCADO na conferência.
+
+   PDF não é recortado aqui — ele sobe como catálogo de origem e é aberto pelo
+   visualizador do navegador. Está dito na própria tela, para ninguém procurar
+   um botão que não existe.
+   =========================================================================== */
+
+/* a imagem carregada vive fora do `S.modal`: bitmap não é estado de tela e não
+   deve viajar em clone nenhum */
+let IMF_IMG = null;
+
+async function imfEscolherArquivo(arquivo) {
+  const m = S.modal;
+  if (!m || m.tipo !== "importarFita") return;
+
+  const ruim = typeof foConferirArquivo === "function" ? foConferirArquivo(arquivo) : null;
+  if (ruim) { m.erro = ruim.motivo; render(); return; }
+
+  m.erro = null;
+  m.nomeArquivo = arquivo.name;
+  m.tipoArquivo = arquivo.type;
+
+  /* PDF: guarda como catálogo e para por aí — sem prévia recortável */
+  if (String(arquivo.type).toLowerCase() === "application/pdf") {
+    m.passo = "pdf";
+    m.subindo = true; render();
+    const r = await foGuardarCatalogo(arquivo);
+    m.subindo = false;
+    if (r.status === "ok") { m.catalogoPath = r.caminho; m.erro = null; }
+    else m.erro = r.motivo || `Não consegui guardar o PDF (${r.status}).`;
+    render();
+    return;
+  }
+
+  try {
+    const lido = await imfLer(arquivo);
+    IMF_IMG = lido.img;
+    m.arquivoOriginal = arquivo;
+    m.dataUrl = lido.dataUrl;
+    m.larg = lido.img.naturalWidth; m.alt = lido.img.naturalHeight;
+    const auto = imfAutoRecorte(lido.img);
+    m.caixa = auto.caixa;
+    m.autoAchou = auto.achou;
+    m.autoMotivo = auto.motivo || null;
+    m.passo = "recortar";
+  } catch (e) {
+    m.erro = String((e && e.message) || e);
+    m.passo = "escolher";
+  }
+  render();
+}
+
+/* ---------------------------------------------------------------------------
+   PASSO 2 · o recorte. A caixa é desenhada em porcentagem sobre a prévia, e os
+   quatro números são editáveis à mão: arrastar é bom para ajustar, digitar é
+   melhor para repetir o mesmo enquadramento em dez fotos do mesmo catálogo.
+   --------------------------------------------------------------------------- */
+function imfViewRecorte(m) {
+  const c = m.caixa || { x: 0, y: 0, w: m.larg, h: m.alt };
+  const pc = (v, total) => (total ? (v / total) * 100 : 0);
+  return `
+    <div class="aviso ${m.autoAchou ? "" : "amber"}" style="margin:0 0 12px">
+      ${m.autoAchou
+        ? `<b>Recorte automático aplicado.</b> Confira e ajuste se precisar — a fita tem de caber inteira, com uma folga.`
+        : `<b>Não consegui recortar sozinho${m.autoMotivo ? ` (${esc(m.autoMotivo)})` : ""}.</b> A imagem está inteira; ajuste a área à mão.`}
+    </div>
+    <div class="imf-palco">
+      <img src="${esc(m.dataUrl)}" alt="prévia">
+      <div class="imf-caixa" style="left:${pc(c.x, m.larg)}%;top:${pc(c.y, m.alt)}%;
+        width:${pc(c.w, m.larg)}%;height:${pc(c.h, m.alt)}%"></div>
+    </div>
+    <div class="imf-num">
+      ${["x", "y", "w", "h"].map((k) => `<label class="fld"><span>${k.toUpperCase()}</span>
+        <input class="inp num" type="number" min="0" data-imf-caixa="${k}" value="${Math.round(c[k])}"></label>`).join("")}
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">
+      <button class="btn sm" data-imf="auto">${svg(IC.atualizar)}Recortar de novo</button>
+      <button class="btn sm ghost" data-imf="inteira">Usar a imagem inteira</button>
+    </div>`;
+}
+
+/* ---------------------------------------------------------------------------
+   PASSO 3 · a conferência. Uma linha por campo: o que está lá, o que foi
+   proposto, e a caixinha que decide. Campo corrigido à mão vem DESMARCADO e
+   com o aviso — é a promessa que o módulo inteiro faz.
+   --------------------------------------------------------------------------- */
+function imfViewConferencia(m) {
+  const cf = m.conferencia;
+  if (!cf) return "";
+  const manuais = cf.campos.filter((c) => c.manual).length;
+  return `
+    <div class="aviso" style="margin:0 0 12px">
+      ${cf.nova
+        ? `<b>Fita nova.</b> Nada será sobrescrito — ela ainda não existe no cadastro.`
+        : `<b>Casou com a fita "${esc(cf.fita.nome || "")}"</b> pelo ${esc(cf.casadaPor)}. Só entra o que você marcar.`}
+      <div class="hint" style="margin-top:4px">Sugestões tiradas do ${esc(cf.origemDaSugestao)} — não há leitura de texto na imagem. Confira tudo.</div>
+    </div>
+    ${manuais ? `<div class="aviso amber" style="margin:0 0 12px">
+      <b>${manuais === 1 ? "1 campo foi corrigido à mão" : manuais + " campos foram corrigidos à mão"}.</b>
+      ${manuais === 1 ? "Ele vem" : "Eles vêm"} desmarcado${manuais === 1 ? "" : "s"}: a importação não desfaz correção de ninguém sem que alguém mande.</div>` : ""}
+    ${!cf.campos.length ? `<div class="hint">Não consegui propor nenhum campo a partir deste arquivo. Você pode subir a foto mesmo assim e preencher a ficha à mão.</div>`
+    : `<table class="t" style="font-size:12.5px">
+      <thead><tr><th style="width:26px"></th><th>Campo</th><th>Está</th><th>Proposto</th></tr></thead>
+      <tbody>${cf.campos.map((c, i) => `<tr class="${c.manual ? "imf-manual" : ""}">
+        <td><input type="checkbox" class="chk" data-imf-aplicar="${i}" ${c.aplicar ? "checked" : ""}
+          ${c.igual ? "disabled" : ""}></td>
+        <td><b>${esc(c.rotulo)}</b>${c.aviso ? `<div class="hint" style="color:var(--amber)">${esc(c.aviso)}</div>` : ""}</td>
+        <td class="${c.atual == null ? "hint" : ""}">${c.atual == null ? "vazio" : esc(String(c.atual))}</td>
+        <td><b>${esc(String(c.proposto))}</b>${c.igual ? ` <span class="hint">(igual)</span>` : ""}</td>
+      </tr>`).join("")}</tbody></table>`}
+    <label style="display:flex;gap:9px;align-items:flex-start;cursor:pointer;margin-top:12px">
+      <input type="checkbox" class="chk" data-imf="anexar-foto" ${m.anexarFoto !== false ? "checked" : ""} style="margin-top:2px">
+      <span>Anexar a imagem recortada como <b>foto desta fita</b></span></label>`;
+}
+
+function viewImportarFita(m) {
+  const passo = m.passo || "escolher";
+  const titulo = { escolher: "Importar fita", recortar: "Recortar a imagem",
+                   conferir: "Conferir antes de gravar", pdf: "Catálogo em PDF" }[passo] || "Importar fita";
+  const trilha = ["escolher", "recortar", "conferir"];
+  return `<div class="ov" data-fechar="1"><div class="modal" style="max-width:min(680px, 96vw)" role="dialog" aria-label="Importar fita">
+    <div class="modal-h"><h2>${esc(titulo)}</h2>
+      ${passo !== "pdf" ? `<span class="tag">${trilha.indexOf(passo) + 1} de 3</span>` : `<span class="tag">PDF</span>`}
+      <button class="btn sm ghost" style="margin-left:auto" data-fechar="1">Fechar</button></div>
+    <div class="modal-b">
+      ${m.erro ? `<div class="aviso erro" style="margin:0 0 12px">${esc(m.erro)}</div>` : ""}
+
+      ${passo === "escolher" ? `
+        <p class="hint" style="margin:0 0 14px">Escolha a foto de uma fita, ou a imagem de uma página do catálogo. Nada é gravado agora: você confere tudo antes.</p>
+        <label class="btn primary" style="cursor:pointer">${svg(IC.mais)}Escolher arquivo
+          <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" style="display:none" data-imf-arquivo></label>
+        <div class="hint" style="margin-top:12px;line-height:1.7">
+          <b>JPG, PNG e WEBP</b> passam pelo recorte e pela conferência.<br>
+          <b>PDF</b> é guardado como catálogo de origem e aberto pelo visualizador do navegador — recortar página de PDF dentro do app fica para uma versão futura. Para importar uma página agora, use uma imagem dela.
+        </div>` : ""}
+
+      ${passo === "pdf" ? `
+        ${m.subindo ? `<div class="hint">Guardando o PDF…</div>`
+        : m.catalogoPath ? `<div class="aviso" style="margin:0 0 12px"><b>PDF guardado como catálogo de origem.</b>
+            <div class="hint mono" style="margin-top:4px;word-break:break-all">${esc(m.catalogoPath)}</div></div>
+          <p class="hint">Ele fica no servidor como prova do que foi importado. Para trazer uma fita deste catálogo para o cadastro, envie uma imagem da página.</p>`
+        : `<div class="hint">Não foi guardado.</div>`}` : ""}
+
+      ${passo === "recortar" ? imfViewRecorte(m) : ""}
+      ${passo === "conferir" ? imfViewConferencia(m) : ""}
+    </div>
+    <div class="modal-f">
+      ${passo === "recortar" ? `<button class="btn" data-imf="voltar-escolher">← Trocar arquivo</button>` : ""}
+      ${passo === "conferir" ? `<button class="btn" data-imf="voltar-recorte">← Recorte</button>` : ""}
+      <span style="margin-left:auto"></span>
+      <button class="btn" data-fechar="1">Cancelar</button>
+      ${passo === "recortar" ? `<button class="btn primary" data-imf="conferir">Continuar</button>` : ""}
+      ${passo === "conferir" ? `<button class="btn primary" data-imf="salvar" ${m.salvando ? "disabled" : ""}>
+        ${m.salvando ? "Gravando…" : "Gravar"}</button>` : ""}
+    </div></div></div>`;
+}
+
+/* ---------------------------------------------------------------------------
+   OS CLIQUES DA JANELA
+   --------------------------------------------------------------------------- */
+async function imfClique(alvo) {
+  const m = S.modal;
+  if (!m || m.tipo !== "importarFita") return false;
+  const a = alvo.dataset.imf;
+
+  if (a === "voltar-escolher") { m.passo = "escolher"; m.erro = null; render(); return true; }
+  if (a === "voltar-recorte")  { m.passo = "recortar"; m.erro = null; render(); return true; }
+  if (a === "inteira") { m.caixa = { x: 0, y: 0, w: m.larg, h: m.alt }; render(); return true; }
+  if (a === "auto") {
+    if (!IMF_IMG) return true;
+    const r = imfAutoRecorte(IMF_IMG);
+    m.caixa = r.caixa; m.autoAchou = r.achou; m.autoMotivo = r.motivo || null;
+    render(); return true;
+  }
+  if (a === "anexar-foto") { m.anexarFoto = !!alvo.checked; return true; }
+
+  if (a === "conferir") {
+    const sug = imfDoNome(m.nomeArquivo);
+    m.conferencia = imfMontarConferencia(sug, imfCasar(sug));
+    m.passo = "conferir";
+    render(); return true;
+  }
+
+  if (a === "salvar") {
+    if (m.salvando) return true;
+    m.salvando = true; m.erro = null; render();
+
+    let caminhoFoto = null;
+    /* a foto sobe ANTES de gravar: um caminho que não existe não pode ser
+       gravado em `foto_path` — é o `orfaos` do smoke */
+    if (m.anexarFoto !== false && IMF_IMG) {
+      try {
+        const recortada = await imfRecortar(IMF_IMG, m.caixa, m.tipoArquivo, m.nomeArquivo);
+        const alvoFita = m.conferencia && m.conferencia.fita;
+        const destino = typeof foCaminhoDaFita === "function"
+          ? foCaminhoDaFita(alvoFita ? alvoFita.id : "nova", recortada.type) : null;
+        const sub = await foSubir(recortada, destino);
+        if (sub.status !== "ok") {
+          m.salvando = false;
+          m.erro = `${sub.motivo || "Não consegui enviar a imagem."} Os campos não foram gravados — nada se perdeu.`;
+          render(); return true;
+        }
+        caminhoFoto = sub.caminho;
+      } catch (e) {
+        m.salvando = false;
+        m.erro = "Não consegui recortar a imagem: " + String((e && e.message) || e);
+        render(); return true;
+      }
+    }
+
+    const r = await imfSalvar(m.conferencia, caminhoFoto);
+    m.salvando = false;
+    if (r.status === "ok" || r.status === "na-fila" || r.status === "sem-mudanca") {
+      const n = imfQuantasAplicam(m.conferencia);
+      toast(r.status === "na-fila"
+        ? "Guardado aqui. Vai ao servidor quando a fila drenar."
+        : r.status === "sem-mudanca" ? "Nada mudou — nenhum campo estava marcado."
+        : `Fita gravada${n ? ` · ${n} ${n === 1 ? "campo" : "campos"}` : ""}${caminhoFoto ? " · com foto" : ""}.`);
+      S.modal = null; IMF_IMG = null;
+      render(); return true;
+    }
+    m.erro = r.motivo || `O servidor não confirmou (${r.status}). Nada foi perdido.`;
+    render(); return true;
   }
   return false;
 }

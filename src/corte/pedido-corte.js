@@ -580,6 +580,128 @@ function pcAquecer() {
   pcGarantirProjetos().then((r) => { if (r.ok && typeof render === "function") render(); }).catch(() => {});
 }
 
+/* ===========================================================================
+   A SEÇÃO NA JANELA DE UM PEDIDO QUE JÁ EXISTE (v8.110)
+   ---------------------------------------------------------------------------
+   Sem isto havia um beco sem saída: no dia em que a primeira regra de família
+   nascesse, todo pedido criado ANTES do módulo ficaria pendente no papel→aberto
+   — e o aviso mandava "abra o pedido e escolha", num lugar onde não havia o
+   que escolher.
+
+   Aqui o pedido JÁ EXISTE, então a decisão não espera: ela vira vínculo na
+   hora. E pedido antigo não é promovido a "sem projeto" por conta própria —
+   se existe regra que casa com o SKU, ele fica pendente até alguém decidir.
+
+   Congelado é SÓ LEITURA. Trocar ou seguir sem depois de o papel ter saído
+   seria contar outra história sobre trabalho que já foi para a bancada.
+   =========================================================================== */
+function pcSecaoDoPedido(pedido) {
+  if (!pedido || !pedido.id) return "";
+  const id = String(pedido.id);
+  const sku = pcSkuDoPedido(pedido);
+  if (!sku) return "";
+  const v = pcVinculoDe(id);
+  const tit = `<div style="font-size:9.5px;letter-spacing:.1em;font-weight:800;color:var(--ink-4);margin-bottom:6px">PROJETO DE CORTE
+    <span style="font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink-3)"> · a ficha que a bancada usa para cortar</span></div>`;
+  const caixa = (borda, fundo, corpo) => `<div style="margin:0 0 14px;padding:10px 12px;border:1px solid ${borda};border-radius:9px;background:${fundo}">${tit}${corpo}</div>`;
+  const dados = ` data-pjc-ped-id="${esc(id)}"`;
+
+  /* 1 · congelado: só leitura, e o que se lê é o SNAPSHOT, não a regra de hoje */
+  if (v && v.congeladoEm) {
+    const s = v.snapshot || {};
+    if (s.sem_projeto) {
+      return caixa("var(--line)", "transparent", `
+        <div><b>Sem Projeto de Corte</b> <span class="tag">congelado</span></div>
+        <div class="hint" style="margin-top:4px">Este pedido foi liberado sem projeto em ${esc(fdate(v.congeladoEm))}. O papel saiu assim.</div>`);
+    }
+    return caixa("var(--line)", "transparent", `
+      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+        <b>${esc((s.projeto && s.projeto.nome) || "")}</b>
+        ${s.versao && s.versao.versao ? `<span class="tag">v${esc(String(s.versao.versao))}</span>` : ""}
+        <span class="tag ok">congelado</span></div>
+      <div style="font-size:12px;color:var(--ink-2)">${esc(pcResumoDoSnapshot(s))}</div>
+      <div class="hint" style="margin-top:5px">Congelado em ${esc(fdate(v.congeladoEm))}. Mexer no projeto depois disto não muda mais este pedido — nem para mudar de projeto, nem para seguir sem.</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:7px">
+        <button type="button" class="btn sm" data-pjc-ped="ver-cong"${dados}>${svg(IC.olho)}Ver a ficha congelada</button></div>`);
+  }
+
+  /* 2 · já tem vínculo, ainda não congelado: dá para rever */
+  if (v) {
+    const manual = v.origem === "manual";
+    const nome = (typeof pjAchar === "function" && (pjAchar(v.projetoId) || {}).nome) || null;
+    if (v.origem === "sem") {
+      return caixa("var(--line)", "transparent", `
+        <div><b>Sem Projeto de Corte</b> <span class="tag">você escolheu seguir sem</span></div>
+        <div class="hint" style="margin-top:4px;margin-bottom:7px">Ainda dá para mudar: o pedido não foi congelado.</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <button type="button" class="btn sm" data-pjc-ped="usar-resolvido"${dados}>Usar o projeto resolvido</button>
+          <button type="button" class="btn sm" data-pjc-ped="trocar-ped"${dados}>${svg(IC.atualizar)}Trocar</button></div>`);
+    }
+    return caixa("var(--line)", "transparent", `
+      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+        <b>${esc(nome || v.projetoId || "")}</b>
+        <span class="tag${manual ? " amber" : ""}">${manual ? "escolhido à mão" : esc(PJC_NOME && PJC_NOME[v.origem] ? PJC_NOME[v.origem] : v.origem)}</span>
+        <span class="tag">vinculado</span></div>
+      <div class="hint" style="margin-bottom:7px">Ainda não congelado — ele congela quando o papel sair.</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button type="button" class="btn sm" data-pjc-ped="ver"${dados}>${svg(IC.olho)}Ver projeto</button>
+        <button type="button" class="btn sm" data-pjc-ped="trocar-ped"${dados}>${svg(IC.atualizar)}Trocar</button>
+        <button type="button" class="btn sm ghost" data-pjc-ped="sem-ped"${dados}>Seguir sem projeto</button></div>`);
+  }
+
+  /* 3 · sem vínculo nenhum. Se existe regra que casa, ISTO É PENDÊNCIA — e é
+     aqui que ela se resolve, não numa mensagem que manda procurar. */
+  const e = pcEstadoDoSku(sku);
+  if (!e.tem) {
+    return caixa("var(--line)", "transparent", `
+      <div><b>Nenhum projeto casa com ${esc(sku)}.</b></div>
+      <div class="hint" style="margin-top:4px;margin-bottom:7px">O papel sai sem o bloco de corte. Se este SKU deveria ter projeto, crie um.</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button type="button" class="btn sm" data-pjc-ped="criar-ped"${dados}>${svg(IC.mais)}Criar Projeto de Corte</button></div>`);
+  }
+  return caixa("var(--amber)", "var(--amber-soft)", `
+    <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+      <b>${esc(e.nome || "")}</b>
+      <span class="tag">${esc(PJC_NOME && PJC_NOME[e.escopo] ? PJC_NOME[e.escopo] : e.escopo)}</span>
+      ${e.versao ? `<span class="tag">v${esc(String(e.versao))}</span>` : ""}
+      <span class="tag amber">falta decidir</span></div>
+    <div style="font-size:12px;color:var(--ink-2);margin-bottom:5px">${esc(pcResumoDoSnapshot(pcMontarSnapshot(sku)))}</div>
+    <div class="hint" style="margin-bottom:7px">Este pedido ainda não tem Projeto de Corte gravado, e existe regra que vale para ${esc(sku)}. Enquanto não decidir, ele não entra na fila de corte.</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button type="button" class="btn sm primary" data-pjc-ped="usar-resolvido"${dados}>Usar projeto resolvido</button>
+      <button type="button" class="btn sm" data-pjc-ped="trocar-ped"${dados}>${svg(IC.atualizar)}Trocar</button>
+      <button type="button" class="btn sm" data-pjc-ped="criar-ped"${dados}>${svg(IC.mais)}Criar projeto</button>
+      <button type="button" class="btn sm ghost" data-pjc-ped="sem-ped"${dados}>Seguir sem projeto</button></div>`);
+}
+
+/* a decisão tomada na janela do pedido. Aqui o pedido EXISTE, então ela vira
+   vínculo imediatamente — não há rascunho onde esperar. */
+async function pcDecidirNoPedido(pedidoId, escolha, projetoId) {
+  const r = typeof pedidoPorId === "function" ? pedidoPorId(pedidoId) : null;
+  if (!r) return { status: "invalido", motivo: "Pedido não encontrado." };
+  if (pcCongelado(pedidoId)) {
+    return { status: "congelado", motivo: "Este pedido já foi congelado — o projeto dele não muda mais." };
+  }
+  const sku = pcSkuDoPedido(r);
+  if (escolha === "sem")      return pcSemProjeto(pedidoId);
+  if (escolha === "manual")   return pcVincularDecidido(pedidoId, sku, pcDecidirManual(sku, projetoId));
+  return pcVincularDecidido(pedidoId, sku, null);        /* o resolvido */
+}
+
+/* os pedidos de uma lista que ainda precisam de decisão — a janela dos papéis
+   usa isto para oferecer o caminho em vez de só dizer que não deu */
+function pcPendentesDe(pedidos) {
+  const fora = [];
+  for (const r of (pedidos || [])) {
+    const id = String(r.id);
+    if (pcVinculoDe(id)) continue;
+    const sku = pcSkuDoPedido(r);
+    if (!pcTemProjeto(sku)) continue;
+    fora.push({ id, numero: r.numero, sku });
+  }
+  return fora;
+}
+
 /* o dono da decisão, de volta pelo que o botão carrega */
 function pcAlvoDecisao(ctx, gi) {
   const m = (typeof S !== "undefined" && S.modal) || null;
